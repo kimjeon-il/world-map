@@ -1,8 +1,0 @@
-ChronoMap Editor MVP uses external runtime map/data services.
-
-Base map: OpenFreeMap style as referenced by MapLibre official examples.
-Country boundary source configured in app.js:
-https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson
-
-The application does not bundle those external datasets in this archive.
-Review the upstream attribution/licensing requirements before redistribution or production deployment.
