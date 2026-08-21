@@ -1,0 +1,185 @@
+{
+  "version": "0.12.1",
+  "schema": "atlaswright-hydro-packs-v1",
+  "dataset": "Natural Earth 5.0.0 base + performance-filtered HydroRIVERS/HydroLAKES 1.0",
+  "crs": "EPSG:4326",
+  "coordinatePolicy": "selected source vertices retained; 1e-6 degree Int32 delta-varint",
+  "selection": {
+    "riverFormula": "ORD_STRA + 4*log10(DIS_AV_CMS) - 0.5*log10(UPLAND_SKM)",
+    "riverThresholds": [
+      14.4744,
+      12.4307,
+      11.2137,
+      10.7957
+    ],
+    "lakeAreaThresholdsKm2": [
+      250.0,
+      100.0,
+      50.0,
+      50.0
+    ],
+    "minZoomStages": [
+      6.0,
+      6.7,
+      7.0,
+      7.5
+    ],
+    "baseDedupTarget": 0.02
+  },
+  "stages": [
+    {
+      "id": 0,
+      "minZoom": 6.0,
+      "columns": 8,
+      "rows": 4,
+      "indexTemplate": "index/0/{x}-{y}.bin.gz"
+    },
+    {
+      "id": 1,
+      "minZoom": 6.7,
+      "columns": 16,
+      "rows": 8,
+      "indexTemplate": "index/1/{x}-{y}.bin.gz"
+    },
+    {
+      "id": 2,
+      "minZoom": 7.0,
+      "columns": 32,
+      "rows": 16,
+      "indexTemplate": "index/2/{x}-{y}.bin.gz"
+    },
+    {
+      "id": 3,
+      "minZoom": 7.5,
+      "columns": 64,
+      "rows": 32,
+      "indexTemplate": "index/3/{x}-{y}.bin.gz"
+    }
+  ],
+  "packTemplate": "packs/p{id}.bin.gz",
+  "layers": [
+    {
+      "id": "rivers_base",
+      "category": "river",
+      "label": "강 · Natural Earth 기본",
+      "locked": true
+    },
+    {
+      "id": "rivers_hydro",
+      "category": "river",
+      "label": "강 · Hydro 보충",
+      "locked": true
+    },
+    {
+      "id": "lakes_base",
+      "category": "lake",
+      "label": "호수 · Natural Earth 기본",
+      "locked": true
+    },
+    {
+      "id": "lakes_hydro",
+      "category": "lake",
+      "label": "호수 · Hydro 보충",
+      "locked": true
+    }
+  ],
+  "stats": {
+    "featureCount": 17672,
+    "coordinateCount": 4532876,
+    "categoryCounts": {
+      "river": 14127,
+      "lake": 3545
+    },
+    "layerCounts": {
+      "rivers_base": 1472,
+      "lakes_base": 1355,
+      "rivers_hydro": 12655,
+      "lakes_hydro": 2190
+    },
+    "stageCounts": {
+      "river:3": 4459,
+      "river:2": 4775,
+      "river:0": 2496,
+      "river:1": 2397,
+      "lake:2": 1880,
+      "lake:0": 1075,
+      "lake:1": 590
+    },
+    "packCount": 789,
+    "indexTileCount": 809,
+    "compressedBytes": 17458770,
+    "largestPackBytes": 1723752
+  },
+  "sources": {
+    "naturalEarthBase": [
+      "rivers_base.geojson",
+      "lakes_base.geojson"
+    ],
+    "hydroRivers": [
+      {
+        "file": "HydroRIVERS_v10_af.shp",
+        "sha256": "3d8b8c421243bf6b88852df03cbb033c5ff19abf67bec80043ee5378d3d65dd6",
+        "selectedReachCount": 44775,
+        "chainCount": 1507
+      },
+      {
+        "file": "HydroRIVERS_v10_ar.shp",
+        "sha256": "33101f9a1e600f0c4b3b84998d7757f1831b0d25f08c45938cff246642616d18",
+        "selectedReachCount": 9808,
+        "chainCount": 339
+      },
+      {
+        "file": "HydroRIVERS_v10_as.shp",
+        "sha256": "827e03a8e419b9578d5f246bcce1c93de1a0bd561a9f572fe84606c5d36d31fa",
+        "selectedReachCount": 56785,
+        "chainCount": 2022
+      },
+      {
+        "file": "HydroRIVERS_v10_au.shp",
+        "sha256": "56bde2b19df7af9aadbbe58df57bbfffb7710b22ce439fd919f9ed2581e9f92a",
+        "selectedReachCount": 22116,
+        "chainCount": 1317
+      },
+      {
+        "file": "HydroRIVERS_v10_eu.shp",
+        "sha256": "24a0fa331ecc714f1199ad8f6400e2267ad4b7a89f7c1b8af57a232a9c7badaf",
+        "selectedReachCount": 23789,
+        "chainCount": 710
+      },
+      {
+        "file": "HydroRIVERS_v10_gr.shp",
+        "sha256": "0c91f6d5b112323ce3e630662ecd0f046d80beb55c9d68b88891bb8965dc1eb7",
+        "selectedReachCount": 455,
+        "chainCount": 52
+      },
+      {
+        "file": "HydroRIVERS_v10_na.shp",
+        "sha256": "d95a49105dc2336eeba777acd19acdbd8b7f1e577c07b6edc6c6299711412d2c",
+        "selectedReachCount": 33597,
+        "chainCount": 1280
+      },
+      {
+        "file": "HydroRIVERS_v10_sa.shp",
+        "sha256": "9d233f98052410ef731c31baea68de6a9c69972cda0f59c0bd01cc80f0daa2ec",
+        "selectedReachCount": 90516,
+        "chainCount": 4564
+      },
+      {
+        "file": "HydroRIVERS_v10_si.shp",
+        "sha256": "c32da0874c254b87a94117db88579005ed67d6d88752e45259280575ddf140e7",
+        "selectedReachCount": 25220,
+        "chainCount": 864
+      }
+    ],
+    "hydroLakes": {
+      "file": "HydroLAKES_polys_v10.shp",
+      "sha256": "bbb5a60b8e3016908991aa0abd76f5553a3d019ae7d2da0866c823f1ddf4dded",
+      "selected": 2190,
+      "duplicates": 1212
+    }
+  },
+  "dedup": {
+    "riverSampleOverlap": 0.006785266074262012,
+    "lakeAreaOverlap": 0.0019055672579298703
+  }
+}
