@@ -1,0 +1,13 @@
+{
+  "version": "0.13.0",
+  "description": "AtlasWright 한국어 수계명 표준화 및 명시적 교정표",
+  "aliases": {
+    "Danube": "도나우강",
+    "Danube River": "도나우강",
+    "Dunav": "도나우강",
+    "Dunărea": "도나우강",
+    "다뉴브": "도나우강",
+    "다뉴브강": "도나우강",
+    "도나우": "도나우강"
+  }
+}
