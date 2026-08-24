@@ -24,19 +24,34 @@ class V0200ModelessSheetTests(unittest.TestCase):
 
     def test_map_sheets_have_three_snap_heights_and_drag_handles(self):
         self.assertEqual(INDEX.count('data-sheet-handle="'), 3)
+        self.assertEqual(INDEX.count('ui-button sheet-drag-handle'), 3)
         self.assertIn('data-sheet-handle="createMenu"', INDEX)
+        self.assertEqual(INDEX.count('role="slider" data-sheet-handle='), 3)
         self.assertIn("const SHEET_SNAP_RATIOS = Object.freeze([0.35, 0.6, 0.9]);", APP)
         self.assertIn("const SHEET_SNAP_LABELS = Object.freeze(['기본 높이', '중간 높이', '최대 높이']);", APP)
+        self.assertIn("window.visualViewport?.height || window.innerHeight", APP)
         self.assertIn("document.querySelectorAll('[data-sheet-handle]').forEach(bindSheetDragHandle);", APP)
         self.assertIn("body.map-sheet-dragging", CSS)
 
     def test_add_menu_is_a_modeless_map_sheet_on_mobile(self):
-        self.assertIn("#app[data-layout=\"mobile\"] .create-sheet-header", CSS)
+        self.assertEqual(INDEX.count("map-sheet-surface"), 3)
+        self.assertIn("#app[data-layout=\"mobile\"] .create-menu.mobile-open", CSS)
         self.assertIn("height: var(--sheet-height, 35dvh);", CSS)
         self.assertIn("$('mobileCloseCreateBtn')?.addEventListener", APP)
+        self.assertIn("panel.setAttribute('aria-modal', 'false')", APP)
+        self.assertIn("item.removeAttribute('role')", APP)
         outside_click = re.search(r"document\.addEventListener\('click', e => \{([\s\S]+?)\n\s*\}\);", APP)
         self.assertIsNotNone(outside_click)
         self.assertNotIn("closeCreateMenu", outside_click.group(1))
+
+    def test_only_one_mobile_sheet_can_be_active(self):
+        self.assertIn("let activeMobileSheet = null;", APP)
+        self.assertIn("function setActiveMobileSheet(kind, trigger = null, { toggle = false } = {})", APP)
+        self.assertIn("panel?.classList.toggle('mobile-open', otherKind === kind)", APP)
+        self.assertIn("activeMobileSheet = kind", APP)
+        self.assertIn('aria-controls="leftPanel"', INDEX)
+        self.assertIn('aria-controls="createMenu"', INDEX)
+        self.assertIn('aria-controls="rightPanel"', INDEX)
 
     def test_map_sheets_do_not_share_the_modal_backdrop_or_focus_trap(self):
         self.assertNotIn("responsive-overlay-open", APP + CSS)
@@ -50,11 +65,29 @@ class V0200ModelessSheetTests(unittest.TestCase):
         self.assertNotIn("closeMobileSheets", backdrop_handler.group(0))
         self.assertIn("if (e.key === 'Tab' && document.body.classList.contains('file-menu-open'))", APP)
 
-    def test_open_sheet_reserves_map_space_without_changing_zoom(self):
-        self.assertIn("workspace?.style.setProperty('--map-safe-bottom'", APP)
-        self.assertIn("body.map-sheet-open #app[data-layout=\"mobile\"] .mode-action-bar", CSS)
+    def test_sheet_occlusion_does_not_move_the_map_or_floating_controls(self):
+        self.assertIn("workspace?.style.setProperty('--sheet-occlusion-bottom'", APP)
+        self.assertNotIn("workspace?.style.setProperty('--map-safe-bottom'", APP)
+        self.assertNotIn("body.map-sheet-open #app[data-layout=\"mobile\"] .mode-action-bar", CSS)
+        self.assertNotIn("body.map-sheet-open #app[data-layout=\"mobile\"] .mobile-zoom-dock", CSS)
         self.assertIn("const scaleContentHeight = isMobile()", APP)
         self.assertIn("Math.max(1, height - safe.top - 96)", APP)
+
+    def test_mobile_sheet_is_edge_to_edge_with_fixed_header_and_scroll_body(self):
+        self.assertIn("right: 0;", CSS)
+        self.assertIn("left: 0;", CSS)
+        self.assertGreaterEqual(CSS.count("bottom: var(--mobile-nav-height);"), 2)
+        self.assertIn("border-radius: 16px 16px 0 0;", CSS)
+        self.assertIn(".map-sheet-body-layers .layer-list", CSS)
+        self.assertIn("overflow-y: auto;", CSS)
+        self.assertIn("body.map-sheet-open #app[data-layout=\"mobile\"] .map-bottom-status", CSS)
+
+    def test_drag_handle_has_no_general_button_chrome_and_supports_keyboard(self):
+        self.assertIn(".map-sheet-header .sheet-drag-handle", CSS)
+        self.assertIn("background: transparent !important;", CSS)
+        self.assertIn("event.key === 'ArrowUp' || event.key === 'PageUp'", APP)
+        self.assertIn("event.key === 'Escape'", APP)
+        self.assertIn("velocity > 0.65", APP)
 
     def test_selection_updates_existing_editor_without_forcing_it_open(self):
         function = re.search(r"function openSelectionEditor\(\) \{([\s\S]+?)\n\s*\}", APP)
@@ -64,9 +97,9 @@ class V0200ModelessSheetTests(unittest.TestCase):
         self.assertNotIn("focus(", body)
 
     def test_version_is_updated(self):
-        self.assertIn('data-app-version="0.21.0"', INDEX)
-        self.assertIn("const APP_VERSION = '0.21.0'", APP)
-        self.assertIn("app.css?v=0.21.0", INDEX)
+        self.assertIn('data-app-version="0.22.0"', INDEX)
+        self.assertIn("const APP_VERSION = '0.22.0'", APP)
+        self.assertIn("app.css?v=0.22.0", INDEX)
 
 
 if __name__ == "__main__":
