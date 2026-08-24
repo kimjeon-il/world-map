@@ -33,6 +33,35 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
             self.assertIn(f'function {function}(', APP)
         self.assertIn("openSurface('editor', { automatic: true })", APP)
 
+    def test_compact_surfaces_share_one_exclusive_activation_rule(self):
+        body = APP[
+            APP.index('function closeCompetingCompactSurfaces'):
+            APP.index('function openSurface')
+        ]
+        self.assertIn("if (layoutMode !== 'compact') return;", body)
+        self.assertIn("if (surface !== 'create') closeCreateMenu();", body)
+        self.assertIn("surface !== 'layers'", body)
+        self.assertIn("surface !== 'editor'", body)
+        open_surface = APP[APP.index('function openSurface'):APP.index('function closeSurface')]
+        self.assertIn('closeCompetingCompactSurfaces(surface);', open_surface)
+        self.assertIn(
+            "if (layoutMode !== 'compact') requestAnimationFrame",
+            APP[APP.index('function toggleCreateMenu'):APP.index('function closeActiveMobileSheet')],
+        )
+
+    def test_sheet_headers_and_row_buttons_use_shared_component_rules(self):
+        row_button = re.search(r'\.ui-row-button \{([^}]+)\}', CSS)
+        self.assertIsNotNone(row_button)
+        self.assertIn('width: 100%', row_button.group(1))
+        self.assertIn('box-sizing: border-box', row_button.group(1))
+        compact_header = re.search(
+            r'#app\[data-layout="compact"\] \.map-sheet-header \{([^}]+)\}',
+            CSS,
+        )
+        self.assertIsNotNone(compact_header)
+        self.assertIn('height: 74px', compact_header.group(1))
+        self.assertIn('padding: 16px', compact_header.group(1))
+
     def test_transient_panels_do_not_change_projection_safe_insets(self):
         self.assertIn('--projection-safe-left', CSS)
         self.assertIn("read('--projection-safe-left')", APP)
@@ -49,8 +78,8 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertIn('searchText: id', APP)
 
     def test_build_version_is_v0230(self):
-        self.assertIn('data-app-version="0.23.0"', INDEX)
-        self.assertIn("const APP_VERSION = '0.23.0'", APP)
+        self.assertIn('data-app-version="0.24.0"', INDEX)
+        self.assertIn("const APP_VERSION = '0.24.0'", APP)
 
 
 if __name__ == '__main__':
