@@ -1,0 +1,57 @@
+from __future__ import annotations
+
+import re
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).parents[1]
+INDEX = (ROOT / "index.html").read_text(encoding="utf-8")
+APP = (ROOT / "assets/js/app.js").read_text(encoding="utf-8")
+CSS = (ROOT / "assets/css/app.css").read_text(encoding="utf-8")
+
+
+class V0230NavigationSurfaceTests(unittest.TestCase):
+    def test_primary_navigation_is_layer_add_edit_in_every_layout(self):
+        nav = re.search(r'<nav class="adaptive-nav.*?</nav>', INDEX, re.S).group(0)
+        self.assertLess(nav.index('<strong>레이어</strong>'), nav.index('<strong>추가</strong>'))
+        self.assertLess(nav.index('<strong>추가</strong>'), nav.index('<strong>편집</strong>'))
+        self.assertNotIn('<strong>지도</strong>', nav)
+        self.assertIn('<strong id="mapSheetTitle">레이어</strong>', INDEX)
+
+    def test_editor_trigger_is_outside_the_view_toolbar(self):
+        view_toolbar = re.search(r'<div id="mapViewToolbar".*?</div>\s*\n\s*<div id="editorEdgeSlot"', INDEX, re.S)
+        self.assertIsNotNone(view_toolbar)
+        toolbar_only = view_toolbar.group(0).split('<div id="editorEdgeSlot"', 1)[0]
+        self.assertNotIn('togglePanelBtn', toolbar_only)
+        self.assertEqual(INDEX.count('id="togglePanelBtn"'), 1)
+
+    def test_common_surface_state_and_manual_editor_collapse_exist(self):
+        for token in ('activeSurface', 'layersOpen', 'editorOpen', 'editorManuallyCollapsed'):
+            self.assertIn(token, APP)
+        for function in ('openSurface', 'closeSurface', 'toggleSurface'):
+            self.assertIn(f'function {function}(', APP)
+        self.assertIn("openSurface('editor', { automatic: true })", APP)
+
+    def test_transient_panels_do_not_change_projection_safe_insets(self):
+        self.assertIn('--projection-safe-left', CSS)
+        self.assertIn("read('--projection-safe-left')", APP)
+        self.assertIn('#app[data-layout="wide"] .workspace.editor-drawer-open { --map-safe-right: 0px; }', CSS)
+        compact = re.search(r'#app\[data-layout="compact"\] \.workspace\.layers-drawer-open,.*?\}', CSS, re.S).group(0)
+        self.assertIn('--map-safe-left: var(--compact-rail-width)', compact)
+        self.assertNotIn('queueMapResize();', APP[APP.index('function toggleEditorPanel'):APP.index('function syncMobileNavigation')])
+
+    def test_layer_search_accordion_and_virtual_list_are_present(self):
+        self.assertIn('id="layerSearchResults"', INDEX)
+        self.assertIn('LAYER_VIRTUAL_ROW_HEIGHT', APP)
+        self.assertIn('renderVirtualizedLayerGroup', APP)
+        self.assertIn('for (const key of LAYER_FOLDER_KEYS) state.layerFolders[key] = false;', APP)
+        self.assertIn('searchText: id', APP)
+
+    def test_build_version_is_v0230(self):
+        self.assertIn('data-app-version="0.23.0"', INDEX)
+        self.assertIn("const APP_VERSION = '0.23.0'", APP)
+
+
+if __name__ == '__main__':
+    unittest.main()
