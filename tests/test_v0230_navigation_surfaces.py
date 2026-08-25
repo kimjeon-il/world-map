@@ -59,8 +59,16 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertIn("read('--projection-safe-left')", APP)
         self.assertIn('#app[data-layout="wide"] .workspace.editor-drawer-open { --map-safe-right: 0px; }', CSS)
         compact = re.search(r'#app\[data-layout="compact"\] \.workspace\.layers-drawer-open,.*?\}', CSS, re.S).group(0)
-        self.assertIn('--map-safe-left: var(--compact-rail-width)', compact)
+        self.assertIn('--map-safe-left: 0px', compact)
+        self.assertNotIn('--compact-rail-width', CSS)
         self.assertNotIn('queueMapResize();', APP[APP.index('function toggleEditorPanel'):APP.index('function syncMobileNavigation')])
+
+    def test_wide_editor_trigger_is_a_persistent_drawer_edge_handle(self):
+        self.assertIn('top: 50%', CSS[CSS.index('.editor-edge-slot {'):CSS.index('.editor-edge-trigger {')])
+        open_rule = re.search(r'#app\[data-layout="wide"\] \.workspace\.editor-drawer-open \.editor-edge-slot \{([^}]+)\}', CSS)
+        self.assertIsNotNone(open_rule)
+        self.assertIn('right: calc(var(--panel-right-width) + 12px)', open_rule.group(1))
+        self.assertIn("surfaceState.editorOpen ? '편집창 닫기' : '편집창 열기'", APP)
 
     def test_layer_search_accordion_and_virtual_list_are_present(self):
         self.assertIn('id="layerSearchResults"', INDEX)
