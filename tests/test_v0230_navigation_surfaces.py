@@ -9,6 +9,7 @@ ROOT = Path(__file__).parents[1]
 INDEX = (ROOT / "index.html").read_text(encoding="utf-8")
 APP = (ROOT / "assets/js/app.js").read_text(encoding="utf-8")
 CSS = (ROOT / "assets/css/app.css").read_text(encoding="utf-8")
+SURFACE = (ROOT / "assets/js/modules/surface-controller.js").read_text(encoding="utf-8")
 
 
 class V0230NavigationSurfaceTests(unittest.TestCase):
@@ -20,34 +21,25 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertIn('<strong id="mapSheetTitle">레이어</strong>', INDEX)
 
     def test_editor_trigger_is_outside_the_view_toolbar(self):
-        view_toolbar = re.search(r'<div id="mapViewToolbar".*?</div>\s*\n\s*<div id="editorEdgeSlot"', INDEX, re.S)
+        view_toolbar = re.search(r'<div class="map-view-toolbar.*?</div>\s*\n\s*<div class="editor-edge-slot"', INDEX, re.S)
         self.assertIsNotNone(view_toolbar)
-        toolbar_only = view_toolbar.group(0).split('<div id="editorEdgeSlot"', 1)[0]
+        toolbar_only = view_toolbar.group(0).split('<div class="editor-edge-slot"', 1)[0]
         self.assertNotIn('togglePanelBtn', toolbar_only)
         self.assertEqual(INDEX.count('id="togglePanelBtn"'), 1)
 
     def test_common_surface_state_and_manual_editor_collapse_exist(self):
         for token in ('activeSurface', 'layersOpen', 'editorOpen', 'editorManuallyCollapsed'):
-            self.assertIn(token, APP)
+            self.assertIn(token, SURFACE)
         for function in ('openSurface', 'closeSurface', 'toggleSurface'):
             self.assertIn(f'function {function}(', APP)
         self.assertIn("openSurface('editor', { automatic: true })", APP)
 
     def test_compact_surfaces_share_one_exclusive_activation_rule(self):
-        body = APP[
-            APP.index('function closeCompetingCompactSurfaces'):
-            APP.index('function openSurface')
-        ]
-        self.assertIn("if (layoutMode !== 'compact') return;", body)
-        self.assertIn("if (surface !== 'create') closeCreateMenu();", body)
-        self.assertIn("surface !== 'layers'", body)
-        self.assertIn("surface !== 'editor'", body)
-        open_surface = APP[APP.index('function openSurface'):APP.index('function closeSurface')]
-        self.assertIn('closeCompetingCompactSurfaces(surface);', open_surface)
-        self.assertIn(
-            "if (layoutMode !== 'compact') requestAnimationFrame",
-            APP[APP.index('function toggleCreateMenu'):APP.index('function closeActiveMobileSheet')],
-        )
+        compact = SURFACE[SURFACE.index("} else if (layout === 'compact')") : SURFACE.index("} else {", SURFACE.index("} else if (layout === 'compact')"))]
+        self.assertIn("state.activeSurface = surface", compact)
+        self.assertIn("state.layersOpen = surface === 'layers'", compact)
+        self.assertIn("state.editorOpen = surface === 'editor'", compact)
+        self.assertNotIn('updateSurfaceStateFromDom', APP + SURFACE)
 
     def test_sheet_headers_and_row_buttons_use_shared_component_rules(self):
         row_button = re.search(r'\.ui-row-button \{([^}]+)\}', CSS)

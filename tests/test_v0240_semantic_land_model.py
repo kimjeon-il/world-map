@@ -10,6 +10,7 @@ APP = (ROOT / "assets" / "js" / "app.js").read_text(encoding="utf-8")
 GIS = (ROOT / "assets" / "js" / "gis-io.js").read_text(encoding="utf-8")
 GPKG = (ROOT / "assets" / "js" / "workers" / "gis-gpkg-worker.js").read_text(encoding="utf-8")
 README = (ROOT / "README.md").read_text(encoding="utf-8")
+PROJECT_STATE = (ROOT / "assets" / "js" / "modules" / "project-state.js").read_text(encoding="utf-8")
 
 
 class V0240SemanticLandModelTests(unittest.TestCase):
@@ -72,7 +73,8 @@ class V0240SemanticLandModelTests(unittest.TestCase):
         self.assertIn("transferLandDependents(transferredGeometry, donorIds, ownerId)", APP)
         self.assertIn("transferLandDependents(transferredGeometry, sourceIds, country.properties.editor_id", APP)
         self.assertIn("reassignLandDependents(targetIds, sourceId)", APP)
-        self.assertIn("drawings: deepClone(state.drawings)", APP)
+        self.assertIn("name: 'drawings', history: true", PROJECT_STATE)
+        self.assertIn("...pickProjectFields(state, { scope: 'history'", APP)
 
     def test_legacy_loads_normalize_after_country_geometry_is_available(self):
         self.assertIn("function normalizeDrawingSemantics", APP)
@@ -80,11 +82,11 @@ class V0240SemanticLandModelTests(unittest.TestCase):
         owner_inference = APP[APP.index("function inferDrawingOwnerId"):APP.index("function normalizeDrawingSemantics")]
         self.assertIn("clipper.intersection", owner_inference)
         self.assertNotIn("d3.geo.centroid", owner_inference)
-        self.assertGreaterEqual(APP.count("state.drawings = normalizeDrawingCollection"), 4)
+        self.assertGreaterEqual(APP.count("normalizeProjectDrawings();"), 4)
         apply_state = APP[APP.index("function applyAtlasState"):APP.index("let confirmModalAction")]
-        self.assertLess(apply_state.index("state.countriesData ="), apply_state.index("state.drawings = normalizeDrawingCollection"))
+        self.assertLess(apply_state.index("state.countriesData ="), apply_state.index("normalizeProjectDrawings();"))
         startup = APP[APP.index("async function init()"):]
-        self.assertLess(startup.index("state.countriesData ="), startup.index("state.drawings = normalizeDrawingCollection"))
+        self.assertLess(startup.index("state.countriesData ="), startup.index("normalizeProjectDrawings();"))
 
     def test_semantic_fields_round_trip_through_geopackage_and_geojson(self):
         for field in (

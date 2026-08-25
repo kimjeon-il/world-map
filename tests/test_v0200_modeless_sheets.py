@@ -9,17 +9,18 @@ ROOT = Path(__file__).parents[1]
 INDEX = (ROOT / "index.html").read_text(encoding="utf-8")
 CSS = (ROOT / "assets" / "css" / "app.css").read_text(encoding="utf-8")
 APP = (ROOT / "assets" / "js" / "app.js").read_text(encoding="utf-8")
+SURFACE = (ROOT / "assets" / "js" / "modules" / "surface-controller.js").read_text(encoding="utf-8")
 
 
 class V0200ModelessSheetTests(unittest.TestCase):
     def test_file_menu_uses_a_dedicated_top_overlay(self):
-        overlay = re.search(r'<div id="overlayRoot" class="overlay-root">([\s\S]+?)\n\s*</div>\n\s*</div>', INDEX)
+        overlay = re.search(r'<div class="overlay-root">([\s\S]+?)\n\s*</div>\n\s*</div>', INDEX)
         self.assertIsNotNone(overlay)
         markup = overlay.group(1)
         self.assertIn('id="mobileBackdrop"', markup)
         self.assertIn('class="top-actions"', markup)
         self.assertIn("body.file-menu-open .mobile-backdrop", CSS)
-        self.assertIn("document.body.classList.toggle('file-menu-open', !!fileOpen)", APP)
+        self.assertIn("document.body.classList.toggle('file-menu-open', fileOpen)", SURFACE)
         self.assertIn("document.body.classList.contains('file-menu-open')", APP)
 
     def test_map_sheets_have_three_snap_heights_and_drag_handles(self):
@@ -38,17 +39,18 @@ class V0200ModelessSheetTests(unittest.TestCase):
         self.assertIn("#app[data-layout=\"mobile\"] .create-menu.mobile-open", CSS)
         self.assertIn("height: var(--sheet-height, 35dvh);", CSS)
         self.assertIn("$('mobileCloseCreateBtn')?.addEventListener", APP)
-        self.assertIn("panel.setAttribute('aria-modal', 'false')", APP)
-        self.assertIn("item.removeAttribute('role')", APP)
+        self.assertIn("panel.setAttribute('aria-modal', 'false')", SURFACE)
+        self.assertIn("item.removeAttribute('role')", SURFACE)
         outside_click = re.search(r"document\.addEventListener\('click', e => \{([\s\S]+?)\n\s*\}\);", APP)
         self.assertIsNotNone(outside_click)
         self.assertNotIn("closeCreateMenu", outside_click.group(1))
 
     def test_only_one_mobile_sheet_can_be_active(self):
-        self.assertIn("let activeMobileSheet = null;", APP)
-        self.assertIn("function setActiveMobileSheet(kind, trigger = null, { toggle = false } = {})", APP)
-        self.assertIn("panel?.classList.toggle('mobile-open', otherKind === kind)", APP)
-        self.assertIn("activeMobileSheet = kind", APP)
+        self.assertIn("let activeMobileSheet = null;", SURFACE)
+        self.assertIn("function open(surface, { automatic = false } = {})", SURFACE)
+        self.assertIn("activeMobileSheet = SURFACE_TO_MOBILE[surface]", SURFACE)
+        self.assertIn("state.layersOpen = surface === 'layers'", SURFACE)
+        self.assertIn("state.editorOpen = surface === 'editor'", SURFACE)
         self.assertIn('aria-controls="leftPanel"', INDEX)
         self.assertIn('aria-controls="createMenu"', INDEX)
         self.assertIn('aria-controls="rightPanel"', INDEX)
@@ -66,7 +68,7 @@ class V0200ModelessSheetTests(unittest.TestCase):
         self.assertIn("if (e.key === 'Tab' && document.body.classList.contains('file-menu-open'))", APP)
 
     def test_sheet_occlusion_does_not_move_the_map_or_floating_controls(self):
-        self.assertIn("workspace?.style.setProperty('--sheet-occlusion-bottom'", APP)
+        self.assertNotIn("--sheet-occlusion-bottom", APP + CSS)
         self.assertNotIn("workspace?.style.setProperty('--map-safe-bottom'", APP)
         self.assertNotIn("body.map-sheet-open #app[data-layout=\"mobile\"] .mode-action-bar", CSS)
         self.assertNotIn("body.map-sheet-open #app[data-layout=\"mobile\"] .mobile-zoom-dock", CSS)
