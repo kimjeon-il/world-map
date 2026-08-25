@@ -74,7 +74,8 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertIn('id="layerSearchResults"', INDEX)
         self.assertIn('LAYER_VIRTUAL_ROW_HEIGHT', APP)
         self.assertIn('renderVirtualizedLayerGroup', APP)
-        self.assertIn('for (const key of LAYER_FOLDER_KEYS) state.layerFolders[key] = false;', APP)
+        self.assertIn('const folderKeys = activeLayerFolderKeys();', APP)
+        self.assertIn('for (const key of folderKeys) state.layerFolders[key] = false;', APP)
         self.assertIn('searchText: id', APP)
 
     def test_build_version_is_v0230(self):
