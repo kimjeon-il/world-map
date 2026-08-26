@@ -7,7 +7,8 @@ from pathlib import Path
 ROOT = Path(__file__).parents[1]
 INDEX = (ROOT / "index.html").read_text(encoding="utf-8")
 APP = (ROOT / "assets" / "js" / "app.js").read_text(encoding="utf-8")
-MODEL = (ROOT / "assets" / "js" / "modules" / "country-regions.js").read_text(encoding="utf-8")
+MODEL = (ROOT / "assets" / "js" / "modules" / "territorial-units.js").read_text(encoding="utf-8")
+GEOMETRY = (ROOT / "assets" / "js" / "modules" / "territorial-geometry.js").read_text(encoding="utf-8")
 GIS = (ROOT / "assets" / "js" / "gis-io.js").read_text(encoding="utf-8")
 GPKG = (ROOT / "assets" / "js" / "workers" / "gis-gpkg-worker.js").read_text(encoding="utf-8")
 PROJECT_STATE = (ROOT / "assets" / "js" / "modules" / "project-state.js").read_text(encoding="utf-8")
@@ -15,9 +16,10 @@ PROJECT_STATE = (ROOT / "assets" / "js" / "modules" / "project-state.js").read_t
 
 class V0240CountryRegionModelTests(unittest.TestCase):
     def test_region_state_is_separate_from_generic_drawings(self):
-        self.assertIn("name: 'countryRegions', history: true, fallback: () => []", PROJECT_STATE)
-        self.assertIn("countryRegions: []", APP)
-        self.assertIn("COUNTRY_REGION_KINDS", APP)
+        self.assertIn("name: 'territorialUnits', history: true, fallback: () => []", PROJECT_STATE)
+        self.assertIn("name: 'territorialRelations', history: true, fallback: () => []", PROJECT_STATE)
+        self.assertIn("territorialUnits: []", APP)
+        self.assertIn("TERRITORIAL_UNIT_TYPES", APP)
         rules = APP[APP.index("const DRAWING_CATEGORY_RULES"):APP.index("const DRAWING_ROLE_LABELS")]
         self.assertNotIn("territory:", rules)
         self.assertNotIn("administrative:", rules)
@@ -27,12 +29,22 @@ class V0240CountryRegionModelTests(unittest.TestCase):
 
     def test_model_normalizes_relations_and_transactions(self):
         for symbol in (
-            "normalizeCountryRegions", "validateCountryRegionRelations",
-            "countryRegionChildren", "countryRegionSiblings",
-            "runCountryRegionTransaction", "parentCreatesCycle",
+            "normalizeTerritorialUnits", "validateTerritorialRelations",
+            "territorialChildren", "territorialSiblings",
+            "runTerritorialTransaction", "parentCreatesCycle",
         ):
             self.assertIn(f"function {symbol}", MODEL)
-        self.assertIn("COUNTRY_REGION_STATUS", MODEL)
+        self.assertIn("TERRITORIAL_STATUS", MODEL)
+        for operation in ("transferGeometry", "mergeUnits", "splitUnit", "editBoundary"):
+            self.assertIn(f"function {operation}", GEOMETRY)
+
+    def test_parent_and_sovereignty_are_distinct_and_historical_regions_are_explicit(self):
+        for field in ("parentId", "sovereignId", "validFrom", "validTo", "sourceLibraryId"):
+            self.assertIn(field, MODEL)
+        self.assertIn("TERRITORIAL_UNIT_TYPES.REGION", MODEL)
+        self.assertIn("TERRITORIAL_COVERAGE_MODES.EXPLICIT", MODEL)
+        for element_id in ("historicalRegionsLayerChildren", "historicalRegionProperties"):
+            self.assertIn(f'id="{element_id}"', INDEX)
 
     def test_dedicated_layers_create_flows_and_editors_exist(self):
         for element_id in (
