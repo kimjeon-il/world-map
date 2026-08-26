@@ -1,0 +1,191 @@
+export const HISTORICAL_LIBRARY_SCHEMA_VERSION = 1;
+
+export const LIBRARY_ENTITY_TYPES = Object.freeze({
+  COUNTRY: 'country',
+  TERRITORY: 'territory',
+  ADMIN: 'admin',
+  REGION: 'region',
+});
+
+const TYPES = new Set(Object.values(LIBRARY_ENTITY_TYPES));
+const POLYGON_TYPES = new Set(['Polygon', 'MultiPolygon']);
+const text = value => String(value ?? '').trim();
+const clone = value => structuredClone(value);
+const yearValue = value => {
+  const match = text(value).match(/^([-+]?\d{1,6})/);
+  return match ? Number(match[1]) : null;
+};
+
+function dateContains(version, referenceDate) {
+  const year = yearValue(referenceDate);
+  if (year == null) return true;
+  const start = yearValue(version.validFrom);
+  const end = yearValue(version.validTo);
+  return (start == null || start <= year) && (end == null || end >= year);
+}
+
+export function normalizeGeometryVersion(raw, { makeId } = {}) {
+  const geometry = POLYGON_TYPES.has(raw?.geometry?.type) ? clone(raw.geometry) : null;
+  if (!geometry) return null;
+  const id = text(raw.id) || text(typeof makeId === 'function' ? makeId() : '');
+  if (!id) return null;
+  return {
+    id,
+    validFrom: text(raw.validFrom) || null,
+    validTo: text(raw.validTo) || null,
+    geometry,
+    datePrecision: text(raw.datePrecision) || 'unknown',
+    certainty: text(raw.certainty) || 'unknown',
+    sourceId: text(raw.sourceId),
+    notes: text(raw.notes),
+  };
+}
+
+export function normalizeHistoricalLibraryEntity(raw, { makeVersionId } = {}) {
+  const type = text(raw?.type).toLowerCase();
+  const libraryId = text(raw?.libraryId || raw?.library_id);
+  if (!libraryId || !TYPES.has(type)) return null;
+  const geometryVersions = (raw.geometryVersions || []).map(version => normalizeGeometryVersion(version, { makeId: makeVersionId })).filter(Boolean);
+  return {
+    libraryId,
+    schemaVersion: HISTORICAL_LIBRARY_SCHEMA_VERSION,
+    type,
+    canonicalName: text(raw.canonicalName || raw.canonical_name) || libraryId,
+    displayNames: raw.displayNames && typeof raw.displayNames === 'object' ? clone(raw.displayNames) : {},
+    alternateNames: [...new Set((raw.alternateNames || []).map(text).filter(Boolean))],
+    startDate: text(raw.startDate || raw.start_date) || null,
+    endDate: text(raw.endDate || raw.end_date) || null,
+    parentLibraryId: text(raw.parentLibraryId || raw.parent_library_id),
+    sovereignLibraryId: text(raw.sovereignLibraryId || raw.sovereign_library_id),
+    adminLevel: type === LIBRARY_ENTITY_TYPES.ADMIN ? Math.max(1, Number(raw.adminLevel || raw.admin_level || 1)) : null,
+    geometryVersions,
+    metadata: raw.metadata && typeof raw.metadata === 'object' ? clone(raw.metadata) : {},
+    sourceInfo: raw.sourceInfo && typeof raw.sourceInfo === 'object' ? clone(raw.sourceInfo) : {},
+  };
+}
+
+export function selectGeometryVersion(entity, referenceDate = null) {
+  const versions = entity?.geometryVersions || [];
+  if (!versions.length) return null;
+  const matching = versions.filter(version => dateContains(version, referenceDate));
+  if (matching.length) return matching.sort((left, right) => (yearValue(right.validFrom) ?? -Infinity) - (yearValue(left.validFrom) ?? -Infinity))[0];
+  const referenceYear = yearValue(referenceDate);
+  if (referenceYear == null) return versions[versions.length - 1];
+  return [...versions].sort((left, right) => {
+    const leftYear = yearValue(left.validFrom) ?? yearValue(left.validTo) ?? referenceYear;
+    const rightYear = yearValue(right.validFrom) ?? yearValue(right.validTo) ?? referenceYear;
+    return Math.abs(leftYear - referenceYear) - Math.abs(rightYear - referenceYear);
+  })[0];
+}
+
+export function createCurrentCountryLibraryEntities(countriesData, { displayName = feature => feature?.properties?.editor_name || feature?.properties?.NAME_KO || feature?.properties?.NAME || feature?.properties?.ADMIN } = {}) {
+  return (countriesData?.features || []).map(feature => {
+    const id = text(feature?.properties?.editor_id || feature?.properties?.iso_a3 || feature?.id);
+    if (!id || !POLYGON_TYPES.has(feature?.geometry?.type)) return null;
+    const canonicalName = text(displayName(feature)) || id;
+    return normalizeHistoricalLibraryEntity({
+      libraryId: `current-country:${id}`,
+      type: LIBRARY_ENTITY_TYPES.COUNTRY,
+      canonicalName,
+      displayNames: { ko: canonicalName },
+      alternateNames: [feature.properties?.NAME, feature.properties?.ADMIN, feature.properties?.SOVEREIGNT].map(text).filter(Boolean),
+      startDate: null,
+      endDate: null,
+      geometryVersions: [{
+        id: `current-country:${id}:natural-earth-5.1.1`,
+        geometry: feature.geometry,
+        datePrecision: 'current',
+        certainty: 'high',
+        sourceId: 'natural-earth-5.1.1',
+      }],
+      metadata: { currentCountryId: id, region: text(feature.properties?.CONTINENT) },
+      sourceInfo: { title: 'Natural Earth 5.1.1 Admin 0 Countries', license: 'Public domain' },
+    });
+  }).filter(Boolean);
+}
+
+export function materializePilotEntities(definitions, countriesData, combineGeometries) {
+  const countryGeometry = new Map((countriesData?.features || []).map(feature => [
+    text(feature?.properties?.editor_id || feature?.properties?.iso_a3 || feature?.id),
+    feature.geometry,
+  ]));
+  return (definitions || []).map(definition => {
+    const versions = (definition.geometryVersions || []).map(version => {
+      const memberGeometries = (version.memberCountryIds || []).map(id => countryGeometry.get(text(id))).filter(Boolean);
+      if (!memberGeometries.length) return null;
+      const geometry = typeof combineGeometries === 'function' ? combineGeometries(memberGeometries) : memberGeometries[0];
+      return geometry ? { ...version, geometry } : null;
+    }).filter(Boolean);
+    return normalizeHistoricalLibraryEntity({ ...definition, geometryVersions: versions });
+  }).filter(entity => entity?.geometryVersions?.length);
+}
+
+export function normalizeWorldSnapshot(raw) {
+  const id = text(raw?.id);
+  if (!id) return null;
+  return {
+    id,
+    name: text(raw.name) || id,
+    referenceDate: text(raw.referenceDate) || null,
+    entityRefs: [...new Set((raw.entityRefs || []).map(text).filter(Boolean))],
+    metadata: raw.metadata && typeof raw.metadata === 'object' ? clone(raw.metadata) : {},
+    sourceInfo: raw.sourceInfo && typeof raw.sourceInfo === 'object' ? clone(raw.sourceInfo) : {},
+  };
+}
+
+export function createHistoricalLibrary({ entities = [], snapshots = [] } = {}) {
+  const entityMap = new Map();
+  for (const raw of entities) {
+    const entity = normalizeHistoricalLibraryEntity(raw);
+    if (!entity || entityMap.has(entity.libraryId)) continue;
+    entityMap.set(entity.libraryId, entity);
+  }
+  const snapshotMap = new Map((snapshots || []).map(normalizeWorldSnapshot).filter(Boolean).map(snapshot => [snapshot.id, snapshot]));
+  return Object.freeze({
+    get: id => entityMap.get(text(id)) || null,
+    list: () => [...entityMap.values()],
+    snapshots: () => [...snapshotMap.values()],
+    getSnapshot: id => snapshotMap.get(text(id)) || null,
+    search({ query = '', type = '', status = 'all', referenceDate = '', region = '' } = {}) {
+      const needle = text(query).toLocaleLowerCase('ko');
+      const referenceYear = yearValue(referenceDate);
+      return [...entityMap.values()].filter(entity => {
+        if (type && entity.type !== type) return false;
+        if (status === 'current' && entity.endDate) return false;
+        if (status === 'past' && !entity.endDate) return false;
+        if (region && text(entity.metadata?.region) !== text(region)) return false;
+        if (referenceYear != null) {
+          const start = yearValue(entity.startDate);
+          const end = yearValue(entity.endDate);
+          if ((start != null && start > referenceYear) || (end != null && end < referenceYear)) return false;
+        }
+        if (!needle) return true;
+        const names = [entity.canonicalName, ...Object.values(entity.displayNames || {}), ...(entity.alternateNames || [])];
+        return names.some(name => text(name).toLocaleLowerCase('ko').includes(needle));
+      });
+    },
+  });
+}
+
+export function instantiateLibraryEntity(entity, referenceDate = null) {
+  const version = selectGeometryVersion(entity, referenceDate);
+  if (!entity || !version) throw new Error('선택한 시점에 사용할 경계 버전이 없습니다.');
+  return {
+    libraryId: entity.libraryId,
+    geometryVersionId: version.id,
+    type: entity.type,
+    name: entity.displayNames?.ko || entity.canonicalName,
+    parentLibraryId: entity.parentLibraryId,
+    sovereignLibraryId: entity.sovereignLibraryId,
+    adminLevel: entity.adminLevel,
+    geometry: clone(version.geometry),
+    validFrom: version.validFrom || entity.startDate,
+    validTo: version.validTo || entity.endDate,
+    metadata: {
+      ...clone(entity.metadata || {}),
+      librarySourceInfo: clone(entity.sourceInfo || {}),
+      geometryCertainty: version.certainty,
+      geometryDatePrecision: version.datePrecision,
+    },
+  };
+}

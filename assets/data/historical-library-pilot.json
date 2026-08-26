@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "entities": [
+    {
+      "libraryId": "historical-country:czechoslovakia",
+      "type": "country",
+      "canonicalName": "Czechoslovakia",
+      "displayNames": { "ko": "체코슬로바키아", "en": "Czechoslovakia", "cs": "Československo" },
+      "alternateNames": ["체코슬로바키아 공화국", "Czecho-Slovakia"],
+      "startDate": "1918",
+      "endDate": "1992",
+      "geometryVersions": [
+        {
+          "id": "historical-country:czechoslovakia:pilot-successor-union",
+          "validFrom": "1918",
+          "validTo": "1992",
+          "memberCountryIds": ["CZE", "SVK"],
+          "datePrecision": "approximate",
+          "certainty": "low",
+          "sourceId": "natural-earth-5.1.1-successor-union",
+          "notes": "현대 후계국 외곽선 합집으로 만든 기능 시험용 근사 경계입니다."
+        }
+      ],
+      "metadata": { "region": "Europe", "pilot": true, "approximateGeometry": true },
+      "sourceInfo": {
+        "title": "AtlasWright pilot derived from Natural Earth 5.1.1 successor states",
+        "license": "Public domain derivative",
+        "notes": "역사 경계 검증용이 아닌 라이브러리 작동 시험용입니다."
+      }
+    },
+    {
+      "libraryId": "historical-country:soviet-union",
+      "type": "country",
+      "canonicalName": "Soviet Union",
+      "displayNames": { "ko": "소련", "en": "Soviet Union", "ru": "СССР" },
+      "alternateNames": ["소비에트 사회주의 공화국 연방", "USSR", "Union of Soviet Socialist Republics"],
+      "startDate": "1922",
+      "endDate": "1991",
+      "geometryVersions": [
+        {
+          "id": "historical-country:soviet-union:pilot-successor-union",
+          "validFrom": "1922",
+          "validTo": "1991",
+          "memberCountryIds": ["RUS", "UKR", "BLR", "MDA", "EST", "LVA", "LTU", "GEO", "ARM", "AZE", "KAZ", "KGZ", "TJK", "TKM", "UZB"],
+          "datePrecision": "approximate",
+          "certainty": "low",
+          "sourceId": "natural-earth-5.1.1-successor-union",
+          "notes": "현대 후계국 외곽선 합집으로 만든 기능 시험용 근사 경계입니다."
+        }
+      ],
+      "metadata": { "region": "Europe/Asia", "pilot": true, "approximateGeometry": true },
+      "sourceInfo": {
+        "title": "AtlasWright pilot derived from Natural Earth 5.1.1 successor states",
+        "license": "Public domain derivative",
+        "notes": "역사 경계 검증용이 아닌 라이브러리 작동 시험용입니다."
+      }
+    }
+  ],
+  "snapshots": [
+    {
+      "id": "pilot-1991",
+      "name": "1991년 기능 시험",
+      "referenceDate": "1991",
+      "entityRefs": ["historical-country:czechoslovakia", "historical-country:soviet-union"],
+      "metadata": { "partial": true, "pilot": true },
+      "sourceInfo": { "notes": "전체 세계 스냅샷이 아닌 라이브러리 기능 시험용 부분 구성입니다." }
+    }
+  ]
+}
