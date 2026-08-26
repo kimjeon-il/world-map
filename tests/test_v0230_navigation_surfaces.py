@@ -79,8 +79,8 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertIn('searchText: id', APP)
 
     def test_build_version_is_v0230(self):
-        self.assertIn('data-app-version="0.25.0"', INDEX)
-        self.assertIn("const APP_VERSION = '0.25.0'", APP)
+        self.assertIn('data-app-version="0.26.0"', INDEX)
+        self.assertIn("const APP_VERSION = '0.26.0'", APP)
 
 
 if __name__ == '__main__':

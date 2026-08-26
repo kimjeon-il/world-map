@@ -99,9 +99,9 @@ class V0200ModelessSheetTests(unittest.TestCase):
         self.assertNotIn("focus(", body)
 
     def test_version_is_updated(self):
-        self.assertIn('data-app-version="0.25.0"', INDEX)
-        self.assertIn("const APP_VERSION = '0.25.0'", APP)
-        self.assertIn("app.css?v=0.25.0-r1", INDEX)
+        self.assertIn('data-app-version="0.26.0"', INDEX)
+        self.assertIn("const APP_VERSION = '0.26.0'", APP)
+        self.assertIn("app.css?v=0.26.0-r1", INDEX)
 
 
 if __name__ == "__main__":
