@@ -11,6 +11,7 @@ MODEL = (ROOT / "assets" / "js" / "modules" / "territorial-units.js").read_text(
 GEOMETRY = (ROOT / "assets" / "js" / "modules" / "territorial-geometry.js").read_text(encoding="utf-8")
 GIS = (ROOT / "assets" / "js" / "gis-io.js").read_text(encoding="utf-8")
 GPKG = (ROOT / "assets" / "js" / "workers" / "gis-gpkg-worker.js").read_text(encoding="utf-8")
+GIS_ADAPTERS = (ROOT / "assets" / "js" / "gis-adapters.js").read_text(encoding="utf-8")
 PROJECT_STATE = (ROOT / "assets" / "js" / "modules" / "project-state.js").read_text(encoding="utf-8")
 
 
@@ -68,11 +69,13 @@ class V0240CountryRegionModelTests(unittest.TestCase):
         self.assertIn("COUNTRY_REGION_STATUS.UNASSIGNED", APP)
 
     def test_geopackage_and_geojson_round_trip_dedicated_layers(self):
-        for table in ("territories", "administrative_areas"):
-            self.assertIn(table, GPKG)
-            self.assertIn(table, GIS)
-        for field in ("country_id", "parent_region_id", "level", "status", "source_folder_id", "properties_json"):
-            self.assertIn(field, GPKG)
+        for table in ("territories", "administrative_units"):
+            self.assertIn(table, GIS_ADAPTERS)
+        self.assertIn("administrative_areas", GIS_ADAPTERS)
+        for field in ("sovereign_id", "parent_id", "admin_level", "status", "properties_json"):
+            self.assertIn(field, GIS_ADAPTERS)
+        self.assertIn("AtlasWrightGisAdapters.territorialRows", GPKG)
+        self.assertIn("gisAdapters.importTerritorialFeature", GIS)
         self.assertIn('id="geoJsonTargetType"', INDEX)
         self.assertIn("function importGeoJsonCountryRegions", APP)
 
