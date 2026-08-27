@@ -23,7 +23,7 @@
       ],
       "metadata": { "region": "Europe", "pilot": true, "approximateGeometry": true },
       "sourceInfo": {
-        "title": "AtlasWright pilot derived from Natural Earth 5.1.1 successor states",
+        "title": "판도연구소 pilot derived from Natural Earth 5.1.1 successor states",
         "license": "Public domain derivative",
         "notes": "역사 경계 검증용이 아닌 라이브러리 작동 시험용입니다."
       }
@@ -50,7 +50,7 @@
       ],
       "metadata": { "region": "Europe/Asia", "pilot": true, "approximateGeometry": true },
       "sourceInfo": {
-        "title": "AtlasWright pilot derived from Natural Earth 5.1.1 successor states",
+        "title": "판도연구소 pilot derived from Natural Earth 5.1.1 successor states",
         "license": "Public domain derivative",
         "notes": "역사 경계 검증용이 아닌 라이브러리 작동 시험용입니다."
       }

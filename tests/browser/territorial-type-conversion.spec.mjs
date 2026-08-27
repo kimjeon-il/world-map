@@ -29,7 +29,7 @@ async function importRegion(page, name) {
   });
   await page.locator('#geoJsonTargetType').selectOption('region');
   await page.locator('#geoJsonTargetConfirmBtn').click();
-  await expect.poll(() => page.evaluate(expected => window.ATLASWRIGHT_TERRITORIAL.list({ type: 'territory' })
+  await expect.poll(() => page.evaluate(expected => window.PANDOLAB_TERRITORIAL.list({ type: 'territory' })
     .find(unit => unit.properties.name === expected)?.id || '', name)).not.toBe('');
 }
 
@@ -38,16 +38,16 @@ test('a region changes to an administrative area with one-step undo', async ({ p
   const errors = await openApp(page);
   const name = '종류 변경 시험 지역';
   await importRegion(page, name);
-  const id = await page.evaluate(expected => window.ATLASWRIGHT_TERRITORIAL.list({ type: 'territory' })
+  const id = await page.evaluate(expected => window.PANDOLAB_TERRITORIAL.list({ type: 'territory' })
     .find(unit => unit.properties.name === expected).id, name);
 
-  await page.evaluate(unitId => window.ATLASWRIGHT_TERRITORIAL.select('territory', unitId), id);
+  await page.evaluate(unitId => window.PANDOLAB_TERRITORIAL.select('territory', unitId), id);
   await page.locator('#changeRegionTypeBtn').click();
   await expect(page.locator('#territorialTypeModal')).toBeVisible();
   await page.locator('#territorialTypeInput').selectOption('admin');
   await page.locator('#territorialTypeConfirmBtn').click();
 
-  await expect.poll(() => page.evaluate(unitId => window.ATLASWRIGHT_TERRITORIAL.get(unitId)?.properties?.unitType, id), { timeout: 60_000 }).toBe('admin');
+  await expect.poll(() => page.evaluate(unitId => window.PANDOLAB_TERRITORIAL.get(unitId)?.properties?.unitType, id), { timeout: 60_000 }).toBe('admin');
   const actionCardLayout = await page.locator('#administrativeProperties .editor-action-button').evaluateAll(buttons => buttons.map(button => {
     const icon = button.querySelector(':scope > span');
     const title = button.querySelector(':scope > strong');
@@ -64,13 +64,13 @@ test('a region changes to an administrative area with one-step undo', async ({ p
   }));
   expect(actionCardLayout.every(card => card.hasIcon && card.titleAfterIcon && card.textColumnsAligned && card.titleWidth > 60)).toBe(true);
   const converted = await page.evaluate(unitId => {
-    const unit = window.ATLASWRIGHT_TERRITORIAL.get(unitId);
+    const unit = window.PANDOLAB_TERRITORIAL.get(unitId);
     return { id: unit.id, name: unit.properties.name, sovereignId: unit.properties.sovereignId, parentId: unit.properties.parentId, adminLevel: unit.properties.adminLevel };
   }, id);
   expect(converted).toEqual({ id, name, sovereignId: 'DEU', parentId: 'DEU', adminLevel: 1 });
 
   await page.locator('#undoBtn').click();
-  await expect.poll(() => page.evaluate(unitId => window.ATLASWRIGHT_TERRITORIAL.get(unitId)?.properties?.unitType, id), { timeout: 30_000 }).toBe('territory');
+  await expect.poll(() => page.evaluate(unitId => window.PANDOLAB_TERRITORIAL.get(unitId)?.properties?.unitType, id), { timeout: 30_000 }).toBe('territory');
   expect(errors).toEqual([]);
 });
 
@@ -78,23 +78,23 @@ test('a country and an administrative area convert both ways without losing iden
   test.setTimeout(180_000);
   const errors = await openApp(page);
   const before = await page.evaluate(() => ({
-    countryCount: window.ATLASWRIGHT_TERRITORIAL.list({ type: 'country' }).length,
-    name: window.ATLASWRIGHT_TERRITORIAL.get('IRL')?.properties?.name || '',
+    countryCount: window.PANDOLAB_TERRITORIAL.list({ type: 'country' }).length,
+    name: window.PANDOLAB_TERRITORIAL.get('IRL')?.properties?.name || '',
   }));
   expect(before.name).not.toBe('');
 
-  await page.evaluate(() => window.ATLASWRIGHT_TERRITORIAL.select('country', 'IRL'));
+  await page.evaluate(() => window.PANDOLAB_TERRITORIAL.select('country', 'IRL'));
   await page.locator('#changeCountryTypeBtn').click();
   await page.locator('#territorialTypeInput').selectOption('admin');
   await page.locator('#territorialTypeSovereignInput').selectOption('GBR');
   await expect(page.locator('#territorialTypeImpact')).toContainText(before.name);
   await page.locator('#territorialTypeConfirmBtn').click();
 
-  await expect.poll(() => page.evaluate(() => window.ATLASWRIGHT_TERRITORIAL.get('IRL')?.properties?.unitType), { timeout: 60_000 }).toBe('admin');
+  await expect.poll(() => page.evaluate(() => window.PANDOLAB_TERRITORIAL.get('IRL')?.properties?.unitType), { timeout: 60_000 }).toBe('admin');
   const converted = await page.evaluate(() => ({
-    countryCount: window.ATLASWRIGHT_TERRITORIAL.list({ type: 'country' }).length,
+    countryCount: window.PANDOLAB_TERRITORIAL.list({ type: 'country' }).length,
     unit: (() => {
-      const unit = window.ATLASWRIGHT_TERRITORIAL.get('IRL');
+      const unit = window.PANDOLAB_TERRITORIAL.get('IRL');
       return {
         id: unit.id,
         name: unit.properties.name,
@@ -114,16 +114,16 @@ test('a country and an administrative area convert both ways without losing iden
   await page.locator('#changeAdministrativeTypeBtn').click();
   await page.locator('#territorialTypeInput').selectOption('country');
   await page.locator('#territorialTypeConfirmBtn').click();
-  await expect.poll(() => page.evaluate(() => window.ATLASWRIGHT_TERRITORIAL.get('IRL')?.properties?.unitType), { timeout: 60_000 }).toBe('country');
+  await expect.poll(() => page.evaluate(() => window.PANDOLAB_TERRITORIAL.get('IRL')?.properties?.unitType), { timeout: 60_000 }).toBe('country');
   expect(await page.evaluate(() => ({
-    count: window.ATLASWRIGHT_TERRITORIAL.list({ type: 'country' }).length,
-    name: window.ATLASWRIGHT_TERRITORIAL.get('IRL')?.properties?.name,
+    count: window.PANDOLAB_TERRITORIAL.list({ type: 'country' }).length,
+    name: window.PANDOLAB_TERRITORIAL.get('IRL')?.properties?.name,
   }))).toEqual({ count: before.countryCount, name: before.name });
 
   await page.locator('#undoBtn').click();
-  await expect.poll(() => page.evaluate(() => window.ATLASWRIGHT_TERRITORIAL.get('IRL')?.properties?.unitType), { timeout: 30_000 }).toBe('admin');
+  await expect.poll(() => page.evaluate(() => window.PANDOLAB_TERRITORIAL.get('IRL')?.properties?.unitType), { timeout: 30_000 }).toBe('admin');
   await page.locator('#undoBtn').click();
-  await expect.poll(() => page.evaluate(() => window.ATLASWRIGHT_TERRITORIAL.get('IRL')?.properties?.unitType), { timeout: 30_000 }).toBe('country');
-  expect(await page.evaluate(() => window.ATLASWRIGHT_TERRITORIAL.list({ type: 'country' }).length)).toBe(before.countryCount);
+  await expect.poll(() => page.evaluate(() => window.PANDOLAB_TERRITORIAL.get('IRL')?.properties?.unitType), { timeout: 30_000 }).toBe('country');
+  expect(await page.evaluate(() => window.PANDOLAB_TERRITORIAL.list({ type: 'country' }).length)).toBe(before.countryCount);
   expect(errors).toEqual([]);
 });

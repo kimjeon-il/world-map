@@ -1,6 +1,6 @@
 {
   "version": "0.12.4",
-  "schema": "atlaswright-hydro-shards-v3",
+  "schema": "pandolab-hydro-shards-v3",
   "dataset": "HydroRIVERS/HydroLAKES 1.0 · Natural Earth 5.1.1 border alignment",
   "crs": "EPSG:4326",
   "coordinatePolicy": "Hydro source vertices retained outside border-aligned display fragments; aligned fragments use exact Natural Earth shared-border paths; 1e-6 degree Int32 delta-varint",
@@ -165,7 +165,7 @@
     }
   ],
   "cache": {
-    "name": "atlaswright-hydro-v0.12.4-52475deae6b8",
+    "name": "pandolab-hydro-v0.12.4-52475deae6b8",
     "backgroundDownload": true,
     "rangeRequests": true
   },
@@ -227,11 +227,11 @@
     "naturalEarthNameReference": [
       {
         "file": "rivers_base.geojson",
-        "sha256": "aa0f1604fa434ac6f4e1fb6824a8496f88ea2eddb0dde1409416d5707f1838e4"
+        "sha256": "53d1f6fa1ae749619497b95f3d7da974ace3ed15db24c439ba329bc4c8d8697e"
       },
       {
         "file": "lakes_base.geojson",
-        "sha256": "f87d690efe5485c21109c026a734bf0b9fb025601aa783e981e16b5fc14dbae4"
+        "sha256": "a0511c91d7c11e7460640d522e9cc0ea39104497784f73af09e39b9bfa6d790c"
       },
       {
         "file": "countries-ne-5.1.1.geojson",

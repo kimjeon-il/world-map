@@ -1,4 +1,4 @@
-# AtlasWright v0.13.0 수계 검증 보고서
+# 판도연구소 v0.13.0 수계 검증 보고서
 
 ## 결과 요약
 
@@ -44,4 +44,4 @@
 - Natural Earth 5.1.1 1:10m: 내장 공유국경 정렬 기준
 - OpenStreetMap waterway 관계: 한국어 명칭·별칭 보강. © OpenStreetMap contributors, ODbL
 
-OSM은 빌드 시에만 사용하며 AtlasWright 실행 중 온라인 요청은 발생하지 않습니다. 원본 파일명과 SHA-256은 [`manifest.json`](../../assets/data/hydro/v0.13.0/manifest.json)의 `sources`에 기록했습니다.
+OSM은 빌드 시에만 사용하며 판도연구소 실행 중 온라인 요청은 발생하지 않습니다. 원본 파일명과 SHA-256은 [`manifest.json`](../../assets/data/hydro/v0.13.0/manifest.json)의 `sources`에 기록했습니다.
