@@ -1,0 +1,74 @@
+{
+  "version": "0.30.0",
+  "source": "countries-ne-5.1.1.geojson",
+  "sourceSha256": "d2fdbd2a7ce57fbd9e9489784999b01b956ca5d1cd74e5eb92792abc8006de87",
+  "countries": 258,
+  "coordinateCount": 28336,
+  "globalAreaError": 0.00237603,
+  "simplificationPercentile": 0.02,
+  "quantization": 1000000,
+  "meshAlgorithmRevision": 3,
+  "meshVertices": 29995,
+  "countriesCompressedBytes": 292403,
+  "meshCompressedBytes": 433640,
+  "combinedCompressedBytes": 726043,
+  "countriesSha256": "efbcfa4c34a89e26dc663381ce25af95efc8be2559d8c74788f80b7d11548386",
+  "meshSha256": "1ff60d21e6fe2f4a305c3b100d243578a5db6552e05293ba77829e902a5c222f",
+  "assets": {
+    "previewCountries": {
+      "url": "countries-preview-v0.30.0.geojson.gz",
+      "encoding": "gzip",
+      "compressedBytes": 292403,
+      "decodedBytes": 1178372,
+      "sha256": "efbcfa4c34a89e26dc663381ce25af95efc8be2559d8c74788f80b7d11548386"
+    },
+    "previewMesh": {
+      "url": "world-mesh-preview-v0.30.0.bin.gz",
+      "encoding": "gzip",
+      "compressedBytes": 433640,
+      "decodedBytes": 951672,
+      "sha256": "1ff60d21e6fe2f4a305c3b100d243578a5db6552e05293ba77829e902a5c222f",
+      "header": [
+        1129137969,
+        1,
+        258,
+        29995,
+        137274,
+        25648,
+        28336,
+        3
+      ]
+    },
+    "labelAnchors": {
+      "url": "country-label-anchors-v0.10.1.json",
+      "encoding": "identity",
+      "compressedBytes": 13826,
+      "decodedBytes": 13826,
+      "sha256": "26234e4bf332ea858c54328608be4886e30d18bbb4220580615c7aba77caff91"
+    },
+    "canonicalCountries": {
+      "url": "countries-ne-5.1.1.geojson.gz",
+      "encoding": "gzip",
+      "compressedBytes": 4390038,
+      "decodedBytes": 12437772,
+      "sha256": "35f5f311e69f417fb61d16d4fa2fa6b9d13b53adf5dcaa32e8534d9ac4525b38"
+    },
+    "canonicalMesh": {
+      "url": "world-mesh-v0.12.6.bin.gz",
+      "encoding": "gzip",
+      "compressedBytes": 14626436,
+      "decodedBytes": 32691712,
+      "sha256": "7e2681a585eac6d17b2d8265e3bba6691233709365e4ae552acfd4ed945286fc",
+      "header": [
+        1129137969,
+        1,
+        258,
+        1028628,
+        4514562,
+        1086788,
+        548466,
+        3
+      ]
+    }
+  }
+}
