@@ -14,14 +14,14 @@ SURFACE = (ROOT / "assets/js/modules/surface-controller.js").read_text(encoding=
 
 class V0230NavigationSurfaceTests(unittest.TestCase):
     def test_primary_navigation_is_layer_add_edit_in_every_layout(self):
-        nav = re.search(r'<nav class="adaptive-nav.*?</nav>', INDEX, re.S).group(0)
+        nav = re.search(r'<nav class="[^"]*adaptive-nav[^"]*".*?</nav>', INDEX, re.S).group(0)
         self.assertLess(nav.index('<strong>레이어</strong>'), nav.index('<strong>추가</strong>'))
         self.assertLess(nav.index('<strong>추가</strong>'), nav.index('<strong>편집</strong>'))
         self.assertNotIn('<strong>지도</strong>', nav)
         self.assertIn('<strong id="mapSheetTitle">레이어</strong>', INDEX)
 
     def test_editor_trigger_is_outside_the_view_toolbar(self):
-        view_toolbar = re.search(r'<div class="map-view-toolbar.*?</div>\s*\n\s*<div class="editor-edge-slot"', INDEX, re.S)
+        view_toolbar = re.search(r'<div class="[^"]*map-view-toolbar[^"]*".*?</div>\s*\n\s*<div class="editor-edge-slot"', INDEX, re.S)
         self.assertIsNotNone(view_toolbar)
         toolbar_only = view_toolbar.group(0).split('<div class="editor-edge-slot"', 1)[0]
         self.assertNotIn('togglePanelBtn', toolbar_only)
