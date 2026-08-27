@@ -31,7 +31,7 @@ class V0200ModelessSheetTests(unittest.TestCase):
         self.assertIn("const SHEET_SNAP_RATIOS = Object.freeze([0.35, 0.6, 0.9]);", APP)
         self.assertIn("const SHEET_SNAP_LABELS = Object.freeze(['기본 높이', '중간 높이', '최대 높이']);", APP)
         self.assertIn("window.visualViewport?.height || window.innerHeight", APP)
-        self.assertIn("document.querySelectorAll('[data-sheet-handle]').forEach(bindSheetDragHandle);", APP)
+        self.assertIn("Object.values(MOBILE_SHEET_IDS).forEach(id => bindMobileSheetSurface($(id)));", APP)
         self.assertIn("body.map-sheet-dragging", CSS)
 
     def test_add_menu_is_a_modeless_map_sheet_on_mobile(self):
@@ -99,9 +99,9 @@ class V0200ModelessSheetTests(unittest.TestCase):
         self.assertNotIn("focus(", body)
 
     def test_version_is_updated(self):
-        self.assertIn('data-app-version="0.29.0"', INDEX)
-        self.assertIn("const APP_VERSION = '0.29.0'", APP)
-        self.assertIn("app.css?v=0.29.0-r3", INDEX)
+        self.assertIn('data-app-version="0.30.0"', INDEX)
+        self.assertIn("const APP_VERSION = '0.30.0'", APP)
+        self.assertIn("app.css?v=0.30.0-r3", INDEX)
 
 
 if __name__ == "__main__":
