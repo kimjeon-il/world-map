@@ -18,7 +18,7 @@ class V0200ModelessSheetTests(unittest.TestCase):
         self.assertIsNotNone(overlay)
         markup = overlay.group(1)
         self.assertIn('id="mobileBackdrop"', markup)
-        self.assertIn('class="top-actions"', markup)
+        self.assertRegex(markup, r'class="[^"]*ui-popover[^"]*top-actions[^"]*"')
         self.assertIn("body.file-menu-open .mobile-backdrop", CSS)
         self.assertIn("document.body.classList.toggle('file-menu-open', fileOpen)", SURFACE)
         self.assertIn("document.body.classList.contains('file-menu-open')", APP)
@@ -101,7 +101,7 @@ class V0200ModelessSheetTests(unittest.TestCase):
     def test_version_is_updated(self):
         self.assertIn('data-app-version="0.30.0"', INDEX)
         self.assertIn("const APP_VERSION = '0.30.0'", APP)
-        self.assertIn("app.css?v=0.30.0-r3", INDEX)
+        self.assertIn("app.css?v=0.30.0-r5", INDEX)
 
 
 if __name__ == "__main__":

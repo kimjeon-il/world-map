@@ -11,10 +11,15 @@
   }
 
   function ensureClosedRing(rawRing) {
-    const ring = (rawRing || [])
+    const coordinates = (rawRing || [])
       .filter(coord => Array.isArray(coord) && Number.isFinite(Number(coord[0])) && Number.isFinite(Number(coord[1])))
       .map(coord => [Number(coord[0]), Number(coord[1])]);
+    const ring = [];
+    for (const coordinate of coordinates) {
+      if (!ring.length || !coordinatesNear(ring[ring.length - 1], coordinate)) ring.push(coordinate);
+    }
     if (ring.length && !coordinatesNear(ring[0], ring[ring.length - 1])) ring.push(ring[0].slice());
+    else if (ring.length > 1) ring[ring.length - 1] = ring[0].slice();
     return ring;
   }
 

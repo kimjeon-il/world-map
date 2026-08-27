@@ -84,8 +84,10 @@ for (const layout of layouts) {
       await openLibrary(page, layout.name);
       const librarySearch = page.locator('#historicalLibrarySearchInput');
       expect(await height(librarySearch)).toBe(layout.controlHeight);
-      const searchStyle = await computed(librarySearch, ['padding-left', 'padding-right']);
-      expect(searchStyle).toEqual({ 'padding-left': '12px', 'padding-right': '12px' });
+      const searchFieldStyle = await computed(librarySearch.locator('xpath=..'), ['padding-left', 'padding-right']);
+      expect(searchFieldStyle).toEqual({ 'padding-left': '12px', 'padding-right': '0px' });
+      const searchInputStyle = await computed(librarySearch, ['padding-left', 'padding-right']);
+      expect(searchInputStyle).toEqual({ 'padding-left': '0px', 'padding-right': '0px' });
 
       const typeField = page.locator('#historicalLibraryTypeInput').locator('xpath=..');
       const customSelect = typeField.locator('.ui-select-control');
