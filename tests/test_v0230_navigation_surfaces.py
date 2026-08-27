@@ -47,12 +47,12 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertIn('width: 100%', row_button.group(1))
         self.assertIn('box-sizing: border-box', row_button.group(1))
         compact_header = re.search(
-            r'#app\[data-layout="compact"\] \.map-sheet-header \{([^}]+)\}',
+            r'#app\[data-layout="compact"\] \.mobile-sheet-header \{([^}]+)\}',
             CSS,
         )
         self.assertIsNotNone(compact_header)
-        self.assertIn('height: 74px', compact_header.group(1))
-        self.assertIn('padding: 16px', compact_header.group(1))
+        self.assertIn('height: var(--ui-sheet-header-height-compact)', compact_header.group(1))
+        self.assertIn('padding: var(--ui-panel-padding)', compact_header.group(1))
 
     def test_transient_panels_do_not_change_projection_safe_insets(self):
         self.assertIn('--projection-safe-left', CSS)
@@ -67,7 +67,7 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertIn('top: 50%', CSS[CSS.index('.editor-edge-slot {'):CSS.index('.editor-edge-trigger {')])
         open_rule = re.search(r'#app\[data-layout="wide"\] \.workspace\.editor-drawer-open \.editor-edge-slot \{([^}]+)\}', CSS)
         self.assertIsNotNone(open_rule)
-        self.assertIn('right: calc(var(--panel-right-width) + 12px)', open_rule.group(1))
+        self.assertIn('right: calc(var(--panel-right-width) + var(--ui-map-edge))', open_rule.group(1))
         self.assertIn("surfaceState.editorOpen ? '편집창 닫기' : '편집창 열기'", APP)
 
     def test_layer_search_accordion_and_virtual_list_are_present(self):
