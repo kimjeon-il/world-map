@@ -67,7 +67,7 @@
       }));
   }
 
-  root.AtlasWrightCountryGeometry = Object.freeze({
+  root.PandoLabCountryGeometry = Object.freeze({
     ensureClosedRing,
     hasCanonicalCountryWinding,
     normalizeCountryGeometry,

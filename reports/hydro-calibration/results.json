@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "analysis-only; AtlasWright runtime hydro assets are not modified",
+  "purpose": "analysis-only; PandoLab runtime hydro assets are not modified",
   "stages": [
     6.0,
     6.7,

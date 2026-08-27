@@ -1,4 +1,4 @@
-# AtlasWright v0.12.4 수계 검증
+# 판도연구소 v0.12.4 수계 검증
 
 ![한반도 본류·국경하천 비교](korea-mainstems-border-alignment.png)
 
