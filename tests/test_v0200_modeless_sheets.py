@@ -79,7 +79,7 @@ class V0200ModelessSheetTests(unittest.TestCase):
         self.assertIn("right: 0;", CSS)
         self.assertIn("left: 0;", CSS)
         self.assertGreaterEqual(CSS.count("bottom: var(--mobile-nav-height);"), 2)
-        self.assertIn("border-radius: 16px 16px 0 0;", CSS)
+        self.assertIn("border-radius: var(--ui-radius-sheet) var(--ui-radius-sheet) 0 0;", CSS)
         self.assertIn(".map-sheet-body-layers .layer-list", CSS)
         self.assertIn("overflow-y: auto;", CSS)
         self.assertIn("body.map-sheet-open #app[data-layout=\"mobile\"] .map-bottom-status", CSS)
