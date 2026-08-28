@@ -76,7 +76,8 @@ class V0240CountryRegionModelTests(unittest.TestCase):
             self.assertIn(field, GIS_ADAPTERS)
         self.assertIn("PandoLabGisAdapters.territorialRows", GPKG)
         self.assertIn("gisAdapters.importTerritorialFeature", GIS)
-        self.assertIn('id="geoJsonTargetType"', INDEX)
+        self.assertIn('id="gisTargetType"', INDEX)
+        self.assertIn('id="gisAdvancedMapping"', INDEX)
         self.assertIn("function importGeoJsonCountryRegions", APP)
 
 

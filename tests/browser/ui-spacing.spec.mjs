@@ -72,7 +72,7 @@ for (const layout of layouts) {
       const firstCountry = page.locator('#countriesLayerChildren .layer-child').first();
       await expect(firstCountry).toBeVisible();
       expect(await height(firstCountry)).toBe(48);
-      expect(await height(firstCountry.locator('.layer-child-delete'))).toBe(layout.controlHeight);
+      expect(await height(firstCountry.locator('.layer-child-menu'))).toBe(layout.controlHeight);
 
       const focusTarget = countryFolder.locator('[data-layer-folder-toggle="countries"]').first();
       const beforeHover = await focusTarget.boundingBox();
@@ -89,6 +89,7 @@ for (const layout of layouts) {
       const searchInputStyle = await computed(librarySearch, ['padding-left', 'padding-right']);
       expect(searchInputStyle).toEqual({ 'padding-left': '0px', 'padding-right': '0px' });
 
+      await page.locator('.historical-library-filters summary').click();
       const typeField = page.locator('#historicalLibraryTypeInput').locator('xpath=..');
       const customSelect = typeField.locator('.ui-select-control');
       const selectStyle = await computed(customSelect, ['padding-left', 'padding-right']);

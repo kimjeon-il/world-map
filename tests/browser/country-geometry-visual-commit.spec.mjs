@@ -39,7 +39,8 @@ test(`${renderer} country deletion and undo hide stale GPU geometry before delay
   const firstRow = page.locator('#countriesLayerChildren .layer-child').first();
   const name = (await firstRow.locator('.layer-child-name').textContent()).trim();
 
-  await page.getByRole('button', { name: `${name} 삭제`, exact: true }).click();
+  await firstRow.locator('.layer-child-menu').click();
+  await page.locator('#objectDeleteMenuBtn').click();
   await page.locator('#confirmModalOkBtn').click();
   const pendingDelete = await page.evaluate(() => ({
     metrics: window.__PANDOLAB_GPU_METRICS__,

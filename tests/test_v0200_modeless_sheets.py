@@ -23,13 +23,14 @@ class V0200ModelessSheetTests(unittest.TestCase):
         self.assertIn("document.body.classList.toggle('file-menu-open', fileOpen)", SURFACE)
         self.assertIn("document.body.classList.contains('file-menu-open')", APP)
 
-    def test_map_sheets_have_three_snap_heights_and_drag_handles(self):
+    def test_map_sheets_have_two_snap_heights_and_drag_handles(self):
         self.assertEqual(INDEX.count('data-sheet-handle="'), 3)
         self.assertEqual(INDEX.count('ui-button sheet-drag-handle'), 3)
         self.assertIn('data-sheet-handle="createMenu"', INDEX)
         self.assertEqual(INDEX.count('role="slider" data-sheet-handle='), 3)
-        self.assertIn("const SHEET_SNAP_RATIOS = Object.freeze([0.35, 0.6, 0.9]);", APP)
-        self.assertIn("const SHEET_SNAP_LABELS = Object.freeze(['기본 높이', '중간 높이', '최대 높이']);", APP)
+        self.assertIn("const SHEET_SNAP_RATIOS = Object.freeze([0.6, 1]);", APP)
+        self.assertIn("const SHEET_SNAP_LABELS = Object.freeze(['기본 높이', '전체 높이']);", APP)
+        self.assertEqual(INDEX.count('aria-valuemax="1"'), 3)
         self.assertIn("window.visualViewport?.height || window.innerHeight", APP)
         self.assertIn("Object.values(MOBILE_SHEET_IDS).forEach(id => bindMobileSheetSurface($(id)));", APP)
         self.assertIn("body.map-sheet-dragging", CSS)
@@ -37,7 +38,7 @@ class V0200ModelessSheetTests(unittest.TestCase):
     def test_add_menu_is_a_modeless_map_sheet_on_mobile(self):
         self.assertEqual(INDEX.count("map-sheet-surface"), 3)
         self.assertIn("#app[data-layout=\"mobile\"] .create-menu.mobile-open", CSS)
-        self.assertIn("height: var(--sheet-height, 35dvh);", CSS)
+        self.assertIn("height: var(--sheet-height, 60dvh);", CSS)
         self.assertIn("$('mobileCloseCreateBtn')?.addEventListener", APP)
         self.assertIn("panel.setAttribute('aria-modal', 'false')", SURFACE)
         self.assertIn("item.removeAttribute('role')", SURFACE)
@@ -65,7 +66,9 @@ class V0200ModelessSheetTests(unittest.TestCase):
         self.assertIsNotNone(backdrop_handler)
         self.assertIn("closeFileMenu", backdrop_handler.group(0))
         self.assertNotIn("closeMobileSheets", backdrop_handler.group(0))
-        self.assertIn("if (e.key === 'Tab' && document.body.classList.contains('file-menu-open'))", APP)
+        self.assertIn("fileMenu?.addEventListener('keydown'", APP)
+        self.assertIn("if (event.key === 'Tab')", APP)
+        self.assertIn("closeFileMenu({ restoreFocus: true })", APP)
 
     def test_sheet_occlusion_does_not_move_the_map_or_floating_controls(self):
         self.assertNotIn("--sheet-occlusion-bottom", APP + CSS)
