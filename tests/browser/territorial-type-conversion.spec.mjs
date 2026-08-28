@@ -14,7 +14,7 @@ async function openApp(page) {
 }
 
 async function importRegion(page, name) {
-  await page.locator('#geoJsonFileInput').setInputFiles({
+  await page.locator('#gisFileInput').setInputFiles({
     name: `${name}.geojson`,
     mimeType: 'application/geo+json',
     buffer: Buffer.from(JSON.stringify({
@@ -27,8 +27,10 @@ async function importRegion(page, name) {
       }],
     })),
   });
-  await page.locator('#geoJsonTargetType').selectOption('region');
-  await page.locator('#geoJsonTargetConfirmBtn').click();
+  await expect(page.locator('#gisImportModal')).toBeVisible();
+  await expect(page.locator('#gisImportConfirmBtn')).toBeEnabled({ timeout: 30_000 });
+  await page.locator('#gisTargetType').selectOption('region');
+  await page.locator('#gisImportConfirmBtn').click();
   await expect.poll(() => page.evaluate(expected => window.PANDOLAB_TERRITORIAL.list({ type: 'territory' })
     .find(unit => unit.properties.name === expected)?.id || '', name)).not.toBe('');
 }
@@ -42,27 +44,31 @@ test('a region changes to an administrative area with one-step undo', async ({ p
     .find(unit => unit.properties.name === expected).id, name);
 
   await page.evaluate(unitId => window.PANDOLAB_TERRITORIAL.select('territory', unitId), id);
+  await page.locator('#actionsTabBtn').click();
+  await page.locator('#regionProperties details.editor-action-section summary').click();
   await page.locator('#changeRegionTypeBtn').click();
   await expect(page.locator('#territorialTypeModal')).toBeVisible();
   await page.locator('#territorialTypeInput').selectOption('admin');
+  await expect(page.locator('#territorialTypeTitle')).toHaveText('지역을 행정구역으로 전환');
+  await expect(page.locator('#territorialTypeImpactList')).toContainText('현재 형상과 객체 ID 유지');
+  await expect(page.locator('#territorialTypeImpactList')).toContainText('한 번의 실행취소로 복구 가능');
   await page.locator('#territorialTypeConfirmBtn').click();
 
   await expect.poll(() => page.evaluate(unitId => window.PANDOLAB_TERRITORIAL.get(unitId)?.properties?.unitType, id), { timeout: 60_000 }).toBe('admin');
-  const actionCardLayout = await page.locator('#administrativeProperties .editor-action-button').evaluateAll(buttons => buttons.map(button => {
-    const icon = button.querySelector(':scope > span');
-    const title = button.querySelector(':scope > strong');
-    const description = button.querySelector(':scope > small');
-    const iconRect = icon?.getBoundingClientRect();
-    const titleRect = title?.getBoundingClientRect();
-    const descriptionRect = description?.getBoundingClientRect();
+  await page.locator('#actionsTabBtn').click();
+  await page.locator('#administrativeProperties details.editor-action-section summary').click();
+  const actionRows = await page.locator('#administrativeProperties .editor-action-row').evaluateAll(buttons => buttons.map(button => {
+    const rect = button.getBoundingClientRect();
+    const title = button.querySelector('strong');
+    const description = button.querySelector('small');
     return {
-      hasIcon: !!icon?.querySelector('svg use'),
-      titleAfterIcon: !!iconRect && !!titleRect && titleRect.left > iconRect.right,
-      textColumnsAligned: !!titleRect && !!descriptionRect && Math.abs(titleRect.left - descriptionRect.left) < 1,
-      titleWidth: titleRect?.width || 0,
+      fullWidth: Math.abs(rect.width - button.parentElement.getBoundingClientRect().width) < 1,
+      minHeight: rect.height >= 48,
+      title: title?.textContent || '',
+      descriptionLines: description ? Math.round(description.getBoundingClientRect().height / parseFloat(getComputedStyle(description).lineHeight)) : 0,
     };
   }));
-  expect(actionCardLayout.every(card => card.hasIcon && card.titleAfterIcon && card.textColumnsAligned && card.titleWidth > 60)).toBe(true);
+  expect(actionRows.every(row => row.fullWidth && row.minHeight && row.title && row.descriptionLines <= 1)).toBe(true);
   const converted = await page.evaluate(unitId => {
     const unit = window.PANDOLAB_TERRITORIAL.get(unitId);
     return { id: unit.id, name: unit.properties.name, sovereignId: unit.properties.sovereignId, parentId: unit.properties.parentId, adminLevel: unit.properties.adminLevel };
@@ -84,10 +90,14 @@ test('a country and an administrative area convert both ways without losing iden
   expect(before.name).not.toBe('');
 
   await page.evaluate(() => window.PANDOLAB_TERRITORIAL.select('country', 'IRL'));
+  await page.locator('#actionsTabBtn').click();
+  await page.locator('#countryProperties details.editor-action-section summary').click();
   await page.locator('#changeCountryTypeBtn').click();
   await page.locator('#territorialTypeInput').selectOption('admin');
   await page.locator('#territorialTypeSovereignInput').selectOption('GBR');
   await expect(page.locator('#territorialTypeImpact')).toContainText(before.name);
+  await expect(page.locator('#territorialTypeTitle')).toHaveText('국가를 행정구역으로 전환');
+  await expect(page.locator('#territorialTypeImpactList')).toContainText('현재 형상과 객체 ID 유지');
   await page.locator('#territorialTypeConfirmBtn').click();
 
   await expect.poll(() => page.evaluate(() => window.PANDOLAB_TERRITORIAL.get('IRL')?.properties?.unitType), { timeout: 60_000 }).toBe('admin');
@@ -111,6 +121,8 @@ test('a country and an administrative area convert both ways without losing iden
   expect(converted.unit.parentId).toBe('GBR');
   expect(converted.unit.adminLevel).toBe(1);
 
+  await page.locator('#actionsTabBtn').click();
+  await page.locator('#administrativeProperties details.editor-action-section summary').click();
   await page.locator('#changeAdministrativeTypeBtn').click();
   await page.locator('#territorialTypeInput').selectOption('country');
   await page.locator('#territorialTypeConfirmBtn').click();

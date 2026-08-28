@@ -42,10 +42,7 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertNotIn('updateSurfaceStateFromDom', APP + SURFACE)
 
     def test_sheet_headers_and_row_buttons_use_shared_component_rules(self):
-        row_button = re.search(r'\.ui-row-button \{([^}]+)\}', CSS)
-        self.assertIsNotNone(row_button)
-        self.assertIn('width: 100%', row_button.group(1))
-        self.assertIn('box-sizing: border-box', row_button.group(1))
+        self.assertIn('.ui-row-button { width: 100%; box-sizing: border-box; }', CSS)
         compact_header = re.search(
             r'#app\[data-layout="compact"\] \.mobile-sheet-header \{([^}]+)\}',
             CSS,
@@ -54,10 +51,13 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertIn('height: var(--ui-sheet-header-height-compact)', compact_header.group(1))
         self.assertIn('padding: var(--ui-panel-padding)', compact_header.group(1))
 
-    def test_transient_panels_do_not_change_projection_safe_insets(self):
+    def test_transient_panels_preserve_projection_but_update_control_safe_insets(self):
         self.assertIn('--projection-safe-left', CSS)
         self.assertIn("read('--projection-safe-left')", APP)
-        self.assertIn('#app[data-layout="wide"] .workspace.editor-drawer-open { --map-safe-right: 0px; }', CSS)
+        self.assertIn('#app[data-layout="wide"] .workspace.editor-drawer-open { --map-safe-right: calc(var(--panel-right-width) + var(--ui-map-edge)); }', CSS)
+        drawer_rule = re.search(r'#app\[data-layout="wide"\] \.workspace\.editor-drawer-open \{([^}]+)\}', CSS).group(1)
+        self.assertNotIn('--projection-safe-right', drawer_rule)
+        self.assertIn('function currentObjectFitInsets()', APP)
         compact = re.search(r'#app\[data-layout="compact"\] \.workspace\.layers-drawer-open,.*?\}', CSS, re.S).group(0)
         self.assertIn('--map-safe-left: 0px', compact)
         self.assertNotIn('--compact-rail-width', CSS)
