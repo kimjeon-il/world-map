@@ -48,8 +48,9 @@ for (const layout of layouts) {
     });
     expect(headerSpacing.gap).toBeGreaterThanOrEqual(0);
     expect(headerSpacing.gap).toBeLessThanOrEqual(8);
-    expect(headerSpacing.buttonWidth).toBe(layout.name === 'mobile' ? 48 : 32);
-    expect(headerSpacing.buttonHeight).toBe(layout.name === 'mobile' ? 48 : 32);
+    const expectedHeaderButtonSize = layout.name === 'mobile' ? 48 : 32;
+    expect(headerSpacing.buttonWidth).toBeCloseTo(expectedHeaderButtonSize, 4);
+    expect(headerSpacing.buttonHeight).toBeCloseTo(expectedHeaderButtonSize, 4);
 
     await expect(page.locator('#countriesLocked')).toBeHidden();
     expect(await page.locator('#countriesLocked').boundingBox()).toBeNull();
