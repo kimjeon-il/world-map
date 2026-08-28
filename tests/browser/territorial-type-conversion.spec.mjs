@@ -45,7 +45,6 @@ test('a region changes to an administrative area with one-step undo', async ({ p
 
   await page.evaluate(unitId => window.PANDOLAB_TERRITORIAL.select('territory', unitId), id);
   await page.locator('#actionsTabBtn').click();
-  await page.locator('#regionProperties details.editor-action-section summary').click();
   await page.locator('#changeRegionTypeBtn').click();
   await expect(page.locator('#territorialTypeModal')).toBeVisible();
   await page.locator('#territorialTypeInput').selectOption('admin');
@@ -56,7 +55,6 @@ test('a region changes to an administrative area with one-step undo', async ({ p
 
   await expect.poll(() => page.evaluate(unitId => window.PANDOLAB_TERRITORIAL.get(unitId)?.properties?.unitType, id), { timeout: 60_000 }).toBe('admin');
   await page.locator('#actionsTabBtn').click();
-  await page.locator('#administrativeProperties details.editor-action-section summary').click();
   const actionRows = await page.locator('#administrativeProperties .editor-action-row').evaluateAll(buttons => buttons.map(button => {
     const rect = button.getBoundingClientRect();
     const title = button.querySelector('strong');
@@ -91,7 +89,6 @@ test('a country and an administrative area convert both ways without losing iden
 
   await page.evaluate(() => window.PANDOLAB_TERRITORIAL.select('country', 'IRL'));
   await page.locator('#actionsTabBtn').click();
-  await page.locator('#countryProperties details.editor-action-section summary').click();
   await page.locator('#changeCountryTypeBtn').click();
   await page.locator('#territorialTypeInput').selectOption('admin');
   await page.locator('#territorialTypeSovereignInput').selectOption('GBR');
@@ -122,7 +119,6 @@ test('a country and an administrative area convert both ways without losing iden
   expect(converted.unit.adminLevel).toBe(1);
 
   await page.locator('#actionsTabBtn').click();
-  await page.locator('#administrativeProperties details.editor-action-section summary').click();
   await page.locator('#changeAdministrativeTypeBtn').click();
   await page.locator('#territorialTypeInput').selectOption('country');
   await page.locator('#territorialTypeConfirmBtn').click();
