@@ -1,3 +1,7 @@
+import { installBoundaryGhostingGuard } from './boundary-ghosting-guard.js';
+
+installBoundaryGhostingGuard();
+
 function detachMapStatusSurface() {
   const surface = document.querySelector('.map-bottom-status');
   if (!surface) return;
