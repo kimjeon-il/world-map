@@ -10,6 +10,7 @@ const {
   ensureClosedRing,
   hasCanonicalCountryWinding,
   normalizeCountryGeometry,
+  ringDistinctCoordinateCount,
   ringSignedArea,
 } = globalThis.PandoLabCountryGeometry;
 
@@ -30,6 +31,17 @@ test('country geometry normalizer closes open rings and rejects degenerate polyg
   const normalized = normalizeCountryGeometry([[[[0, 0], [0, 2], [2, 2], [2, 0]]]]);
   assert.deepEqual(normalized.coordinates[0][0], normalized.coordinates[0].at(-1));
   assert.equal(normalizeCountryGeometry([[[[0, 0], [1, 1], [0, 0]]]]), null);
+  assert.equal(ringDistinctCoordinateCount([[0, 0], [1, 0], [0, 0], [0, 0]]), 2);
+});
+
+test('country geometry normalizer never promotes a surviving hole when the outer ring degenerates', () => {
+  const degenerateOuter = [[0, 0], [1, 1], [0, 0], [0, 0]];
+  const validHole = [[0.2, 0.2], [0.2, 0.8], [0.8, 0.8], [0.8, 0.2], [0.2, 0.2]];
+  assert.equal(normalizeCountryGeometry({ type: 'Polygon', coordinates: [degenerateOuter, validHole] }), null);
+
+  const validOuter = [[0, 0], [0, 2], [2, 2], [2, 0], [0, 0]];
+  const normalized = normalizeCountryGeometry({ type: 'Polygon', coordinates: [validOuter, degenerateOuter] });
+  assert.equal(normalized.coordinates.length, 1);
 });
 
 test('legacy counter-clockwise country geometry is detected before project restore', () => {
@@ -50,16 +62,17 @@ test('country geometry normalizer removes consecutive duplicate vertices', () =>
     && coord[1] === normalizedRing[index - 1][1]), false);
 });
 
-test('Borneo country rings are sanitized without changing their boundaries', () => {
+test('Borneo canonical country rings are clean before runtime normalization', () => {
   const countries = JSON.parse(fs.readFileSync(path.join(root, 'assets/data/countries-ne-5.1.1.geojson'), 'utf8'));
   const borneoCountries = countries.features.filter(feature => ['IDN', 'MYS'].includes(feature.properties?.editor_id));
 
   assert.equal(borneoCountries.length, 2);
   for (const feature of borneoCountries) {
-    assert.equal(hasCanonicalCountryWinding(feature.geometry), false);
+    assert.equal(hasCanonicalCountryWinding(feature.geometry), true);
     const normalized = normalizeCountryGeometry(feature.geometry);
     assert.ok(normalized);
     assert.equal(hasCanonicalCountryWinding(normalized), true);
+    assert.deepEqual(normalized, feature.geometry);
     const polygons = normalized.type === 'Polygon' ? [normalized.coordinates] : normalized.coordinates;
     for (const polygon of polygons) for (const ring of polygon) {
       assert.equal(ring.some((coord, index) => index > 0

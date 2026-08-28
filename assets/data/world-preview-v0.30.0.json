@@ -1,41 +1,41 @@
 {
   "version": "0.30.0",
   "source": "countries-ne-5.1.1.geojson",
-  "sourceSha256": "d2fdbd2a7ce57fbd9e9489784999b01b956ca5d1cd74e5eb92792abc8006de87",
+  "sourceSha256": "b78ff2daff7d45aac40980645892642941100d56a6649de9eaeee2e85e021290",
   "countries": 258,
-  "coordinateCount": 28336,
-  "globalAreaError": 0.00237603,
-  "simplificationPercentile": 0.02,
-  "quantization": 1000000,
+  "coordinateCount": 59856,
+  "globalAreaError": 0.0018064,
+  "simplificationPercentile": 0.025,
+  "quantization": 0,
   "meshAlgorithmRevision": 3,
-  "meshVertices": 29995,
-  "countriesCompressedBytes": 292403,
-  "meshCompressedBytes": 433640,
-  "combinedCompressedBytes": 726043,
-  "countriesSha256": "efbcfa4c34a89e26dc663381ce25af95efc8be2559d8c74788f80b7d11548386",
-  "meshSha256": "1ff60d21e6fe2f4a305c3b100d243578a5db6552e05293ba77829e902a5c222f",
+  "meshVertices": 78819,
+  "countriesCompressedBytes": 509372,
+  "meshCompressedBytes": 1089134,
+  "combinedCompressedBytes": 1598506,
+  "countriesSha256": "d6f4f8fc22ccb720f75d237367d28ee2fe5ee35a74f4e79357b5b1eed54763c9",
+  "meshSha256": "91130d224b6f7dd5e9dedd034d0823986abe867c5e41674dbb1a73f7068801f7",
   "assets": {
     "previewCountries": {
       "url": "countries-preview-v0.30.0.geojson.gz",
       "encoding": "gzip",
-      "compressedBytes": 292403,
-      "decodedBytes": 1178372,
-      "sha256": "efbcfa4c34a89e26dc663381ce25af95efc8be2559d8c74788f80b7d11548386"
+      "compressedBytes": 509372,
+      "decodedBytes": 1407969,
+      "sha256": "d6f4f8fc22ccb720f75d237367d28ee2fe5ee35a74f4e79357b5b1eed54763c9"
     },
     "previewMesh": {
       "url": "world-mesh-preview-v0.30.0.bin.gz",
       "encoding": "gzip",
-      "compressedBytes": 433640,
-      "decodedBytes": 951672,
-      "sha256": "1ff60d21e6fe2f4a305c3b100d243578a5db6552e05293ba77829e902a5c222f",
+      "compressedBytes": 1089134,
+      "decodedBytes": 2411564,
+      "sha256": "91130d224b6f7dd5e9dedd034d0823986abe867c5e41674dbb1a73f7068801f7",
       "header": [
         1129137969,
         1,
         258,
-        29995,
-        137274,
-        25648,
-        28336,
+        78819,
+        288789,
+        117046,
+        59856,
         3
       ]
     },
@@ -49,16 +49,16 @@
     "canonicalCountries": {
       "url": "countries-ne-5.1.1.geojson.gz",
       "encoding": "gzip",
-      "compressedBytes": 4390038,
-      "decodedBytes": 12437772,
-      "sha256": "35f5f311e69f417fb61d16d4fa2fa6b9d13b53adf5dcaa32e8534d9ac4525b38"
+      "compressedBytes": 4390035,
+      "decodedBytes": 12437728,
+      "sha256": "63d825f46aaa357f9beba0889d024ff1121a0440044193b682eee8450c0daff4"
     },
     "canonicalMesh": {
       "url": "world-mesh-v0.12.6.bin.gz",
       "encoding": "gzip",
       "compressedBytes": 14626436,
       "decodedBytes": 32691712,
-      "sha256": "7e2681a585eac6d17b2d8265e3bba6691233709365e4ae552acfd4ed945286fc",
+      "sha256": "aa3065349bdb4ca0023449173104a64a8965a7fbfcfa5044c10af5890c0f9f18",
       "header": [
         1129137969,
         1,
@@ -66,7 +66,7 @@
         1028628,
         4514562,
         1086788,
-        548466,
+        548464,
         3
       ]
     }
