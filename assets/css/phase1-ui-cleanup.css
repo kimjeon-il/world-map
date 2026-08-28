@@ -1,0 +1,301 @@
+/* PandoLab phase 1: residual UI 05–08 + useless surface cleanup.
+ * Loaded after app.css by bootstrap.js. This file intentionally contains only
+ * presentation cleanup; data/render reliability work is out of scope.
+ */
+
+:root {
+  --ui-map-status-height: 0px;
+}
+
+/* Structural hosts are layout containers, not visual surfaces. */
+.workspace,
+.overlay-root,
+#projectionToolbarSlot,
+#mobileProjectionSlot {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.overlay-root {
+  pointer-events: none;
+}
+.overlay-root > * {
+  pointer-events: auto;
+}
+
+/* Obsolete/redundant surfaces are hidden before the runtime cleanup module
+ * removes or detaches them after app initialization. */
+.map-bottom-status,
+.editor-edge-slot,
+.editor-edge-trigger,
+.ui-dialog-kicker,
+.create-toolbar-divider {
+  display: none !important;
+}
+
+/* File menu is an anchored menu, not a modal operation. */
+body.file-menu-open .mobile-backdrop {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* Keep actual map toolbars compact even if an outer layout rule expands. */
+.map-command-toolbar,
+.map-view-toolbar,
+.mobile-zoom-dock {
+  width: max-content !important;
+  max-width: calc(100% - var(--map-safe-left, 0px) - var(--map-safe-right, 0px) - (var(--ui-map-edge) * 2));
+  align-self: start;
+  justify-self: start;
+}
+
+.map-view-toolbar {
+  justify-self: end;
+}
+
+/* Editor: sections are document structure, not stacked cards. */
+.editor-object-form,
+#hydroProperties,
+#distributionProperties,
+#labelProperties,
+#drawingProperties {
+  gap: var(--ui-space-5) !important;
+}
+
+.editor-object-form > .editor-section,
+.editor-object-form > .editor-disclosure,
+#hydroProperties > .editor-section,
+#hydroProperties > .editor-disclosure,
+#distributionProperties > .editor-section,
+#distributionProperties > .editor-disclosure,
+#labelProperties > .editor-section,
+#drawingProperties > .editor-section {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.editor-section + .editor-section,
+.editor-section + .editor-disclosure,
+.editor-disclosure + .editor-section {
+  padding-top: var(--ui-space-1) !important;
+}
+
+.editor-section-title {
+  margin-bottom: var(--ui-space-1);
+}
+
+/* Work actions: compact rows instead of large action cards. */
+.editor-action-grid,
+.editor-action-grid-two {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: var(--ui-space-2) !important;
+}
+
+.editor-action-button {
+  width: 100% !important;
+  min-height: var(--ui-touch-height) !important;
+  display: grid !important;
+  grid-template-columns: var(--ui-icon-size) minmax(0, 1fr) !important;
+  grid-template-rows: 1fr !important;
+  align-items: center !important;
+  gap: var(--ui-space-3) !important;
+  padding: 0 var(--ui-control-padding-x) !important;
+  border-radius: var(--ui-radius-control) !important;
+  box-shadow: none !important;
+}
+
+.editor-action-button > span {
+  grid-row: auto !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+.editor-action-button > strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-action-button > small {
+  display: none !important;
+}
+
+/* Info/disclosure blocks should not create a second card hierarchy. */
+.editor-disclosure,
+.ui-info-list.editor-info-list {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.editor-disclosure > summary {
+  padding-inline: 0 !important;
+}
+
+.editor-disclosure .editor-disclosure-body {
+  padding-inline: 0 !important;
+}
+
+/* Layer category boxes are semantic grouping only. */
+.layer-category,
+.layer-category-items {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Empty-state chrome should not occupy large boxed regions. */
+.ui-empty-state,
+.layer-empty {
+  min-height: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.editor-help {
+  margin-block: var(--ui-space-1);
+}
+
+/* Historical Library: wide two-pane workspace. */
+.historical-library-card {
+  width: min(1040px, calc(100vw - (var(--ui-dialog-edge) * 2))) !important;
+  max-width: 1040px !important;
+  height: min(760px, calc(100dvh - (var(--ui-dialog-edge) * 2))) !important;
+  max-height: min(760px, calc(100dvh - (var(--ui-dialog-edge) * 2))) !important;
+  display: grid !important;
+  grid-template-rows: auto auto minmax(0, 1fr) auto !important;
+  overflow: hidden !important;
+}
+
+.historical-library-layout {
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-columns: minmax(280px, 40fr) minmax(360px, 60fr) !important;
+  gap: var(--ui-space-4) !important;
+  overflow: hidden !important;
+}
+
+.historical-library-results,
+.historical-library-preview {
+  min-height: 0 !important;
+  overflow: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.historical-library-preview {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.historical-library-preview-map {
+  box-shadow: none !important;
+}
+
+/* GIS importer: compact desktop dialog; one body scroll, stable actions. */
+#gisImportModal .ui-dialog-card {
+  width: min(640px, calc(100vw - (var(--ui-dialog-edge) * 2))) !important;
+  max-width: 640px !important;
+  max-height: calc(100dvh - (var(--ui-dialog-edge) * 2)) !important;
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  overflow: hidden !important;
+}
+
+#gisImportModal .ui-dialog-header {
+  position: relative;
+  z-index: 2;
+  background: var(--modal-card-bg);
+}
+
+#gisImportForm {
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+#gisImportForm > .gis-form-grid {
+  min-height: 0 !important;
+  flex: 1 1 auto;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+#gisImportModal .ui-dialog-actions {
+  flex: 0 0 auto;
+  margin-top: 0 !important;
+  padding-top: var(--ui-space-3);
+  background: var(--modal-card-bg);
+}
+
+/* Do not reserve blank visual regions for conditional content. */
+.gis-import-status:empty,
+.territorial-type-impact:empty,
+.ui-callout:empty,
+.ui-alert:empty,
+.editor-help:empty {
+  display: none !important;
+  min-height: 0 !important;
+}
+
+/* Reduce decorative depth without removing functional boundaries. */
+.editor-flag-preview,
+.historical-library-preview-map,
+.ui-info-list,
+.editor-disclosure {
+  box-shadow: none !important;
+}
+
+/* Mobile: import/library are full-screen navigation flows, not shrunken desktop modals. */
+body[data-layout="mobile"] .historical-library-card,
+body[data-layout="mobile"] #gisImportModal .ui-dialog-card,
+#app[data-layout="mobile"] .historical-library-card,
+#app[data-layout="mobile"] #gisImportModal .ui-dialog-card {
+  width: 100% !important;
+  max-width: none !important;
+  height: 100dvh !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+}
+
+body[data-layout="mobile"] .historical-library-layout,
+#app[data-layout="mobile"] .historical-library-layout {
+  grid-template-columns: 1fr !important;
+}
+
+body[data-layout="mobile"] #gisImportModal,
+#app[data-layout="mobile"] #gisImportModal {
+  padding: 0 !important;
+  align-items: stretch !important;
+}
+
+/* Mobile surfaces should have one primary scroll region. */
+body[data-layout="mobile"] .historical-library-results,
+body[data-layout="mobile"] .historical-library-preview,
+#app[data-layout="mobile"] .historical-library-results,
+#app[data-layout="mobile"] .historical-library-preview {
+  max-height: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .historical-library-card,
+  #gisImportModal .ui-dialog-card {
+    transition-duration: 0.01ms !important;
+  }
+}
