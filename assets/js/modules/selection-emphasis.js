@@ -1,3 +1,5 @@
+import { buildRenderableBoundarySegments, densifyBoundarySegmentsForProjection } from './geographic-boundary.js';
+
 export const SELECTION_STYLE = {
   color: '#346733',
   primaryWidth: 2.5,
@@ -21,37 +23,9 @@ function selectionColorRgb() {
   return [(value >> 16 & 255) / 255, (value >> 8 & 255) / 255, (value & 255) / 255];
 }
 
-function polygonSets(geometry) {
-  if (geometry?.type === 'Polygon') return [geometry.coordinates || []];
-  if (geometry?.type === 'MultiPolygon') return geometry.coordinates || [];
-  return [];
-}
-
-function addSegment(segments, start, end) {
-  if (!Array.isArray(start) || !Array.isArray(end) || start.length < 2 || end.length < 2) return;
-  const startLon = Number(start[0]);
-  const endLon = Number(end[0]);
-  if (!Number.isFinite(startLon) || !Number.isFinite(endLon) || Math.abs(startLon - endLon) > 180) return;
-  segments.push([start.slice(0, 2), end.slice(0, 2)]);
-}
-
-export function buildSelectionBoundarySegments(geometry) {
-  const segments = [];
-  for (const polygon of polygonSets(geometry)) {
-    for (const ring of polygon || []) {
-      for (let index = 0; index < ring.length - 1; index += 1) addSegment(segments, ring[index], ring[index + 1]);
-    }
-  }
-  if (geometry?.type === 'LineString') {
-    const coordinates = geometry.coordinates || [];
-    for (let index = 0; index < coordinates.length - 1; index += 1) addSegment(segments, coordinates[index], coordinates[index + 1]);
-  }
-  if (geometry?.type === 'MultiLineString') {
-    for (const line of geometry.coordinates || []) {
-      for (let index = 0; index < line.length - 1; index += 1) addSegment(segments, line[index], line[index + 1]);
-    }
-  }
-  return segments;
+export function buildSelectionBoundarySegments(geometry, { densify = false } = {}) {
+  const segments = buildRenderableBoundarySegments(geometry);
+  return densify ? densifyBoundarySegmentsForProjection(segments) : segments;
 }
 
 function ribbonVerticesForSegments(segments) {
@@ -186,7 +160,7 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     const values = [];
     let segmentCount = 0;
     for (const item of nextItems) for (const geometry of flattenGeometry(item.geometry)) {
-      const segments = buildSelectionBoundarySegments(geometry);
+      const segments = buildSelectionBoundarySegments(geometry, { densify: true });
       segmentCount += segments.length;
       values.push(...ribbonVerticesForSegments(segments));
     }
