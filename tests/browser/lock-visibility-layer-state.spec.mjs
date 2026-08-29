@@ -37,6 +37,27 @@ async function autosavedCountryLock(page, countryId) {
   }, countryId);
 }
 
+async function autosavedHydroEdit(page, name) {
+  return page.evaluate(async expectedName => {
+    const database = await new Promise((resolve, reject) => {
+      const request = indexedDB.open('pandolab-editor-v010', 2);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    try {
+      const project = await new Promise((resolve, reject) => {
+        const transaction = database.transaction('projects', 'readonly');
+        const request = transaction.objectStore('projects').get('active-project');
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error);
+      });
+      return project?.hydroEdits?.find(feature => feature.properties?.name === expectedName) || null;
+    } finally {
+      database.close();
+    }
+  }, name);
+}
+
 test('country lock is per-object, preserves inspection, rejects geometry edits, and restores from autosave', async ({ page }) => {
   test.setTimeout(240_000);
   const errors = await openApp(page);
@@ -82,8 +103,8 @@ test('country lock is per-object, preserves inspection, rejects geometry edits, 
 test('built-in hydro can hide but has no delete menu, while a user distribution can be deleted', async ({ page }) => {
   test.setTimeout(180_000);
   const errors = await openApp(page);
-  await openFolder(page, 'drawings');
-  const hydroRow = page.locator('#drawingsLayerChildren .layer-child[data-item-id^="hydro-layer:"]').first();
+  await openFolder(page, 'hydro');
+  const hydroRow = page.locator('#hydroLayerChildren .layer-child[data-item-id="rivers_hydro"]');
   await expect(hydroRow).toBeVisible();
   await expect(hydroRow.locator('.layer-child-menu')).toHaveCount(0);
   const hydroVisibility = hydroRow.locator('input[type="checkbox"]');
@@ -106,5 +127,49 @@ test('built-in hydro can hide but has no delete menu, while a user distribution 
   await expect(page.locator('#confirmModal')).toBeVisible();
   await page.locator('#confirmModalOkBtn').click();
   await expect(page.getByRole('button', { name: '잠금 가시성 테스트', exact: true })).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('user-created hydro stays outside drawings and round-trips through autosave', async ({ page }) => {
+  test.setTimeout(240_000);
+  const errors = await openApp(page);
+  await page.locator('#createMenuBtn').click();
+  await page.locator('#addRiverBtn').click();
+  const mapBox = await page.locator('#map').boundingBox();
+  expect(mapBox).not.toBeNull();
+  await page.mouse.click(mapBox.x + mapBox.width * 0.42, mapBox.y + mapBox.height * 0.45);
+  await page.mouse.click(mapBox.x + mapBox.width * 0.55, mapBox.y + mapBox.height * 0.53);
+  await expect(page.locator('#modePrimaryBtn')).toBeEnabled();
+  await page.locator('#modePrimaryBtn').click();
+  await expect(page.locator('#hydroProperties')).toBeVisible();
+  await expect(page.locator('#hydroEditFields')).toBeVisible();
+  await expect(page.locator('circle.vertex-handle')).toHaveCount(2);
+  await page.locator('#hydroNameInput').fill('분리 수계 테스트');
+  await page.locator('#hydroNameInput').blur();
+  await page.locator('#hydroNotesInput').fill('Hydro domain');
+  await page.locator('#hydroNotesInput').blur();
+
+  await openFolder(page, 'hydro');
+  const editRow = page.locator('#hydroLayerChildren .layer-child', { hasText: '분리 수계 테스트' });
+  await expect(editRow).toBeVisible();
+  await openFolder(page, 'drawings');
+  await expect(page.locator('#drawingsLayerChildren .layer-child[data-item-id="rivers_hydro"]')).toHaveCount(0);
+  await expect(page.locator('#drawingsLayerChildren .layer-child[data-item-id="lakes_natural_earth"]')).toHaveCount(0);
+
+  await expect.poll(() => autosavedHydroEdit(page, '분리 수계 테스트'), { timeout: 10_000 }).not.toBeNull();
+  const saved = await autosavedHydroEdit(page, '분리 수계 테스트');
+  expect(saved.properties.pandolab_domain).toBe('hydro');
+  expect(saved.properties.notes).toBe('Hydro domain');
+
+  await page.reload();
+  await expect(page.locator('#bootstrapLoading')).toHaveAttribute('hidden', '', { timeout: 30_000 });
+  await expect(page.locator('#app')).toHaveAttribute('data-readiness', 'enhanced', { timeout: 90_000 });
+  await openFolder(page, 'hydro');
+  const restored = page.locator('#hydroLayerChildren .layer-child', { hasText: '분리 수계 테스트' });
+  await expect(restored).toBeVisible();
+  await restored.locator('.layer-child-menu').click();
+  await page.locator('#objectDeleteMenuBtn').click();
+  await page.locator('#confirmModalOkBtn').click();
+  await expect(page.locator('#hydroLayerChildren .layer-child', { hasText: '분리 수계 테스트' })).toHaveCount(0);
   expect(errors).toEqual([]);
 });

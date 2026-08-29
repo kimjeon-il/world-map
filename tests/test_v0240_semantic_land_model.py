@@ -24,9 +24,21 @@ class V0240CountryRegionModelTests(unittest.TestCase):
         rules = APP[APP.index("const DRAWING_CATEGORY_RULES"):APP.index("const DRAWING_ROLE_LABELS")]
         self.assertNotIn("territory:", rules)
         self.assertNotIn("administrative:", rules)
+        self.assertNotIn("river:", rules)
+        self.assertNotIn("lake:", rules)
         drawing_categories = INDEX[INDEX.index('id="drawingCategoryInput"'):INDEX.index('</select>', INDEX.index('id="drawingCategoryInput"'))]
         self.assertNotIn('<option value="territory">', drawing_categories)
         self.assertNotIn('<option value="administrative">', drawing_categories)
+        self.assertNotIn('<option value="river">', drawing_categories)
+        self.assertNotIn('<option value="lake">', drawing_categories)
+
+    def test_hydro_edits_are_a_separate_project_domain(self):
+        self.assertIn("name: 'hydroEdits', history: true, fallback: () => []", PROJECT_STATE)
+        self.assertIn("hydroEdits: []", APP)
+        self.assertIn('id="hydroLayerChildren"', INDEX)
+        self.assertIn('id="hydroEditFields"', INDEX)
+        self.assertIn("function renderHydroEdits()", APP)
+        self.assertIn("state.hydroEdits.push(feature)", APP)
 
     def test_model_normalizes_relations_and_transactions(self):
         for symbol in (
