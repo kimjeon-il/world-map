@@ -26,11 +26,7 @@ class V0240CountryRegionModelTests(unittest.TestCase):
         self.assertNotIn("administrative:", rules)
         self.assertNotIn("river:", rules)
         self.assertNotIn("lake:", rules)
-        drawing_categories = INDEX[INDEX.index('id="drawingCategoryInput"'):INDEX.index('</select>', INDEX.index('id="drawingCategoryInput"'))]
-        self.assertNotIn('<option value="territory">', drawing_categories)
-        self.assertNotIn('<option value="administrative">', drawing_categories)
-        self.assertNotIn('<option value="river">', drawing_categories)
-        self.assertNotIn('<option value="lake">', drawing_categories)
+        self.assertNotIn('id="drawingCategoryInput"', INDEX)
 
     def test_hydro_edits_are_a_separate_project_domain(self):
         self.assertIn("name: 'hydroEdits', history: true, fallback: () => []", PROJECT_STATE)
