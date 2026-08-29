@@ -7,8 +7,18 @@ export function createLayerPanelController({
   let searchTimer = 0;
 
   function bind() {
+    elements.layersTab?.addEventListener('click', () => commands.setPanelView?.('layers'));
+    elements.viewTab?.addEventListener('click', () => commands.setPanelView?.('view'));
+    elements.panelTabs?.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      commands.setPanelView?.(event.key === 'ArrowRight' || event.key === 'End' ? 'view' : 'layers', { focus: true });
+    });
     for (const [group, input] of Object.entries(elements.visibilityInputs || {})) {
-      input?.addEventListener('change', event => commands.setLayerVisibility(group, event.target.checked));
+      input?.addEventListener('change', event => {
+        commands.syncVisibilityToggle?.(event.target);
+        commands.setLayerVisibility(group, event.target.checked);
+      });
     }
     elements.terrainVisible?.addEventListener('change', event => commands.setTerrainVisible(event.target.checked));
     for (const input of elements.terrainStyleInputs || []) input?.addEventListener('change', event => {
@@ -39,6 +49,11 @@ export function createLayerPanelController({
         commands.toggleRegionFolder(regionFolder.dataset.countryRegionFolderToggle);
         return;
       }
+      const hydroFolder = event.target.closest('[data-hydro-folder-toggle]');
+      if (hydroFolder) {
+        commands.toggleHydroFolder?.(hydroFolder.dataset.hydroFolderToggle);
+        return;
+      }
       const folder = event.target.closest('[data-layer-folder-toggle]');
       if (folder) {
         commands.toggleFolder(folder.dataset.layerFolderToggle);
@@ -54,6 +69,7 @@ export function createLayerPanelController({
     });
     elements.section?.addEventListener('scroll', commands.handleScroll, true);
     elements.section?.addEventListener('change', event => {
+      commands.syncVisibilityToggle?.(event.target);
       const checkbox = event.target.closest('[data-layer-item-visibility]');
       if (checkbox) commands.setItemVisibility(checkbox.dataset.layerItemVisibility, checkbox.dataset.itemId, checkbox.checked);
     });

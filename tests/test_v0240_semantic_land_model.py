@@ -32,7 +32,8 @@ class V0240CountryRegionModelTests(unittest.TestCase):
     def test_hydro_edits_are_a_separate_project_domain(self):
         self.assertIn("name: 'hydroEdits', scope: 'document', fallback: () => []", PROJECT_STATE)
         self.assertIn("hydroEdits: []", APP)
-        self.assertIn('id="hydroLayerChildren"', INDEX)
+        self.assertIn('id="drawingsLayerChildren"', INDEX)
+        self.assertIn("layerGroup: 'hydro'", APP)
         self.assertIn('id="hydroEditFields"', INDEX)
         self.assertIn("function renderHydroEdits()", APP)
         self.assertIn("state.hydroEdits.push(feature)", APP)

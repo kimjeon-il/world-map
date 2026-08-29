@@ -104,8 +104,9 @@ test('country lock is per-object, preserves inspection, rejects geometry edits, 
 test('built-in hydro can hide but has no delete menu, while a user distribution can be deleted', async ({ page }) => {
   test.setTimeout(180_000);
   const errors = await openApp(page);
-  await openFolder(page, 'hydro');
-  const hydroRow = page.locator('#hydroLayerChildren .layer-child[data-item-id="rivers_hydro"]');
+  await openFolder(page, 'drawings');
+  await page.locator('[data-hydro-folder-toggle="hydro-folder:rivers_hydro"]').first().click();
+  const hydroRow = page.locator('#drawingsLayerChildren .layer-child[data-layer-group="hydro"][data-item-id="rivers_hydro"]');
   await expect(hydroRow).toBeVisible();
   await expect(hydroRow.locator('.layer-child-menu')).toHaveCount(0);
   const hydroVisibility = hydroRow.locator('input[type="checkbox"]');
@@ -130,7 +131,7 @@ test('built-in hydro can hide but has no delete menu, while a user distribution 
   expect(errors).toEqual([]);
 });
 
-test('user-created hydro stays outside drawings and round-trips through autosave', async ({ page }) => {
+test('user-created hydro keeps its domain inside map elements and round-trips through autosave', async ({ page }) => {
   test.setTimeout(240_000);
   const errors = await openApp(page);
   await page.locator('#createMenuBtn').click();
@@ -149,12 +150,10 @@ test('user-created hydro stays outside drawings and round-trips through autosave
   await page.locator('#hydroNotesInput').fill('Hydro domain');
   await page.locator('#hydroNotesInput').blur();
 
-  await openFolder(page, 'hydro');
-  const editRow = page.locator('#hydroLayerChildren .layer-child', { hasText: '분리 수계 테스트' });
-  await expect(editRow).toBeVisible();
   await openFolder(page, 'drawings');
-  await expect(page.locator('#drawingsLayerChildren .layer-child[data-item-id="rivers_hydro"]')).toHaveCount(0);
-  await expect(page.locator('#drawingsLayerChildren .layer-child[data-item-id="lakes_natural_earth"]')).toHaveCount(0);
+  const editRow = page.locator('#drawingsLayerChildren .layer-child[data-layer-group="hydro"]', { hasText: '분리 수계 테스트' });
+  await expect(editRow).toBeVisible();
+  await expect(page.locator('#drawingsLayerChildren .layer-child[data-layer-group="drawings"]', { hasText: '분리 수계 테스트' })).toHaveCount(0);
 
   await expect.poll(() => autosavedHydroEdit(page, '분리 수계 테스트'), { timeout: 10_000 }).not.toBeNull();
   const saved = await autosavedHydroEdit(page, '분리 수계 테스트');
@@ -164,12 +163,12 @@ test('user-created hydro stays outside drawings and round-trips through autosave
   await page.reload();
   await expect(page.locator('#bootstrapLoading')).toHaveAttribute('hidden', '', { timeout: 30_000 });
   await expect(page.locator('#app')).toHaveAttribute('data-readiness', 'enhanced', { timeout: 90_000 });
-  await openFolder(page, 'hydro');
-  const restored = page.locator('#hydroLayerChildren .layer-child', { hasText: '분리 수계 테스트' });
+  await openFolder(page, 'drawings');
+  const restored = page.locator('#drawingsLayerChildren .layer-child[data-layer-group="hydro"]', { hasText: '분리 수계 테스트' });
   await expect(restored).toBeVisible();
   await restored.locator('.layer-child-menu').click();
   await page.locator('#objectDeleteMenuBtn').click();
   await page.locator('#confirmModalOkBtn').click();
-  await expect(page.locator('#hydroLayerChildren .layer-child', { hasText: '분리 수계 테스트' })).toHaveCount(0);
+  await expect(page.locator('#drawingsLayerChildren .layer-child[data-layer-group="hydro"]', { hasText: '분리 수계 테스트' })).toHaveCount(0);
   expect(errors).toEqual([]);
 });

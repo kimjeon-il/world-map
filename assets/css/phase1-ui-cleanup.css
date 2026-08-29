@@ -9,9 +9,7 @@
 
 /* Structural hosts are layout containers, not visual surfaces. */
 .workspace,
-.overlay-root,
-#projectionToolbarSlot,
-#mobileProjectionSlot {
+.overlay-root {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
