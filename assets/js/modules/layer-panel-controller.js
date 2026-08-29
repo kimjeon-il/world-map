@@ -41,7 +41,7 @@ export function createLayerPanelController({
       const menu = event.target.closest('[data-layer-item-menu]');
       if (menu) {
         event.stopPropagation();
-        commands.openItemMenu(menu.dataset.layerItemMenu, menu.dataset.itemId);
+        commands.openItemMenu(menu.dataset.layerItemMenu, menu.dataset.itemId, menu);
         return;
       }
       const regionFolder = event.target.closest('[data-country-region-folder-toggle]');
