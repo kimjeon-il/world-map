@@ -35,7 +35,6 @@ test(`${renderer} country deletion and undo hide stale GPU geometry before delay
   await expect.poll(() => page.evaluate(() => window.__PANDOLAB_GPU_METRICS__?.renderer), { timeout: 30_000 }).toBe(renderer);
   const folderToggle = page.locator('[data-layer-folder-toggle="countries"]').first();
   if (await folderToggle.getAttribute('aria-expanded') !== 'true') await folderToggle.click();
-  await page.locator('#countriesLocked').uncheck({ force: true });
   const firstRow = page.locator('#countriesLayerChildren .layer-child').first();
   const name = (await firstRow.locator('.layer-child-name').textContent()).trim();
 
