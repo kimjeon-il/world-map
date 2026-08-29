@@ -1,10 +1,16 @@
-export const SELECTION_STYLE = Object.freeze({
+export const SELECTION_STYLE = {
   color: '#346733',
   primaryWidth: 2.5,
   primaryAlpha: 1.0,
   secondaryWidth: 1.5,
   secondaryAlpha: 0.72,
-});
+};
+
+export function setSelectionColor(color) {
+  const value = String(color || '').trim();
+  if (/^#[0-9a-f]{6}$/i.test(value)) SELECTION_STYLE.color = value.toLowerCase();
+  return SELECTION_STYLE.color;
+}
 
 const DEGREES_TO_RADIANS = Math.PI / 180;
 
