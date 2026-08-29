@@ -52,9 +52,7 @@ for (const layout of layouts) {
     expect(headerSpacing.buttonWidth).toBeCloseTo(expectedHeaderButtonSize, 4);
     expect(headerSpacing.buttonHeight).toBeCloseTo(expectedHeaderButtonSize, 4);
 
-    await expect(page.locator('#countriesLocked')).toBeHidden();
-    expect(await page.locator('#countriesLocked').boundingBox()).toBeNull();
-    await expect(page.locator('#countriesLocked')).toHaveCSS('display', 'none');
+    await expect(page.locator('#countriesLocked')).toHaveCount(0);
     const rowAlignment = await page.locator('.layer-folder-row').evaluateAll(rows => rows.slice(0, 4).map(row => {
       const toggle = row.querySelector(':scope > .layer-folder-toggle').getBoundingClientRect();
       const checkbox = row.querySelector(':scope > input[type="checkbox"]:not([hidden])').getBoundingClientRect();

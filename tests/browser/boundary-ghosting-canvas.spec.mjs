@@ -42,7 +42,6 @@ test('canvas worker hides a stale bitmap while a delayed geometry patch catches 
 
   const folderToggle = page.locator('[data-layer-folder-toggle="countries"]').first();
   if (await folderToggle.getAttribute('aria-expanded') !== 'true') await folderToggle.click();
-  await page.locator('#countriesLocked').uncheck({ force: true });
 
   const firstRow = page.locator('#countriesLayerChildren .layer-child').first();
   const name = (await firstRow.locator('.layer-child-name').textContent()).trim();
