@@ -43,7 +43,7 @@ class V0240CountryRegionModelTests(unittest.TestCase):
             "runTerritorialTransaction", "parentCreatesCycle",
         ):
             self.assertIn(f"function {symbol}", MODEL)
-        self.assertIn("TERRITORIAL_STATUS", MODEL)
+        self.assertIn("isRemainder", MODEL)
         for operation in ("transferGeometry", "mergeUnits", "splitUnit", "editBoundary"):
             self.assertIn(f"function {operation}", GEOMETRY)
 
@@ -74,13 +74,13 @@ class V0240CountryRegionModelTests(unittest.TestCase):
         self.assertIn("syncHardLandDependents", APP)
         self.assertIn("transferLandDependents", APP)
         self.assertIn("reassignLandDependents", APP)
-        self.assertIn("COUNTRY_REGION_STATUS.UNASSIGNED", APP)
+        self.assertIn("properties?.isRemainder", APP)
 
     def test_geopackage_and_geojson_round_trip_dedicated_layers(self):
         for table in ("territories", "administrative_units"):
             self.assertIn(table, GIS_ADAPTERS)
         self.assertNotIn("administrative_areas", GIS_ADAPTERS)
-        for field in ("sovereign_id", "parent_id", "admin_level", "status", "properties_json"):
+        for field in ("sovereign_id", "parent_id", "admin_level", "is_remainder", "properties_json"):
             self.assertIn(field, GIS_ADAPTERS)
         self.assertIn("PandoLabGisAdapters.territorialRows", GPKG)
         self.assertIn("gisAdapters.importTerritorialFeature", GIS)

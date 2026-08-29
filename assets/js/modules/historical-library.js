@@ -1,3 +1,10 @@
+import {
+  normalizeTemporal,
+  normalizeTemporalInterval,
+  parseTemporal,
+  temporalContains,
+} from './temporal.js';
+
 export const HISTORICAL_LIBRARY_SCHEMA_VERSION = 1;
 
 export const LIBRARY_ENTITY_TYPES = Object.freeze({
@@ -11,28 +18,27 @@ const TYPES = new Set(Object.values(LIBRARY_ENTITY_TYPES));
 const POLYGON_TYPES = new Set(['Polygon', 'MultiPolygon']);
 const text = value => String(value ?? '').trim();
 const clone = value => structuredClone(value);
-const yearValue = value => {
-  const match = text(value).match(/^([-+]?\d{1,6})/);
-  return match ? Number(match[1]) : null;
-};
-
 function dateContains(version, referenceDate) {
-  const year = yearValue(referenceDate);
-  if (year == null) return true;
-  const start = yearValue(version.validFrom);
-  const end = yearValue(version.validTo);
-  return (start == null || start <= year) && (end == null || end >= year);
+  const point = parseTemporal(referenceDate);
+  return !point || temporalContains(version, point);
 }
 
+const startYear = value => parseTemporal(value)?.year ?? null;
+
 export function normalizeGeometryVersion(raw) {
-  const geometry = POLYGON_TYPES.has(raw?.geometry?.type) ? clone(raw.geometry) : null;
+  const geometry = POLYGON_TYPES.has(raw?.geometry?.type)
+    && Array.isArray(raw.geometry.coordinates)
+    && raw.geometry.coordinates.length
+    ? clone(raw.geometry)
+    : null;
   if (!geometry) return null;
   const id = text(raw.id);
   if (!id) return null;
+  const interval = normalizeTemporalInterval(raw.validFrom, raw.validTo);
   return {
     id,
-    validFrom: text(raw.validFrom) || null,
-    validTo: text(raw.validTo) || null,
+    validFrom: interval.validFrom,
+    validTo: interval.validTo,
     geometry,
     datePrecision: text(raw.datePrecision) || 'unknown',
     certainty: text(raw.certainty) || 'unknown',
@@ -45,6 +51,7 @@ export function normalizeHistoricalLibraryEntity(raw) {
   const type = text(raw?.type).toLowerCase();
   const libraryId = text(raw?.libraryId);
   if (!libraryId || !TYPES.has(type)) return null;
+  const interval = normalizeTemporalInterval(raw.startDate, raw.endDate);
   const geometryVersions = [];
   const versionIds = new Set();
   for (const rawVersion of raw.geometryVersions || []) {
@@ -61,8 +68,8 @@ export function normalizeHistoricalLibraryEntity(raw) {
     canonicalName: text(raw.canonicalName) || libraryId,
     displayNames: raw.displayNames && typeof raw.displayNames === 'object' ? clone(raw.displayNames) : {},
     alternateNames: [...new Set((raw.alternateNames || []).map(text).filter(Boolean))],
-    startDate: text(raw.startDate) || null,
-    endDate: text(raw.endDate) || null,
+    startDate: interval.validFrom,
+    endDate: interval.validTo,
     parentLibraryId: text(raw.parentLibraryId),
     sovereignLibraryId: text(raw.sovereignLibraryId),
     adminLevel: type === LIBRARY_ENTITY_TYPES.ADMIN ? Math.max(1, Number(raw.adminLevel || 1)) : null,
@@ -76,12 +83,12 @@ export function selectGeometryVersion(entity, referenceDate = null) {
   const versions = entity?.geometryVersions || [];
   if (!versions.length) return null;
   const matching = versions.filter(version => dateContains(version, referenceDate));
-  if (matching.length) return matching.sort((left, right) => (yearValue(right.validFrom) ?? -Infinity) - (yearValue(left.validFrom) ?? -Infinity))[0];
-  const referenceYear = yearValue(referenceDate);
+  if (matching.length) return matching.sort((left, right) => (startYear(right.validFrom) ?? -Infinity) - (startYear(left.validFrom) ?? -Infinity))[0];
+  const referenceYear = startYear(referenceDate);
   if (referenceYear == null) return versions[versions.length - 1];
   return [...versions].sort((left, right) => {
-    const leftYear = yearValue(left.validFrom) ?? yearValue(left.validTo) ?? referenceYear;
-    const rightYear = yearValue(right.validFrom) ?? yearValue(right.validTo) ?? referenceYear;
+    const leftYear = startYear(left.validFrom) ?? startYear(left.validTo) ?? referenceYear;
+    const rightYear = startYear(right.validFrom) ?? startYear(right.validTo) ?? referenceYear;
     return Math.abs(leftYear - referenceYear) - Math.abs(rightYear - referenceYear);
   })[0];
 }
@@ -134,7 +141,7 @@ export function normalizeWorldSnapshot(raw) {
   return {
     id,
     name: text(raw.name) || id,
-    referenceDate: text(raw.referenceDate) || null,
+    referenceDate: normalizeTemporal(raw.referenceDate),
     entityRefs: [...new Set((raw.entityRefs || []).map(text).filter(Boolean))],
     metadata: raw.metadata && typeof raw.metadata === 'object' ? clone(raw.metadata) : {},
     sourceInfo: raw.sourceInfo && typeof raw.sourceInfo === 'object' ? clone(raw.sourceInfo) : {},
@@ -164,17 +171,13 @@ export function createHistoricalLibrary({ schemaVersion, entities = [], snapshot
     getSnapshot: id => snapshotMap.get(text(id)) || null,
     search({ query = '', type = '', status = 'all', referenceDate = '', region = '' } = {}) {
       const needle = text(query).toLocaleLowerCase('ko');
-      const referenceYear = yearValue(referenceDate);
+      const referencePoint = parseTemporal(referenceDate);
       return [...entityMap.values()].filter(entity => {
         if (type && entity.type !== type) return false;
         if (status === 'current' && entity.endDate) return false;
         if (status === 'past' && !entity.endDate) return false;
         if (region && text(entity.metadata?.region) !== text(region)) return false;
-        if (referenceYear != null) {
-          const start = yearValue(entity.startDate);
-          const end = yearValue(entity.endDate);
-          if ((start != null && start > referenceYear) || (end != null && end < referenceYear)) return false;
-        }
+        if (referencePoint && !temporalContains({ validFrom: entity.startDate, validTo: entity.endDate }, referencePoint)) return false;
         if (!needle) return true;
         const names = [entity.canonicalName, ...Object.values(entity.displayNames || {}), ...(entity.alternateNames || [])];
         return names.some(name => text(name).toLocaleLowerCase('ko').includes(needle));
