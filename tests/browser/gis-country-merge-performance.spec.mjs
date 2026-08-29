@@ -46,17 +46,22 @@ test('imported-territory priority validates only affected countries and finishes
   });
   await expect(page.locator('#gisImportModal')).toBeVisible();
   await expect(page.locator('#gisImportConfirmBtn')).toBeEnabled({ timeout: 30_000 });
+  await page.locator('#gisImportNextBtn').click();
+  await expect(page.locator('#gisStepIndicator')).toHaveText('2/5 · 가져올 내용');
   await selectCustomOption(page, 'gisTargetType', '국가');
+  await page.locator('#gisImportNextBtn').click();
+  await page.locator('#gisImportNextBtn').click();
+  await expect(page.locator('#gisStepIndicator')).toHaveText('4/5 · 적용 결과');
+  await page.locator('[data-gis-open-mode="merge"]').click();
+  await expect(page.locator('#gisMergeStrategyRow')).toBeVisible();
   await selectCustomOption(page, 'gisMergeStrategy', '가져온 영토 우선');
+  await page.locator('#gisImportNextBtn').click();
+  await expect(page.locator('#gisStepIndicator')).toHaveText('5/5 · 최종 확인');
 
   const startedAt = Date.now();
   await page.locator('#gisImportConfirmBtn').click();
-  await expect(page.locator('#confirmModal')).toBeVisible({ timeout: 45_000 });
+  await expect(page.locator('#gisImportModal')).toBeHidden({ timeout: 45_000 });
   expect(Date.now() - startedAt).toBeLessThan(45_000);
-  await expect(page.locator('#confirmModalTitle')).toHaveText('GIS 병합 미리보기');
-  await expect(page.locator('#confirmModalMessage')).toContainText('차감 1개');
-  await expect(page.locator('#confirmModalMessage')).not.toContainText('처리 후 남는 중첩');
-  await page.locator('#confirmModalOkBtn').click();
 
   await page.locator('#layerSearchInput').fill('영향 국가 검증');
   await expect(page.getByRole('option').filter({ hasText: '영향 국가 검증' }).first()).toBeVisible({ timeout: 30_000 });

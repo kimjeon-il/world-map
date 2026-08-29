@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { selectUiOption } from './helpers/ui-select.mjs';
 
 const layouts = [
   { name: 'wide', width: 1440, height: 900 },
@@ -46,9 +47,7 @@ for (const layout of layouts) {
     await expect(page.locator('#layerPresentationBtn, #layerPresentationCloseBtn, #layerPresentationModal')).toHaveCount(0);
     expect(await page.locator('#layerSection .layer-category-title').allTextContents()).not.toContain('라벨');
 
-    await expect(page.locator('#countriesLocked')).toBeHidden();
-    expect(await page.locator('#countriesLocked').boundingBox()).toBeNull();
-    await expect(page.locator('#countriesLocked')).toHaveCSS('display', 'none');
+    await expect(page.locator('#countriesLocked')).toHaveCount(0);
     const rowAlignment = await page.locator('.layer-folder-row').evaluateAll(rows => rows.slice(0, 4).map(row => {
       const toggle = row.querySelector(':scope > .layer-folder-toggle').getBoundingClientRect();
       const checkbox = row.querySelector(':scope > input[type="checkbox"]:not([hidden])').getBoundingClientRect();
@@ -129,7 +128,7 @@ for (const layout of layouts) {
       '영역별 가장 높은 비율',
       '선택한 분포의 비율',
     ]);
-    await page.locator('#distributionLayerModeInput').selectOption('intensity');
+    await selectUiOption(page, '#distributionLayerModeInput', 'intensity');
     await expect(page.locator('#distributionLayerModeHint')).toHaveText('선택한 분포를 비율이 높을수록 진하게 표시합니다.');
     await page.locator('#mapViewTabBtn').focus();
     await page.keyboard.press('ArrowLeft');

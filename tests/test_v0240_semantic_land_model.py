@@ -13,20 +13,30 @@ GIS = (ROOT / "assets" / "js" / "gis-io.js").read_text(encoding="utf-8")
 GPKG = (ROOT / "assets" / "js" / "workers" / "gis-gpkg-worker.js").read_text(encoding="utf-8")
 GIS_ADAPTERS = (ROOT / "assets" / "js" / "gis-adapters.js").read_text(encoding="utf-8")
 PROJECT_STATE = (ROOT / "assets" / "js" / "modules" / "project-state.js").read_text(encoding="utf-8")
+DRAWING_SERVICE = (ROOT / "assets" / "js" / "modules" / "drawing-service.js").read_text(encoding="utf-8")
 
 
 class V0240CountryRegionModelTests(unittest.TestCase):
     def test_region_state_is_separate_from_generic_drawings(self):
-        self.assertIn("name: 'territorialUnits', history: true, fallback: () => []", PROJECT_STATE)
-        self.assertIn("name: 'territorialRelations', history: true, fallback: () => []", PROJECT_STATE)
+        self.assertIn("name: 'territorialUnits', scope: 'document', fallback: () => []", PROJECT_STATE)
+        self.assertIn("name: 'territorialRelations', scope: 'document', fallback: () => []", PROJECT_STATE)
         self.assertIn("territorialUnits: []", APP)
         self.assertIn("TERRITORIAL_UNIT_TYPES", APP)
-        rules = APP[APP.index("const DRAWING_CATEGORY_RULES"):APP.index("const DRAWING_ROLE_LABELS")]
+        rules = DRAWING_SERVICE[DRAWING_SERVICE.index("export const DRAWING_CATEGORY_RULES"):DRAWING_SERVICE.index("export const DRAWING_ROLE_LABELS")]
         self.assertNotIn("territory:", rules)
         self.assertNotIn("administrative:", rules)
-        drawing_categories = INDEX[INDEX.index('id="drawingCategoryInput"'):INDEX.index('</select>', INDEX.index('id="drawingCategoryInput"'))]
-        self.assertNotIn('<option value="territory">', drawing_categories)
-        self.assertNotIn('<option value="administrative">', drawing_categories)
+        self.assertNotIn("river:", rules)
+        self.assertNotIn("lake:", rules)
+        self.assertNotIn('id="drawingCategoryInput"', INDEX)
+
+    def test_hydro_edits_are_a_separate_project_domain(self):
+        self.assertIn("name: 'hydroEdits', scope: 'document', fallback: () => []", PROJECT_STATE)
+        self.assertIn("hydroEdits: []", APP)
+        self.assertIn('id="drawingsLayerChildren"', INDEX)
+        self.assertIn("layerGroup: 'hydro'", APP)
+        self.assertIn('id="hydroEditFields"', INDEX)
+        self.assertIn("function renderHydroEdits()", APP)
+        self.assertIn("state.hydroEdits.push(feature)", APP)
 
     def test_model_normalizes_relations_and_transactions(self):
         for symbol in (
@@ -35,7 +45,7 @@ class V0240CountryRegionModelTests(unittest.TestCase):
             "runTerritorialTransaction", "parentCreatesCycle",
         ):
             self.assertIn(f"function {symbol}", MODEL)
-        self.assertIn("TERRITORIAL_STATUS", MODEL)
+        self.assertIn("isRemainder", MODEL)
         for operation in ("transferGeometry", "mergeUnits", "splitUnit", "editBoundary"):
             self.assertIn(f"function {operation}", GEOMETRY)
 
@@ -66,13 +76,13 @@ class V0240CountryRegionModelTests(unittest.TestCase):
         self.assertIn("syncHardLandDependents", APP)
         self.assertIn("transferLandDependents", APP)
         self.assertIn("reassignLandDependents", APP)
-        self.assertIn("COUNTRY_REGION_STATUS.UNASSIGNED", APP)
+        self.assertIn("properties?.isRemainder", APP)
 
     def test_geopackage_and_geojson_round_trip_dedicated_layers(self):
         for table in ("territories", "administrative_units"):
             self.assertIn(table, GIS_ADAPTERS)
-        self.assertIn("administrative_areas", GIS_ADAPTERS)
-        for field in ("sovereign_id", "parent_id", "admin_level", "status", "properties_json"):
+        self.assertNotIn("administrative_areas", GIS_ADAPTERS)
+        for field in ("sovereign_id", "parent_id", "admin_level", "is_remainder", "properties_json"):
             self.assertIn(field, GIS_ADAPTERS)
         self.assertIn("PandoLabGisAdapters.territorialRows", GPKG)
         self.assertIn("gisAdapters.importTerritorialFeature", GIS)
