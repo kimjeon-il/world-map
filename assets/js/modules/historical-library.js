@@ -24,10 +24,10 @@ function dateContains(version, referenceDate) {
   return (start == null || start <= year) && (end == null || end >= year);
 }
 
-export function normalizeGeometryVersion(raw, { makeId } = {}) {
+export function normalizeGeometryVersion(raw) {
   const geometry = POLYGON_TYPES.has(raw?.geometry?.type) ? clone(raw.geometry) : null;
   if (!geometry) return null;
-  const id = text(raw.id) || text(typeof makeId === 'function' ? makeId() : '');
+  const id = text(raw.id);
   if (!id) return null;
   return {
     id,
@@ -41,23 +41,31 @@ export function normalizeGeometryVersion(raw, { makeId } = {}) {
   };
 }
 
-export function normalizeHistoricalLibraryEntity(raw, { makeVersionId } = {}) {
+export function normalizeHistoricalLibraryEntity(raw) {
   const type = text(raw?.type).toLowerCase();
-  const libraryId = text(raw?.libraryId || raw?.library_id);
+  const libraryId = text(raw?.libraryId);
   if (!libraryId || !TYPES.has(type)) return null;
-  const geometryVersions = (raw.geometryVersions || []).map(version => normalizeGeometryVersion(version, { makeId: makeVersionId })).filter(Boolean);
+  const geometryVersions = [];
+  const versionIds = new Set();
+  for (const rawVersion of raw.geometryVersions || []) {
+    const version = normalizeGeometryVersion(rawVersion);
+    if (!version) throw new Error(`${libraryId}의 경계 버전 형식이 올바르지 않습니다.`);
+    if (versionIds.has(version.id)) throw new Error(`${libraryId}의 경계 버전 ID가 중복되었습니다: ${version.id}`);
+    versionIds.add(version.id);
+    geometryVersions.push(version);
+  }
   return {
     libraryId,
     schemaVersion: HISTORICAL_LIBRARY_SCHEMA_VERSION,
     type,
-    canonicalName: text(raw.canonicalName || raw.canonical_name) || libraryId,
+    canonicalName: text(raw.canonicalName) || libraryId,
     displayNames: raw.displayNames && typeof raw.displayNames === 'object' ? clone(raw.displayNames) : {},
     alternateNames: [...new Set((raw.alternateNames || []).map(text).filter(Boolean))],
-    startDate: text(raw.startDate || raw.start_date) || null,
-    endDate: text(raw.endDate || raw.end_date) || null,
-    parentLibraryId: text(raw.parentLibraryId || raw.parent_library_id),
-    sovereignLibraryId: text(raw.sovereignLibraryId || raw.sovereign_library_id),
-    adminLevel: type === LIBRARY_ENTITY_TYPES.ADMIN ? Math.max(1, Number(raw.adminLevel || raw.admin_level || 1)) : null,
+    startDate: text(raw.startDate) || null,
+    endDate: text(raw.endDate) || null,
+    parentLibraryId: text(raw.parentLibraryId),
+    sovereignLibraryId: text(raw.sovereignLibraryId),
+    adminLevel: type === LIBRARY_ENTITY_TYPES.ADMIN ? Math.max(1, Number(raw.adminLevel || 1)) : null,
     geometryVersions,
     metadata: raw.metadata && typeof raw.metadata === 'object' ? clone(raw.metadata) : {},
     sourceInfo: raw.sourceInfo && typeof raw.sourceInfo === 'object' ? clone(raw.sourceInfo) : {},
@@ -133,14 +141,22 @@ export function normalizeWorldSnapshot(raw) {
   };
 }
 
-export function createHistoricalLibrary({ entities = [], snapshots = [] } = {}) {
+export function createHistoricalLibrary({ schemaVersion, entities = [], snapshots = [] } = {}) {
+  if (Number(schemaVersion) !== HISTORICAL_LIBRARY_SCHEMA_VERSION) throw new Error('역사 라이브러리 schemaVersion이 현재 형식과 일치하지 않습니다.');
   const entityMap = new Map();
   for (const raw of entities) {
     const entity = normalizeHistoricalLibraryEntity(raw);
-    if (!entity || entityMap.has(entity.libraryId)) continue;
+    if (!entity) throw new Error('역사 라이브러리 객체 형식이 올바르지 않습니다.');
+    if (entityMap.has(entity.libraryId)) throw new Error(`역사 라이브러리 ID가 중복되었습니다: ${entity.libraryId}`);
     entityMap.set(entity.libraryId, entity);
   }
-  const snapshotMap = new Map((snapshots || []).map(normalizeWorldSnapshot).filter(Boolean).map(snapshot => [snapshot.id, snapshot]));
+  const snapshotMap = new Map();
+  for (const raw of snapshots || []) {
+    const snapshot = normalizeWorldSnapshot(raw);
+    if (!snapshot) throw new Error('세계 스냅샷 ID가 비어 있습니다.');
+    if (snapshotMap.has(snapshot.id)) throw new Error(`세계 스냅샷 ID가 중복되었습니다: ${snapshot.id}`);
+    snapshotMap.set(snapshot.id, snapshot);
+  }
   return Object.freeze({
     get: id => entityMap.get(text(id)) || null,
     list: () => [...entityMap.values()],

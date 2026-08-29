@@ -28,7 +28,7 @@ test('historical entities use stable IDs and select the geometry version for a r
 });
 
 test('library search covers multilingual names aliases dates types and current/past status', () => {
-  const library = createHistoricalLibrary({ entities: [
+  const library = createHistoricalLibrary({ schemaVersion: 1, entities: [
     { libraryId: 'past', type: 'country', canonicalName: 'Czechoslovakia', displayNames: { ko: '체코슬로바키아' }, alternateNames: ['Československo'], startDate: '1918', endDate: '1992', geometryVersions: [{ id: 'past-v', geometry: square() }] },
     { libraryId: 'current', type: 'region', canonicalName: 'Current region', endDate: null, geometryVersions: [{ id: 'current-v', geometry: square() }] },
   ] });
@@ -66,7 +66,7 @@ test('pilot geometry is materialized from member countries and instances retain 
 
 test('world snapshots remain templates with independent reference lists', () => {
   const refs = ['one'];
-  const library = createHistoricalLibrary({ snapshots: [{ id: 'snapshot', name: 'Snapshot', referenceDate: '1914', entityRefs: refs }] });
+  const library = createHistoricalLibrary({ schemaVersion: 1, snapshots: [{ id: 'snapshot', name: 'Snapshot', referenceDate: '1914', entityRefs: refs }] });
   refs.push('two');
   assert.deepEqual(library.getSnapshot('snapshot').entityRefs, ['one']);
 });
