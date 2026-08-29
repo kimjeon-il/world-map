@@ -13,6 +13,7 @@ GIS = (ROOT / "assets" / "js" / "gis-io.js").read_text(encoding="utf-8")
 GPKG = (ROOT / "assets" / "js" / "workers" / "gis-gpkg-worker.js").read_text(encoding="utf-8")
 GIS_ADAPTERS = (ROOT / "assets" / "js" / "gis-adapters.js").read_text(encoding="utf-8")
 PROJECT_STATE = (ROOT / "assets" / "js" / "modules" / "project-state.js").read_text(encoding="utf-8")
+DRAWING_SERVICE = (ROOT / "assets" / "js" / "modules" / "drawing-service.js").read_text(encoding="utf-8")
 
 
 class V0240CountryRegionModelTests(unittest.TestCase):
@@ -21,7 +22,7 @@ class V0240CountryRegionModelTests(unittest.TestCase):
         self.assertIn("name: 'territorialRelations', scope: 'document', fallback: () => []", PROJECT_STATE)
         self.assertIn("territorialUnits: []", APP)
         self.assertIn("TERRITORIAL_UNIT_TYPES", APP)
-        rules = APP[APP.index("const DRAWING_CATEGORY_RULES"):APP.index("const DRAWING_ROLE_LABELS")]
+        rules = DRAWING_SERVICE[DRAWING_SERVICE.index("export const DRAWING_CATEGORY_RULES"):DRAWING_SERVICE.index("export const DRAWING_ROLE_LABELS")]
         self.assertNotIn("territory:", rules)
         self.assertNotIn("administrative:", rules)
         self.assertNotIn("river:", rules)

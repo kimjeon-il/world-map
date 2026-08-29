@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { selectUiOption } from './helpers/ui-select.mjs';
 
 async function openApp(page) {
   const errors = [];
@@ -114,7 +115,7 @@ test('built-in hydro can hide but has no delete menu, while a user distribution 
 
   await page.locator('#createMenuBtn').click();
   await page.locator('#addDistributionBtn').click();
-  await page.locator('#distributionTypeInput').selectOption('language');
+  await selectUiOption(page, '#distributionTypeInput', 'language');
   page.once('dialog', dialog => dialog.accept('잠금 가시성 테스트'));
   await page.locator('#distributionTypeConfirmBtn').click();
   await openFolder(page, 'languages');

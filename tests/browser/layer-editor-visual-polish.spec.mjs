@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { selectUiOption } from './helpers/ui-select.mjs';
 
 const layouts = [
   { name: 'wide', width: 1440, height: 900 },
@@ -75,7 +76,7 @@ for (const layout of layouts) {
       '영역별 가장 높은 비율',
       '선택한 분포의 비율',
     ]);
-    await page.locator('#distributionLayerModeInput').selectOption('intensity');
+    await selectUiOption(page, '#distributionLayerModeInput', 'intensity');
     await expect(page.locator('#distributionLayerModeHint')).toHaveText('선택한 분포를 비율이 높을수록 진하게 표시합니다.');
     await page.locator('#layerPresentationCloseBtn').click();
     await expect(page.locator('#mapSheetTitle')).toHaveText('레이어');
