@@ -17,8 +17,8 @@ PROJECT_STATE = (ROOT / "assets" / "js" / "modules" / "project-state.js").read_t
 
 class V0240CountryRegionModelTests(unittest.TestCase):
     def test_region_state_is_separate_from_generic_drawings(self):
-        self.assertIn("name: 'territorialUnits', history: true, fallback: () => []", PROJECT_STATE)
-        self.assertIn("name: 'territorialRelations', history: true, fallback: () => []", PROJECT_STATE)
+        self.assertIn("name: 'territorialUnits', scope: 'document', fallback: () => []", PROJECT_STATE)
+        self.assertIn("name: 'territorialRelations', scope: 'document', fallback: () => []", PROJECT_STATE)
         self.assertIn("territorialUnits: []", APP)
         self.assertIn("TERRITORIAL_UNIT_TYPES", APP)
         rules = APP[APP.index("const DRAWING_CATEGORY_RULES"):APP.index("const DRAWING_ROLE_LABELS")]
@@ -29,7 +29,7 @@ class V0240CountryRegionModelTests(unittest.TestCase):
         self.assertNotIn('id="drawingCategoryInput"', INDEX)
 
     def test_hydro_edits_are_a_separate_project_domain(self):
-        self.assertIn("name: 'hydroEdits', history: true, fallback: () => []", PROJECT_STATE)
+        self.assertIn("name: 'hydroEdits', scope: 'document', fallback: () => []", PROJECT_STATE)
         self.assertIn("hydroEdits: []", APP)
         self.assertIn('id="hydroLayerChildren"', INDEX)
         self.assertIn('id="hydroEditFields"', INDEX)
