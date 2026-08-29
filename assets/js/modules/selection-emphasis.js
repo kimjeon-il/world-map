@@ -1,7 +1,7 @@
 export const SELECTION_STYLE = Object.freeze({
   color: '#346733',
   primaryWidth: 2.5,
-  primaryAlpha: 0.96,
+  primaryAlpha: 1.0,
   secondaryWidth: 1.5,
   secondaryAlpha: 0.72,
 });
