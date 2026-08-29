@@ -35,22 +35,16 @@ async function openApp(page, layout) {
 }
 
 for (const layout of layouts) {
-  test(`${layout.name} keeps layer settings in the header and uses compact editor highlights`, async ({ page }) => {
+  test(`${layout.name} keeps map views and editor highlights visually consistent`, async ({ page }) => {
     test.setTimeout(180_000);
     const errors = await openApp(page, layout);
 
-    await expect(page.locator('.layer-panel-header .layer-header-title-group')).toContainText('레이어');
-    await expect(page.locator('.layer-panel-header #layerPresentationBtn')).toBeVisible();
-    const headerSpacing = await page.locator('.layer-header-title-group').evaluate(group => {
-      const title = group.querySelector('#mapSheetTitle').getBoundingClientRect();
-      const button = group.querySelector('#layerPresentationBtn').getBoundingClientRect();
-      return { gap: button.left - title.right, buttonWidth: button.width, buttonHeight: button.height };
-    });
-    expect(headerSpacing.gap).toBeGreaterThanOrEqual(0);
-    expect(headerSpacing.gap).toBeLessThanOrEqual(8);
-    const expectedHeaderButtonSize = layout.name === 'mobile' ? 48 : 32;
-    expect(headerSpacing.buttonWidth).toBeCloseTo(expectedHeaderButtonSize, 4);
-    expect(headerSpacing.buttonHeight).toBeCloseTo(expectedHeaderButtonSize, 4);
+    await expect(page.locator('#mapSheetTitle')).toHaveText('지도');
+    await expect(page.locator('#mapPanelTabs')).toBeVisible();
+    await expect(page.locator('#mapLayersTabBtn')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#mapViewTabBtn')).toHaveAttribute('aria-selected', 'false');
+    await expect(page.locator('#layerPresentationBtn, #layerPresentationCloseBtn, #layerPresentationModal')).toHaveCount(0);
+    expect(await page.locator('#layerSection .layer-category-title').allTextContents()).not.toContain('라벨');
 
     await expect(page.locator('#countriesLocked')).toBeHidden();
     expect(await page.locator('#countriesLocked').boundingBox()).toBeNull();
@@ -65,13 +59,71 @@ for (const layout of layouts) {
       const positions = rowAlignment.map(row => row[key]);
       expect(Math.max(...positions) - Math.min(...positions)).toBeLessThanOrEqual(1);
     }
+    const layerNameLayout = await page.locator('.layer-folder-row').evaluateAll(rows => rows.map(row => {
+      const name = row.querySelector(':scope > .layer-folder-name');
+      const rowBox = row.getBoundingClientRect();
+      const nameBox = name.getBoundingClientRect();
+      return {
+        text: name.textContent.trim(),
+        clientWidth: name.clientWidth,
+        scrollWidth: name.scrollWidth,
+        rightInset: rowBox.right - nameBox.right,
+      };
+    }));
+    for (const item of layerNameLayout) {
+      expect(item.clientWidth, `${item.text} 이름 칸 너비`).toBeGreaterThan(18);
+      expect(item.scrollWidth, `${item.text} 이름이 잘리지 않아야 함`).toBeLessThanOrEqual(item.clientWidth + 1);
+      expect(item.rightInset, `${item.text} 이름이 행 밖으로 나가지 않아야 함`).toBeGreaterThanOrEqual(0);
+    }
 
-    await page.locator('#layerPresentationBtn').click();
-    await expect(page.locator('#mapSheetTitle')).toHaveText('레이어 표시 설정');
-    await expect(page.locator('#layerPresentationCloseBtn')).toBeVisible();
-    await expect(page.locator('#layerPresentationCloseBtn')).toBeFocused();
-    await expect(page.locator('#layerPresentationBtn')).toBeHidden();
-    await expect(page.locator('#layerPresentationDoneBtn, .layer-subview-header')).toHaveCount(0);
+    const countryVisibility = page.locator('#countriesVisible');
+    const visibleEye = await countryVisibility.evaluate(input => {
+      const box = input.getBoundingClientRect();
+      const icon = getComputedStyle(input, '::before');
+      return { width: box.width, height: box.height, iconWidth: icon.width, mask: icon.maskImage || icon.webkitMaskImage };
+    });
+    const expectedVisibilityTarget = layout.name === 'mobile' ? 48 : 42;
+    expect(visibleEye.width).toBeCloseTo(expectedVisibilityTarget, 1);
+    expect(visibleEye.height).toBeCloseTo(expectedVisibilityTarget, 1);
+    expect(visibleEye.iconWidth).toBe('20px');
+    expect(visibleEye.mask).toContain('svg');
+    await expect(countryVisibility).toHaveAttribute('data-tooltip', '국가 숨기기');
+    await countryVisibility.click();
+    await expect(countryVisibility).not.toBeChecked();
+    await expect(countryVisibility).toHaveAttribute('data-tooltip', '국가 표시');
+    const hiddenEyeMask = await countryVisibility.evaluate(input => {
+      const icon = getComputedStyle(input, '::before');
+      return icon.maskImage || icon.webkitMaskImage;
+    });
+    expect(hiddenEyeMask).not.toBe(visibleEye.mask);
+    await countryVisibility.click();
+    await expect(countryVisibility).toBeChecked();
+
+    const mapTabMetrics = await page.locator('#mapPanelTabs').evaluate(tabs => {
+      const active = tabs.querySelector('[aria-selected="true"]');
+      const inactive = tabs.querySelector('[aria-selected="false"]');
+      const activeMark = getComputedStyle(active, '::after');
+      const inactiveMark = getComputedStyle(inactive, '::after');
+      return {
+        width: activeMark.width,
+        height: activeMark.height,
+        radius: activeMark.borderRadius,
+        activeOpacity: activeMark.opacity,
+        inactiveOpacity: inactiveMark.opacity,
+      };
+    });
+    expect(mapTabMetrics).toMatchObject({ width: '30px', height: '3px', radius: '999px', activeOpacity: '1', inactiveOpacity: '0' });
+
+    await page.locator('#mapViewTabBtn').click();
+    await expect(page.locator('#mapViewTabBtn')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#mapLayersTabBtn')).toHaveAttribute('aria-selected', 'false');
+    await expect(page.locator('#mapViewSection')).toBeVisible();
+    await expect(page.locator('#layerSection')).toBeHidden();
+    await expect.poll(() => page.locator('#projectionControl').evaluate(control => control.parentElement?.id)).toBe('mapViewProjectionSlot');
+    await expect(page.locator('#projectionControl')).toContainText('지구본');
+    await expect(page.locator('#projectionControl')).toContainText('평면');
+    await expect(page.locator('label:has(#basemapLabelsVisible)')).toContainText('국가명 표시');
+    await expect(page.locator('label:has(#labelsVisible)')).toContainText('도시·지명 표시');
     await expect(page.locator('#distributionLayerSettingsTitle')).toHaveText('분포가 겹칠 때');
     await expect(page.locator('#distributionLayerModeInput option')).toHaveText([
       '영역별 가장 높은 비율',
@@ -79,9 +131,10 @@ for (const layout of layouts) {
     ]);
     await page.locator('#distributionLayerModeInput').selectOption('intensity');
     await expect(page.locator('#distributionLayerModeHint')).toHaveText('선택한 분포를 비율이 높을수록 진하게 표시합니다.');
-    await page.locator('#layerPresentationCloseBtn').click();
-    await expect(page.locator('#mapSheetTitle')).toHaveText('레이어');
-    await expect(page.locator('#layerPresentationBtn')).toBeFocused();
+    await page.locator('#mapViewTabBtn').focus();
+    await page.keyboard.press('ArrowLeft');
+    await expect(page.locator('#mapLayersTabBtn')).toBeFocused();
+    await expect(page.locator('#layerSection')).toBeVisible();
 
     const search = page.locator('#layerSearchInput');
     await search.fill('폴란드');

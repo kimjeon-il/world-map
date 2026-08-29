@@ -117,16 +117,16 @@ test('mobile sheets hide header close buttons and resize from the full header', 
   await dragHeader(page, '#leftPanel', -180);
   const expandedHeight = await page.locator('#leftPanel').evaluate(element => element.getBoundingClientRect().height);
   expect(expandedHeight).toBeGreaterThan(initialHeight);
-  await expect(page.locator('#leftPanel')).toHaveAttribute('data-sheet-snap', '2');
+  await expect(page.locator('#leftPanel')).toHaveAttribute('data-sheet-snap', '1');
 
-  await page.getByRole('slider', { name: '레이어 창 높이 조절' }).press('Home');
+  await page.getByRole('slider', { name: '지도 창 높이 조절' }).press('Home');
   await expect(page.locator('#leftPanel')).toHaveAttribute('data-sheet-snap', '0');
   await dragHeader(page, '#leftPanel', 240, 450);
   await expect(page.locator('#leftPanel')).toBeHidden();
   await expect(page.locator('#mobileMapBtn')).toHaveAttribute('aria-expanded', 'false');
 });
 
-test('sheet body expands at scroll top but preserves an already scrolled container', async ({ page }) => {
+test('editor sheet body always keeps vertical touch gestures for content scrolling', async ({ page }) => {
   await openApp(page);
   await openSheet(page, '#mobileEditBtn', '#rightPanel');
   await page.locator('#editorScrollBody').evaluate(body => {
@@ -137,6 +137,7 @@ test('sheet body expands at scroll top but preserves an already scrolled contain
     body.prepend(scroll);
   });
   const probe = page.locator('#sheetGestureScrollProbe');
+  await expect(page.locator('#editorScrollBody')).toHaveCSS('touch-action', 'pan-y');
   await probe.evaluate(element => { element.scrollTop = 80; });
   const scrolledHeight = await page.locator('#rightPanel').evaluate(element => element.getBoundingClientRect().height);
   const scrolledStart = await startBodyTouch(page, '#sheetGestureScrollProbe');
@@ -148,10 +149,38 @@ test('sheet body expands at scroll top but preserves an already scrolled contain
   await probe.evaluate(element => { element.scrollTop = 0; });
   const topStart = await startBodyTouch(page, '#sheetGestureScrollProbe', 82);
   const topMove = await finishBodyTouch(page, '#sheetGestureScrollProbe', topStart, -180, 82);
-  const expandedHeight = await page.locator('#rightPanel').evaluate(element => element.getBoundingClientRect().height);
-  expect(topMove.movePrevented).toBe(true);
-  expect(expandedHeight).toBeGreaterThan(unchangedHeight);
-  await expect(page.locator('#rightPanel')).toHaveAttribute('data-sheet-snap', '2');
+  const topHeight = await page.locator('#rightPanel').evaluate(element => element.getBoundingClientRect().height);
+  expect(topMove.movePrevented).toBe(false);
+  expect(Math.abs(topHeight - unchangedHeight)).toBeLessThanOrEqual(1);
+  await expect(page.locator('#rightPanel')).toHaveAttribute('data-sheet-snap', '0');
+});
+
+test('map layer and view bodies keep touch scrolling while nested folders chain outward', async ({ page }) => {
+  await openApp(page);
+  const initialHeight = await openSheet(page, '#mobileMapBtn', '#leftPanel');
+  const layerList = page.locator('.layer-list');
+  await expect(layerList).toHaveCSS('touch-action', 'pan-y');
+  await expect(layerList).toHaveCSS('overscroll-behavior-y', 'contain');
+
+  await page.locator('[data-layer-folder-toggle="countries"]').first().tap();
+  const countryChildren = page.locator('#countriesLayerChildren');
+  await expect(countryChildren).toBeVisible();
+  await expect(countryChildren).toHaveCSS('touch-action', 'pan-y');
+  await expect(countryChildren).toHaveCSS('overscroll-behavior-y', 'auto');
+  const layerStart = await startBodyTouch(page, '#countriesLayerChildren', 83);
+  const layerMove = await finishBodyTouch(page, '#countriesLayerChildren', layerStart, -160, 83);
+  expect(layerMove.movePrevented).toBe(false);
+  expect(Math.abs(await page.locator('#leftPanel').evaluate(element => element.getBoundingClientRect().height) - initialHeight)).toBeLessThanOrEqual(1);
+
+  await page.locator('#mapViewTabBtn').tap();
+  const view = page.locator('#mapViewSection');
+  await expect(view).toBeVisible();
+  await expect(view).toHaveCSS('touch-action', 'pan-y');
+  await expect(view).toHaveCSS('overscroll-behavior-y', 'contain');
+  const viewStart = await startBodyTouch(page, '#mapViewSection', 84);
+  const viewMove = await finishBodyTouch(page, '#mapViewSection', viewStart, -160, 84);
+  expect(viewMove.movePrevented).toBe(false);
+  expect(Math.abs(await page.locator('#leftPanel').evaluate(element => element.getBoundingClientRect().height) - initialHeight)).toBeLessThanOrEqual(1);
 });
 
 test('active navigation and browser back both dismiss the current mobile sheet', async ({ page }) => {

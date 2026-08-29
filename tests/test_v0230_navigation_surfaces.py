@@ -13,12 +13,14 @@ SURFACE = (ROOT / "assets/js/modules/surface-controller.js").read_text(encoding=
 
 
 class V0230NavigationSurfaceTests(unittest.TestCase):
-    def test_primary_navigation_is_layer_add_edit_in_every_layout(self):
+    def test_primary_navigation_is_map_add_edit_in_every_layout(self):
         nav = re.search(r'<nav class="[^"]*adaptive-nav[^"]*".*?</nav>', INDEX, re.S).group(0)
-        self.assertLess(nav.index('<strong>레이어</strong>'), nav.index('<strong>추가</strong>'))
+        self.assertLess(nav.index('<strong>지도</strong>'), nav.index('<strong>추가</strong>'))
         self.assertLess(nav.index('<strong>추가</strong>'), nav.index('<strong>편집</strong>'))
-        self.assertNotIn('<strong>지도</strong>', nav)
-        self.assertIn('<strong id="mapSheetTitle">레이어</strong>', INDEX)
+        self.assertNotIn('<strong>레이어</strong>', nav)
+        self.assertIn('<strong id="mapSheetTitle">지도</strong>', INDEX)
+        self.assertIn('id="mapLayersTabBtn"', INDEX)
+        self.assertIn('id="mapViewTabBtn"', INDEX)
 
     def test_editor_trigger_is_outside_the_view_toolbar(self):
         view_toolbar = re.search(r'<div class="[^"]*map-view-toolbar[^"]*".*?</div>\s*\n\s*<div class="editor-edge-slot"', INDEX, re.S)
@@ -75,8 +77,27 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertIn('LAYER_VIRTUAL_ROW_HEIGHT', APP)
         self.assertIn('renderVirtualizedLayerGroup', APP)
         self.assertIn('const folderKeys = activeLayerFolderKeys();', APP)
-        self.assertIn('if (!key.startsWith(COUNTRY_REGION_FOLDER_STATE_PREFIX)) state.layerFolders[key] = false;', APP)
+        self.assertIn("const HYDRO_FOLDER_STATE_PREFIX = 'hydro-folder:';", APP)
+        self.assertIn('if (!key.startsWith(COUNTRY_REGION_FOLDER_STATE_PREFIX) && !key.startsWith(HYDRO_FOLDER_STATE_PREFIX)) state.layerFolders[key] = false;', APP)
         self.assertIn('searchText: id', APP)
+
+    def test_sheet_content_owns_vertical_scrolling(self):
+        self.assertNotIn('activeSheetTouch', APP)
+        self.assertNotIn('sheetScrollableAncestor', APP)
+        self.assertNotIn("body.addEventListener('touchmove'", APP)
+        for selector in (
+            '.layer-list',
+            '.editor-scroll-body',
+            '.map-view-panel-section',
+            '.layer-search-results',
+        ):
+            rules = re.findall(rf'(?m)^{re.escape(selector)}\s*\{{([^}}]+)\}}', CSS)
+            self.assertTrue(rules, selector)
+            self.assertTrue(any('overflow-y: auto' in rule and 'touch-action: pan-y' in rule for rule in rules), selector)
+        children = re.search(r'\.layer-children\s*\{([^}]+)\}', CSS)
+        self.assertIsNotNone(children)
+        self.assertIn('overscroll-behavior-y: auto', children.group(1))
+        self.assertIn('touch-action: pan-y', children.group(1))
 
     def test_build_version_is_v0230(self):
         self.assertIn('data-app-version="0.30.0"', INDEX)
