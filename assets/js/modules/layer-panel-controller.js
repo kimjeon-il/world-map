@@ -38,6 +38,13 @@ export function createLayerPanelController({
       elements.search.focus({ preventScroll: true });
     });
     elements.section?.addEventListener('click', event => {
+      const styleToggle = event.target.closest('[data-layer-style-toggle]');
+      if (styleToggle) {
+        event.preventDefault();
+        event.stopPropagation();
+        commands.toggleLayerStyle?.(styleToggle.dataset.layerStyleToggle);
+        return;
+      }
       const menu = event.target.closest('[data-layer-item-menu]');
       if (menu) {
         event.stopPropagation();
@@ -72,6 +79,16 @@ export function createLayerPanelController({
       commands.syncVisibilityToggle?.(event.target);
       const checkbox = event.target.closest('[data-layer-item-visibility]');
       if (checkbox) commands.setItemVisibility(checkbox.dataset.layerItemVisibility, checkbox.dataset.itemId, checkbox.checked);
+      const opacity = event.target.closest('[data-layer-style-opacity]');
+      if (opacity) commands.updateLayerStyle?.(opacity.dataset.layerStyleOpacity, { opacity: Number(opacity.value) / 100 });
+      const boundary = event.target.closest('[data-layer-style-boundary]');
+      if (boundary) commands.updateLayerStyle?.(boundary.dataset.layerStyleBoundary, { boundaryVisible: boundary.checked });
+      const distributionMode = event.target.closest('[data-layer-distribution-mode]');
+      if (distributionMode) commands.setDistributionRenderMode?.(distributionMode.value);
+    });
+    elements.section?.addEventListener('input', event => {
+      const opacity = event.target.closest('[data-layer-style-opacity]');
+      if (opacity) commands.updateLayerStyle?.(opacity.dataset.layerStyleOpacity, { opacity: Number(opacity.value) / 100 });
     });
   }
 

@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { selectUiOption } from './helpers/ui-select.mjs';
 
 const layouts = [
   { name: 'wide', width: 1440, height: 900 },
@@ -121,14 +120,15 @@ for (const layout of layouts) {
     await expect.poll(() => page.locator('#projectionControl').evaluate(control => control.parentElement?.id)).toBe('mapViewProjectionSlot');
     await expect(page.locator('#projectionControl')).toContainText('지구본');
     await expect(page.locator('#projectionControl')).toContainText('평면');
-    await expect(page.locator('label:has(#basemapLabelsVisible)')).toContainText('국가명 표시');
-    await expect(page.locator('label:has(#labelsVisible)')).toContainText('도시·지명 표시');
-    await expect(page.locator('#distributionLayerSettingsTitle')).toHaveText('분포가 겹칠 때');
+    await page.locator('#mapLayersTabBtn').click();
+    await expect(page.locator('label:has(#basemapLabelsVisible)')).toContainText('국가명 라벨');
+    await expect(page.locator('label:has(#labelsVisible)')).toContainText('도시·지명');
+    await page.locator('[data-layer-style-toggle="distribution"]').click();
     await expect(page.locator('#distributionLayerModeInput option')).toHaveText([
       '영역별 가장 높은 비율',
       '선택한 분포의 비율',
     ]);
-    await selectUiOption(page, '#distributionLayerModeInput', 'intensity');
+    await page.locator('#distributionLayerModeInput').selectOption('intensity');
     await expect(page.locator('#distributionLayerModeHint')).toHaveText('선택한 분포를 비율이 높을수록 진하게 표시합니다.');
     await page.locator('#mapViewTabBtn').focus();
     await page.keyboard.press('ArrowLeft');
