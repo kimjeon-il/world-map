@@ -95,6 +95,39 @@ function pointInGeometry(point, geometry) {
   ));
 }
 
+function ringBounds(ring) {
+  const bounds = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const point of ring || []) {
+    if (!finitePoint(point)) continue;
+    bounds[0] = Math.min(bounds[0], point[0]);
+    bounds[1] = Math.min(bounds[1], point[1]);
+    bounds[2] = Math.max(bounds[2], point[0]);
+    bounds[3] = Math.max(bounds[3], point[1]);
+  }
+  return bounds;
+}
+
+function prepareGeometryContains(geometry) {
+  return polygonCoordinates(geometry).filter(polygon => polygon?.[0]?.length).map(polygon => ({
+    outer: polygon[0],
+    outerBounds: ringBounds(polygon[0]),
+    holes: polygon.slice(1).map(ring => ({ ring, bounds: ringBounds(ring) })),
+  }));
+}
+
+function boundsContain(bounds, point) {
+  return point[0] >= bounds[0] - 1e-9 && point[0] <= bounds[2] + 1e-9
+    && point[1] >= bounds[1] - 1e-9 && point[1] <= bounds[3] + 1e-9;
+}
+
+function pointInPreparedGeometry(point, prepared) {
+  return prepared.some(polygon => (
+    boundsContain(polygon.outerBounds, point)
+    && pointInRing(point, polygon.outer)
+    && !polygon.holes.some(hole => boundsContain(hole.bounds, point) && pointInRing(point, hole.ring))
+  ));
+}
+
 function unwrapLongitude(longitude, centerLongitude) {
   let value = Number(longitude);
   while (value - centerLongitude > 180) value -= 360;
@@ -566,7 +599,7 @@ function ringSelfIntersects(ring, workspace) {
   return false;
 }
 
-function validateConnector(connector, chain, donorGeometry, targetGeometry, config) {
+function validateConnector(connector, chain, donorContains, targetContains, config) {
   const [left, right] = connector;
   const leftMetric = chain.workspace.toMeters(left);
   const rightMetric = chain.workspace.toMeters(right);
@@ -579,8 +612,8 @@ function validateConnector(connector, chain, donorGeometry, targetGeometry, conf
     const metric = chain.workspace.toMeters(coordinate);
     const frontier = index.nearest(metric, config.connectorBorderCorridorM);
     const nearBorder = !!frontier && frontier.distance <= config.connectorBorderCorridorM;
-    if (!pointInGeometry(coordinate, donorGeometry) && !nearBorder) return { valid: false, reason: 'outside-donor', length };
-    if (pointInGeometry(coordinate, targetGeometry) && !nearBorder) return { valid: false, reason: 'inside-target', length };
+    if (!nearBorder && !pointInPreparedGeometry(coordinate, donorContains)) return { valid: false, reason: 'outside-donor', length };
+    if (!nearBorder && pointInPreparedGeometry(coordinate, targetContains)) return { valid: false, reason: 'inside-target', length };
   }
   return { valid: true, length };
 }
@@ -716,10 +749,12 @@ export function buildMetricRiverAnnexCandidates({
   const seen = new Set();
   const topologyKey = stableTextHash(String(topologyRevision));
   const configKey = configFingerprint(config);
+  const targetContains = prepareGeometryContains(targetFeature.geometry);
   for (const row of donorFrontiers) {
     const donorFeature = row?.donorFeature;
     const donorCountryId = String(donorFeature?.properties?.editor_id || donorFeature?.id || '');
     if (!donorCountryId || !donorFeature?.geometry || !row?.segments?.length) continue;
+    const donorContains = prepareGeometryContains(donorFeature.geometry);
     const chains = buildSharedFrontierChains(row.segments);
     if (!chains.length) continue;
     const windowsByChain = new Map(chains.map(chain => [chain.key, buildWorkingWindows(chain, config)]));
@@ -737,6 +772,12 @@ export function buildMetricRiverAnnexCandidates({
           const runs = matchRunsForPart(sourcePoints, chain, windowsByChain.get(chain.key) || [chain], config, diagnostics);
           for (const run of runs) {
             diagnostics.matchedParallelRuns += 1;
+            const donorSideVerified = run.samples.every(sample => {
+              if (sample.frontier?.distance <= config.connectorBorderCorridorM) return true;
+              const coordinate = run.sourceWorkspace.toLonLat(sample.coordinate);
+              return pointInPreparedGeometry(coordinate, donorContains)
+                && !pointInPreparedGeometry(coordinate, targetContains);
+            });
             const startIntersection = actualIntersectionNear(run, chain, run.start.distanceAlong, config);
             const endIntersection = actualIntersectionNear(run, chain, run.end.distanceAlong, config);
             const startAnchor = startIntersection?.frontier || run.start.frontier;
@@ -780,7 +821,7 @@ export function buildMetricRiverAnnexCandidates({
             else connectors.push([frontierEnd.slice(), riverEnd.slice()]);
             let connectorsValid = true;
             for (const connector of connectors) {
-              const validation = validateConnector(connector, candidateChain, donorFeature.geometry, targetFeature.geometry, config);
+              const validation = validateConnector(connector, candidateChain, donorContains, targetContains, config);
               if (!validation.valid) {
                 if (validation.reason === 'length') diagnostics.rejectedByConnectorLength += 1;
                 else if (validation.reason === 'outside-donor') diagnostics.rejectedOutsideDonor += 1;
@@ -816,7 +857,9 @@ export function buildMetricRiverAnnexCandidates({
               diagnostics.rejectedBelowArea += 1;
               continue;
             }
-            const components = clipPocket(ring, donorFeature.geometry, targetFeature.geometry, clipper);
+            const components = donorSideVerified
+              ? [{ type: 'Polygon', coordinates: [ring.map(point => point.slice())] }]
+              : clipPocket(ring, donorFeature.geometry, targetFeature.geometry, clipper);
             if (!components.length) {
               diagnostics.rejectedOutsideDonor += 1;
               continue;

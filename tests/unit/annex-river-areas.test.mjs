@@ -12,6 +12,7 @@ const {
 } = await import('../../assets/js/modules/annex-geometry.js');
 
 const clipper = globalThis.polygonClipping;
+const { createLocalMetricWorkspace } = await import('../../assets/js/modules/river-annex-metric.js');
 
 function polygon(id, coordinates) {
   return {
@@ -160,4 +161,11 @@ test('discovery bounds use the shared frontier and expand in meters', () => {
   const expanded = expandRiverAnnexDiscoveryBounds(raw, 5000);
   assert.ok(expanded[0] < -0.04 && expanded[2] > 0.04);
   assert.ok(expanded[1] < -0.04 && expanded[3] > 0.14);
+});
+
+test('local metric workspaces unwrap coordinates across the date line', () => {
+  const workspace = createLocalMetricWorkspace([[179.9, 0], [-179.9, 0]]);
+  const left = workspace.toMeters([179.9, 0]);
+  const right = workspace.toMeters([-179.9, 0]);
+  assert.ok(Math.hypot(right[0] - left[0], right[1] - left[1]) < 25_000);
 });

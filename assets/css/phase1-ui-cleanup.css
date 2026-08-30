@@ -193,6 +193,7 @@ body.file-menu-open .mobile-backdrop {
   overflow-y: auto !important;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
+  padding-inline-start: var(--ui-scrollbar-size);
 }
 
 #gisImportForm > .gis-import-content-rail > .gis-form-grid {

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import test from 'node:test';
+import zlib from 'node:zlib';
 
 const app = fs.readFileSync(new URL('../../assets/js/app.js', import.meta.url), 'utf8');
 const geometry = fs.readFileSync(new URL('../../assets/js/modules/annex-geometry.js', import.meta.url), 'utf8');
@@ -8,6 +10,8 @@ const metric = fs.readFileSync(new URL('../../assets/js/modules/river-annex-metr
 const sourceWorker = fs.readFileSync(new URL('../../assets/js/workers/hydro-annex-source-worker.js', import.meta.url), 'utf8');
 const worker = fs.readFileSync(new URL('../../assets/js/workers/river-annex-worker.js', import.meta.url), 'utf8');
 const manifest = JSON.parse(fs.readFileSync(new URL('../../assets/data/hydro/annex-source-v1/manifest.json', import.meta.url), 'utf8'));
+const sourceBytes = fs.readFileSync(new URL('../../assets/data/hydro/annex-source-v1/source.json.gz', import.meta.url));
+const sourcePayload = JSON.parse(zlib.gunzipSync(sourceBytes));
 
 test('annex river UI preserves automatic multi-candidate selection and preview', () => {
   assert.match(app, /annexPhase === 'river-areas'/);
@@ -28,6 +32,12 @@ test('candidate discovery explicitly loads source-role rivers from the companion
   assert.equal(manifest.buildCorridorM, 10000);
   assert.ok(manifest.featureCount > 0);
   assert.ok(manifest.data.bytes > 0);
+  assert.equal(manifest.data.bytes, sourceBytes.length);
+  assert.equal(manifest.data.sha256, crypto.createHash('sha256').update(sourceBytes).digest('hex'));
+  assert.equal(sourcePayload.features.length, manifest.featureCount);
+  assert.ok(sourcePayload.features.every(feature => /^source-[a-f0-9]{20}$/.test(feature.id)));
+  assert.ok(sourcePayload.features.every(feature => feature.properties.category === 'river'));
+  assert.ok(sourcePayload.features.every(feature => !('width' in feature.properties)));
 });
 
 test('metric matching owns pocket generation and the worker injects polygon-clipping', () => {

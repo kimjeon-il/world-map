@@ -37,6 +37,15 @@ class ScrollbarSurfaceTests(unittest.TestCase):
         self.assertNotIn(".editor-scroll-body", mobile_auto)
         self.assertNotIn(".layer-children", mobile_auto)
 
+    def test_scroll_owners_use_explicit_content_rail_compensation(self):
+        self.assertRegex(CSS, r"#fileMenu\s*\{[^}]*padding-inline-start:\s*var\(--ui-scrollbar-size\);")
+        self.assertRegex(CSS, r"\.ui-select-listbox\s*\{[^}]*padding-inline-start:\s*var\(--ui-scrollbar-size\);")
+        self.assertRegex(CSS, r"\.layer-children\s*\{[^}]*calc\(var\(--ui-space-0-5\) \+ var\(--ui-scrollbar-size\)\)")
+        self.assertRegex(CSS, r"\.editor-scroll-body\s*\{[^}]*padding-inline-start:\s*var\(--ui-scrollbar-size\);")
+        self.assertRegex(CSS, r"\.map-view-settings\s*\{[^}]*padding-inline-start:\s*var\(--ui-scrollbar-size\);")
+        self.assertIn(".map-sheet-body:not(.map-sheet-body-layers)", CSS)
+        self.assertIn("scrollbar-gutter: auto;", CSS)
+
 
 if __name__ == "__main__":
     unittest.main()

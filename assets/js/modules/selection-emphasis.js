@@ -1,7 +1,7 @@
 import { buildRenderableBoundarySegments, densifyBoundarySegmentsForProjection } from './geographic-boundary.js';
 
 export const SELECTION_STYLE = {
-  color: '#346733',
+  color: '#cda95d',
   primaryWidth: 2.5,
   primaryAlpha: 1.0,
   secondaryWidth: 1.5,
@@ -9,9 +9,9 @@ export const SELECTION_STYLE = {
 };
 
 let interactionStyle = Object.freeze({
-  hover: Object.freeze({ color: '#e2c982', width: 1.5, alpha: 1, fillAlpha: 0.07 }),
+  hover: Object.freeze({ color: '#d7ba7d', width: 1.5, alpha: 1, fillAlpha: 0.05775 }),
   selection: Object.freeze({
-    color: '#346733', casingColor: '#f2f4f6',
+    color: '#cda95d', casingColor: '#f2f4f6',
     primary: Object.freeze({ innerWidth: 2.5, innerAlpha: 1, outerWidth: 4, casingAlpha: 0.72, fillAlpha: 0.13 }),
     secondary: Object.freeze({ innerWidth: 1.5, innerAlpha: 0.72, outerWidth: 2.8, casingAlpha: 0.48, fillAlpha: 0.08 }),
   }),
@@ -76,6 +76,48 @@ export function buildSelectionPointCoordinates(geometry) {
   return [];
 }
 
+function flattenSelectionGeometry(feature) {
+  if (!feature) return [];
+  if (feature.type === 'FeatureCollection') return (feature.features || []).flatMap(flattenSelectionGeometry);
+  if (feature.type === 'Feature') return flattenSelectionGeometry(feature.geometry);
+  return [feature];
+}
+
+export function buildSelectionBoundaryBufferData(nextItems = []) {
+  const values = [];
+  let segmentCount = 0;
+  const renderedKeys = [];
+  const missingKeys = [];
+  for (const item of nextItems) {
+    const key = String(item?.key || '');
+    const itemValues = [];
+    let itemSegmentCount = 0;
+    try {
+      if (item?.ribbonVertices?.length) {
+        for (const value of item.ribbonVertices) itemValues.push(value);
+        itemSegmentCount = Math.max(0, Number(item.segmentCount || item.ribbonVertices.length / 36));
+      } else if (!item?.missing) {
+        for (const geometry of flattenSelectionGeometry(item?.geometry)) {
+          const segments = buildSelectionBoundarySegments(geometry, { densify: true });
+          itemSegmentCount += segments.length;
+          itemValues.push(...ribbonVerticesForSegments(segments));
+        }
+      }
+    } catch (_) {
+      itemSegmentCount = 0;
+      itemValues.length = 0;
+    }
+    if (itemSegmentCount > 0 && itemValues.length > 0) {
+      values.push(...itemValues);
+      segmentCount += itemSegmentCount;
+      if (key) renderedKeys.push(key);
+    } else if (key) {
+      missingKeys.push(key);
+    }
+  }
+  return { values, segmentCount, renderedKeys, missingKeys };
+}
+
 export function createSelectionEmphasisRenderer({ canvas, projectionForView, getSize, getDpr } = {}) {
   let gl = null;
   let program = null;
@@ -103,6 +145,7 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   let hoverSegmentCount = 0;
   let hoverPointCount = 0;
   let items = { hover: [], primary: [], secondary: [] };
+  let coverage = emptyCoverage();
   let countryBoundaryRevision = '';
   let countryBoundarySnapshot = null;
   let countryLinePairs = { base: new Map(), override: new Map() };
@@ -111,6 +154,29 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   let bufferBuildCount = 0;
   let bufferBuildMs = 0;
   let available = false;
+
+  function coverageChannel(nextItems = [], renderedKeys = [], missingKeys = [], segmentCount = 0) {
+    const requestedKeys = [...new Set(nextItems.map(item => String(item?.key || '')).filter(Boolean))];
+    const rendered = [...new Set(renderedKeys.map(String))];
+    const renderedSet = new Set(rendered);
+    const missing = [...new Set([
+      ...missingKeys.map(String),
+      ...requestedKeys.filter(key => !renderedSet.has(key)),
+    ])];
+    return Object.freeze({
+      renderedKeys: Object.freeze(rendered),
+      missingKeys: Object.freeze(missing),
+      segmentCount: Math.max(0, Number(segmentCount) || 0),
+    });
+  }
+
+  function emptyCoverage(nextItems = items) {
+    return Object.freeze({
+      hover: coverageChannel(nextItems.hover),
+      primary: coverageChannel(nextItems.primary),
+      secondary: coverageChannel(nextItems.secondary),
+    });
+  }
 
   function compile(type, source) {
     const shader = gl.createShader(type);
@@ -243,36 +309,26 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     return true;
   }
 
-  function flattenGeometry(feature) {
-    if (!feature) return [];
-    if (feature.type === 'FeatureCollection') return (feature.features || []).flatMap(flattenGeometry);
-    if (feature.type === 'Feature') return flattenGeometry(feature.geometry);
-    return [feature];
-  }
-
   function updateBuffer(buffer, nextItems) {
-    const values = [];
-    let segmentCount = 0;
-    for (const item of nextItems) {
-      if (item.ribbonVertices) {
-        for (const value of item.ribbonVertices) values.push(value);
-        segmentCount += Number(item.segmentCount || item.ribbonVertices.length / 36);
-        continue;
-      }
-      for (const geometry of flattenGeometry(item.geometry)) {
-      const segments = buildSelectionBoundarySegments(geometry, { densify: true });
-      segmentCount += segments.length;
-      values.push(...ribbonVerticesForSegments(segments));
-      }
+    const data = buildSelectionBoundaryBufferData(nextItems);
+    try {
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.values), gl.STATIC_DRAW);
+    } catch (_) {
+      return {
+        vertexCount: 0,
+        coverage: coverageChannel(nextItems, [], nextItems.map(item => item?.key).filter(Boolean), 0),
+      };
     }
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(values), gl.STATIC_DRAW);
-    return { vertexCount: values.length / 6, segmentCount };
+    return {
+      vertexCount: data.values.length / 6,
+      coverage: coverageChannel(nextItems, data.renderedKeys, data.missingKeys, data.segmentCount),
+    };
   }
 
   function updatePointBuffer(buffer, nextItems) {
     const values = [];
-    for (const item of nextItems) for (const geometry of flattenGeometry(item.geometry)) {
+    for (const item of nextItems) for (const geometry of flattenSelectionGeometry(item.geometry)) {
       for (const point of buildSelectionPointCoordinates(geometry)) values.push(...point);
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -382,6 +438,12 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     return item;
   }
 
+  function countryRequestItem(id) {
+    const key = String(id || '');
+    if (!key) return null;
+    return countryRibbonItem(key) || { key: `country:${key}`, missing: true };
+  }
+
   function geometryIdentity(feature) {
     if (feature?.ribbonVertices) return feature.ribbonVertices;
     if (feature?.type === 'FeatureCollection') return (feature.features || []).map(item => item.geometry);
@@ -405,28 +467,39 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     const nextHover = hover.slice();
     const nextPrimary = primary.slice();
     const nextSecondary = secondary.slice();
-    const countryHover = countryRibbonItem(countryHoverId);
-    const countryPrimary = countryRibbonItem(countryPrimaryId);
+    const countryHover = countryRequestItem(countryHoverId);
+    const countryPrimary = countryRequestItem(countryPrimaryId);
     if (countryHover) nextHover.push(countryHover);
     if (countryPrimary) nextPrimary.push(countryPrimary);
     for (const id of countrySecondaryIds || []) {
-      const item = countryRibbonItem(id);
+      const item = countryRequestItem(id);
       if (item) nextSecondary.push(item);
     }
     if (Number(revision) === geometryRevision && sameItems(items.hover, nextHover) && sameItems(items.primary, nextPrimary) && sameItems(items.secondary, nextSecondary)) return false;
     items = { hover: nextHover, primary: nextPrimary, secondary: nextSecondary };
     geometryRevision = Number(revision || 0);
-    if (!available) return false;
+    if (!available) {
+      coverage = emptyCoverage(items);
+      primaryCount = secondaryCount = hoverCount = 0;
+      primarySegmentCount = secondarySegmentCount = hoverSegmentCount = 0;
+      primaryPointCount = secondaryPointCount = hoverPointCount = 0;
+      return false;
+    }
     const started = performance.now();
     const primaryData = updateBuffer(primaryBuffer, items.primary);
     const secondaryData = updateBuffer(secondaryBuffer, items.secondary);
     const hoverData = updateBuffer(hoverBuffer, items.hover);
     primaryCount = primaryData.vertexCount;
     secondaryCount = secondaryData.vertexCount;
-    primarySegmentCount = primaryData.segmentCount;
-    secondarySegmentCount = secondaryData.segmentCount;
+    primarySegmentCount = primaryData.coverage.segmentCount;
+    secondarySegmentCount = secondaryData.coverage.segmentCount;
     hoverCount = hoverData.vertexCount;
-    hoverSegmentCount = hoverData.segmentCount;
+    hoverSegmentCount = hoverData.coverage.segmentCount;
+    coverage = Object.freeze({
+      hover: hoverData.coverage,
+      primary: primaryData.coverage,
+      secondary: secondaryData.coverage,
+    });
     primaryPointCount = updatePointBuffer(primaryPointBuffer, items.primary);
     secondaryPointCount = updatePointBuffer(secondaryPointBuffer, items.secondary);
     hoverPointCount = updatePointBuffer(hoverPointBuffer, items.hover);
@@ -575,6 +648,7 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
 
   function clear() {
     items = { hover: [], primary: [], secondary: [] }; geometryRevision = -1;
+    coverage = emptyCoverage(items);
     primaryCount = secondaryCount = hoverCount = primarySegmentCount = secondarySegmentCount = hoverSegmentCount = primaryPointCount = secondaryPointCount = hoverPointCount = 0;
     if (available) render({ projection: 'flat', size: getSize?.() || { width: 1, height: 1 }, dpr: getDpr?.() || 1 });
   }
@@ -588,6 +662,11 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
       bufferBuildCount, bufferBuildMs, geometryRevision, countryBoundaryRevision,
       territorialBoundaryRevision, territorialBoundarySegmentCount, territorialBoundaryBufferBytes,
       territorialBoundaryBuildCount, territorialBoundaryDrawCalls: territorialBuffers.size,
+      coverage: {
+        hover: { ...coverage.hover, renderedKeys: [...coverage.hover.renderedKeys], missingKeys: [...coverage.hover.missingKeys] },
+        primary: { ...coverage.primary, renderedKeys: [...coverage.primary.renderedKeys], missingKeys: [...coverage.primary.missingKeys] },
+        secondary: { ...coverage.secondary, renderedKeys: [...coverage.secondary.renderedKeys], missingKeys: [...coverage.secondary.missingKeys] },
+      },
     }),
   });
 }
