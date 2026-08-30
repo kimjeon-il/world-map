@@ -35,6 +35,11 @@ export function setSelectionColor(color) {
 }
 
 const DEGREES_TO_RADIANS = Math.PI / 180;
+const RIBBON_VERTEX_SCALAR_COUNT = 6;
+const RIBBON_SEGMENT_SCALAR_COUNT = RIBBON_VERTEX_SCALAR_COUNT * 6;
+const RIBBON_MIN_SEGMENT_LENGTH_DEGREES = 1e-12;
+const RIBBON_SIDE_PATTERN = Object.freeze([-1, 1, -1, -1, 1, 1]);
+const RIBBON_ENDPOINT_PATTERN = Object.freeze([0, 0, 1, 1, 0, 1]);
 
 export function buildSelectionBoundarySegments(geometry, { densify = false } = {}) {
   const segments = buildRenderableBoundarySegments(geometry);
@@ -49,22 +54,63 @@ function colorRgb(value) {
 }
 
 function appendRibbonSegment(values, startLon, startLat, endLon, endLat) {
-    // Endpoint extension overlaps adjacent quads, keeping joins continuous
-    // without CPU screen-space work on pan/zoom frames.
-    values.push(
-      startLon, startLat, endLon, endLat, -1, 0,
-      startLon, startLat, endLon, endLat, 1, 0,
-      endLon, endLat, startLon, startLat, -1, 1,
-      endLon, endLat, startLon, startLat, -1, 1,
-      startLon, startLat, endLon, endLat, 1, 0,
-      endLon, endLat, startLon, startLat, 1, 1,
-    );
+  const coordinates = [startLon, startLat, endLon, endLat].map(Number);
+  if (!coordinates.every(Number.isFinite)) return false;
+  const [safeStartLon, safeStartLat, safeEndLon, safeEndLat] = coordinates;
+  if (Math.hypot(safeEndLon - safeStartLon, safeEndLat - safeStartLat) <= RIBBON_MIN_SEGMENT_LENGTH_DEGREES) return false;
+  // Every vertex keeps the same start/end order. The shader selects the cap
+  // with aEndpoint; reversing the coordinates here collapses both triangles.
+  values.push(
+    safeStartLon, safeStartLat, safeEndLon, safeEndLat, -1, 0,
+    safeStartLon, safeStartLat, safeEndLon, safeEndLat, 1, 0,
+    safeStartLon, safeStartLat, safeEndLon, safeEndLat, -1, 1,
+    safeStartLon, safeStartLat, safeEndLon, safeEndLat, -1, 1,
+    safeStartLon, safeStartLat, safeEndLon, safeEndLat, 1, 0,
+    safeStartLon, safeStartLat, safeEndLon, safeEndLat, 1, 1,
+  );
+  return true;
 }
 
 function ribbonVerticesForSegments(segments) {
   const values = [];
   for (const [[startLon, startLat], [endLon, endLat]] of segments) appendRibbonSegment(values, startLon, startLat, endLon, endLat);
   return values;
+}
+
+export function validateSelectionRibbonVertices(vertices, expectedSegmentCount = null) {
+  const values = Array.from(vertices || []);
+  if (!values.length) return { valid: false, segmentCount: 0, reason: 'empty-ribbon' };
+  if (values.length % RIBBON_SEGMENT_SCALAR_COUNT !== 0) {
+    return { valid: false, segmentCount: 0, reason: 'invalid-ribbon-length' };
+  }
+  if (!values.every(value => Number.isFinite(Number(value)))) {
+    return { valid: false, segmentCount: 0, reason: 'non-finite-ribbon-value' };
+  }
+  const segmentCount = values.length / RIBBON_SEGMENT_SCALAR_COUNT;
+  if (expectedSegmentCount != null && Number(expectedSegmentCount) !== segmentCount) {
+    return { valid: false, segmentCount: 0, reason: 'segment-count-mismatch' };
+  }
+  for (let segmentOffset = 0; segmentOffset < values.length; segmentOffset += RIBBON_SEGMENT_SCALAR_COUNT) {
+    const startLon = Number(values[segmentOffset]);
+    const startLat = Number(values[segmentOffset + 1]);
+    const endLon = Number(values[segmentOffset + 2]);
+    const endLat = Number(values[segmentOffset + 3]);
+    if (Math.hypot(endLon - startLon, endLat - startLat) <= RIBBON_MIN_SEGMENT_LENGTH_DEGREES) {
+      return { valid: false, segmentCount: 0, reason: 'zero-length-ribbon-segment' };
+    }
+    for (let vertex = 0; vertex < 6; vertex += 1) {
+      const offset = segmentOffset + vertex * RIBBON_VERTEX_SCALAR_COUNT;
+      if (Number(values[offset]) !== startLon || Number(values[offset + 1]) !== startLat
+        || Number(values[offset + 2]) !== endLon || Number(values[offset + 3]) !== endLat) {
+        return { valid: false, segmentCount: 0, reason: 'inconsistent-ribbon-endpoints' };
+      }
+      if (Number(values[offset + 4]) !== RIBBON_SIDE_PATTERN[vertex]
+        || Number(values[offset + 5]) !== RIBBON_ENDPOINT_PATTERN[vertex]) {
+        return { valid: false, segmentCount: 0, reason: 'invalid-ribbon-vertex-pattern' };
+      }
+    }
+  }
+  return { valid: true, segmentCount, reason: '' };
 }
 
 export function buildSelectionRibbonVertices(geometry) {
@@ -94,13 +140,19 @@ export function buildSelectionBoundaryBufferData(nextItems = []) {
     let itemSegmentCount = 0;
     try {
       if (item?.ribbonVertices?.length) {
-        for (const value of item.ribbonVertices) values.push(value);
-        itemSegmentCount = Math.max(0, Number(item.segmentCount || item.ribbonVertices.length / 36));
+        const validation = validateSelectionRibbonVertices(item.ribbonVertices, item.segmentCount ?? null);
+        if (!validation.valid) throw new Error(validation.reason);
+        for (const value of item.ribbonVertices) values.push(Number(value));
+        itemSegmentCount = validation.segmentCount;
       } else if (!item?.missing) {
         for (const geometry of flattenSelectionGeometry(item?.geometry)) {
           const segments = buildSelectionBoundarySegments(geometry, { densify: true });
-          itemSegmentCount += segments.length;
-          for (const value of ribbonVerticesForSegments(segments)) values.push(value);
+          const ribbonValues = ribbonVerticesForSegments(segments);
+          if (!ribbonValues.length) continue;
+          const validation = validateSelectionRibbonVertices(ribbonValues);
+          if (!validation.valid) throw new Error(validation.reason);
+          itemSegmentCount += validation.segmentCount;
+          for (const value of ribbonValues) values.push(value);
         }
       }
     } catch (_) {
@@ -164,6 +216,13 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   let bufferBuildCount = 0;
   let bufferBuildMs = 0;
   let available = false;
+  let gpuHealth = 'unchecked';
+  let selfTestPassed = false;
+  let selfTestFailureReason = '';
+  let selfTestCount = 0;
+  let selfTestMs = 0;
+  let lastSelfTestContextRevision = 0;
+  let contextRevision = 0;
   let contextLost = false;
   let contextLossCount = 0;
   let contextRestoreCount = 0;
@@ -206,6 +265,167 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     gl.compileShader(shader);
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(shader) || 'selection shader compile failed');
     return shader;
+  }
+
+  function selfTestError(reason, message = reason) {
+    const error = new Error(message);
+    error.selfTestReason = reason;
+    return error;
+  }
+
+  function captureSelfTestState() {
+    const attributes = Object.values(programInfo?.attributes || {}).filter(location => location >= 0);
+    return {
+      framebuffer: gl.getParameter(gl.FRAMEBUFFER_BINDING),
+      viewport: Array.from(gl.getParameter(gl.VIEWPORT)),
+      program: gl.getParameter(gl.CURRENT_PROGRAM),
+      arrayBuffer: gl.getParameter(gl.ARRAY_BUFFER_BINDING),
+      activeTexture: gl.getParameter(gl.ACTIVE_TEXTURE),
+      texture2d: gl.getParameter(gl.TEXTURE_BINDING_2D),
+      blend: gl.isEnabled(gl.BLEND),
+      depthTest: gl.isEnabled(gl.DEPTH_TEST),
+      cullFace: gl.isEnabled(gl.CULL_FACE),
+      scissorTest: gl.isEnabled(gl.SCISSOR_TEST),
+      blendSrcRgb: gl.getParameter(gl.BLEND_SRC_RGB),
+      blendDstRgb: gl.getParameter(gl.BLEND_DST_RGB),
+      blendSrcAlpha: gl.getParameter(gl.BLEND_SRC_ALPHA),
+      blendDstAlpha: gl.getParameter(gl.BLEND_DST_ALPHA),
+      blendEquationRgb: gl.getParameter(gl.BLEND_EQUATION_RGB),
+      blendEquationAlpha: gl.getParameter(gl.BLEND_EQUATION_ALPHA),
+      colorMask: Array.from(gl.getParameter(gl.COLOR_WRITEMASK)),
+      clearColor: Array.from(gl.getParameter(gl.COLOR_CLEAR_VALUE)),
+      attributes: attributes.map(location => ({
+        location,
+        enabled: !!gl.getVertexAttrib(location, gl.VERTEX_ATTRIB_ARRAY_ENABLED),
+        buffer: gl.getVertexAttrib(location, gl.VERTEX_ATTRIB_ARRAY_BUFFER_BINDING),
+        size: gl.getVertexAttrib(location, gl.VERTEX_ATTRIB_ARRAY_SIZE),
+        type: gl.getVertexAttrib(location, gl.VERTEX_ATTRIB_ARRAY_TYPE),
+        normalized: !!gl.getVertexAttrib(location, gl.VERTEX_ATTRIB_ARRAY_NORMALIZED),
+        stride: gl.getVertexAttrib(location, gl.VERTEX_ATTRIB_ARRAY_STRIDE),
+        offset: gl.getVertexAttribOffset(location, gl.VERTEX_ATTRIB_ARRAY_POINTER),
+      })),
+    };
+  }
+
+  function restoreSelfTestState(state) {
+    const setEnabled = (capability, enabled) => enabled ? gl.enable(capability) : gl.disable(capability);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, state.framebuffer);
+    gl.viewport(...state.viewport);
+    gl.useProgram(state.program);
+    for (const attribute of state.attributes) {
+      if (attribute.buffer) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, attribute.buffer);
+        gl.vertexAttribPointer(attribute.location, attribute.size, attribute.type, attribute.normalized, attribute.stride, attribute.offset);
+      }
+      if (attribute.enabled) gl.enableVertexAttribArray(attribute.location);
+      else gl.disableVertexAttribArray(attribute.location);
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, state.arrayBuffer);
+    gl.activeTexture(state.activeTexture);
+    gl.bindTexture(gl.TEXTURE_2D, state.texture2d);
+    setEnabled(gl.BLEND, state.blend);
+    setEnabled(gl.DEPTH_TEST, state.depthTest);
+    setEnabled(gl.CULL_FACE, state.cullFace);
+    setEnabled(gl.SCISSOR_TEST, state.scissorTest);
+    gl.blendFuncSeparate(state.blendSrcRgb, state.blendDstRgb, state.blendSrcAlpha, state.blendDstAlpha);
+    gl.blendEquationSeparate(state.blendEquationRgb, state.blendEquationAlpha);
+    gl.colorMask(...state.colorMask);
+    gl.clearColor(...state.clearColor);
+  }
+
+  function runRibbonSelfTest() {
+    const started = performance.now();
+    selfTestCount += 1;
+    lastSelfTestContextRevision = contextRevision;
+    let stage = 'shader-program-unavailable';
+    let passed = false;
+    let failureReason = '';
+    let savedState = null;
+    let texture = null;
+    let framebuffer = null;
+    let buffer = null;
+    try {
+      if (!gl || !program || !programInfo) throw selfTestError(stage);
+      savedState = captureSelfTestState();
+      const ribbonValues = [];
+      appendRibbonSegment(ribbonValues, -0.5, 0, 0.5, 0);
+      const validation = validateSelectionRibbonVertices(ribbonValues, 1);
+      if (!validation.valid) throw selfTestError('invalid-ribbon-data', validation.reason);
+
+      stage = 'framebuffer-incomplete';
+      texture = gl.createTexture();
+      framebuffer = gl.createFramebuffer();
+      if (!texture || !framebuffer) throw selfTestError(stage, 'selection self-test framebuffer allocation failed');
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 16, 16, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw selfTestError(stage);
+
+      stage = 'buffer-upload-failed';
+      buffer = gl.createBuffer();
+      if (!buffer) throw selfTestError(stage, 'selection self-test buffer allocation failed');
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(ribbonValues), gl.STATIC_DRAW);
+
+      stage = 'draw-failed';
+      gl.viewport(0, 0, 16, 16);
+      gl.disable(gl.BLEND);
+      gl.disable(gl.DEPTH_TEST);
+      gl.disable(gl.CULL_FACE);
+      gl.disable(gl.SCISSOR_TEST);
+      gl.colorMask(true, true, true, true);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.useProgram(program);
+      const locations = setRibbonAttributes();
+      const uniforms = programInfo.uniforms;
+      gl.uniform2f(uniforms.uViewport, 16, 16);
+      gl.uniform2f(uniforms.uTranslate, 8, 8);
+      gl.uniform1f(uniforms.uScale, 400);
+      gl.uniform3fv(uniforms.uRowX, [1, 0, 0]);
+      gl.uniform3fv(uniforms.uRowY, [0, 1, 0]);
+      gl.uniform3fv(uniforms.uRowZ, [0, 0, 1]);
+      gl.uniform2f(uniforms.uFlatCenter, 0, 0);
+      gl.uniform1f(uniforms.uWorldOffset, 0);
+      gl.uniform1i(uniforms.uMode, 1);
+      gl.uniform1f(uniforms.uHalfWidth, 1.5);
+      gl.uniform1f(uniforms.uDpr, 1);
+      gl.uniform4f(uniforms.uColor, 1, 1, 1, 1);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      for (const location of locations) if (location >= 0) gl.disableVertexAttribArray(location);
+
+      stage = 'zero-alpha-output';
+      const pixels = new Uint8Array(16 * 16 * 4);
+      gl.readPixels(0, 0, 16, 16, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+      if (!pixels.some((value, index) => index % 4 === 3 && value > 0)) throw selfTestError(stage);
+      passed = true;
+    } catch (error) {
+      failureReason = error?.selfTestReason || stage;
+      onRenderError?.({ stage: 'selection-ribbon-self-test', reason: failureReason, error });
+    } finally {
+      try {
+        if (buffer) gl?.deleteBuffer?.(buffer);
+        if (framebuffer) gl?.deleteFramebuffer?.(framebuffer);
+        if (texture) gl?.deleteTexture?.(texture);
+        if (savedState) restoreSelfTestState(savedState);
+      } catch (error) {
+        passed = false;
+        failureReason = 'state-restore-failed';
+        onRenderError?.({ stage: 'selection-ribbon-self-test', reason: failureReason, error });
+      }
+    }
+    selfTestPassed = passed;
+    selfTestFailureReason = passed ? '' : failureReason || stage;
+    selfTestMs = performance.now() - started;
+    gpuHealth = passed ? 'healthy' : 'unhealthy';
+    available = passed && !contextLost;
+    return passed;
   }
 
   function init() {
@@ -329,8 +549,10 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     primaryBuffer = gl.createBuffer(); secondaryBuffer = gl.createBuffer(); hoverBuffer = gl.createBuffer();
     primaryPointBuffer = gl.createBuffer(); secondaryPointBuffer = gl.createBuffer(); hoverPointBuffer = gl.createBuffer();
     contextLost = false;
-    available = true;
-    return true;
+    contextRevision += 1;
+    gpuHealth = 'unchecked';
+    available = false;
+    return runRibbonSelfTest();
   }
 
   function resetChannelResources() {
@@ -350,6 +572,9 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     event?.preventDefault?.();
     contextLost = true;
     available = false;
+    gpuHealth = 'context-lost';
+    selfTestPassed = false;
+    selfTestFailureReason = 'context-lost';
     contextLossCount += 1;
     lastRenderResult = finishRenderResult({
       channelSucceeded: { hover: false, primary: false, secondary: false },
@@ -361,6 +586,7 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   function handleContextRestored() {
     contextLost = false;
     available = false;
+    gpuHealth = 'unchecked';
     contextRestoreCount += 1;
     program = programInfo = territorialProgram = territorialProgramInfo = null;
     territorialBuffers.clear();
@@ -410,11 +636,16 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   function setTerritorialBoundaries({ revision = '', batches = [] } = {}) {
     territorialBoundaryRequest = { revision: String(revision || ''), batches };
     const nextRevision = String(revision || '');
+    if (!available) {
+      territorialBoundaryRevision = '';
+      territorialBoundarySegmentCount = 0;
+      territorialBoundaryBufferBytes = 0;
+      return false;
+    }
     if (nextRevision === territorialBoundaryRevision) return false;
     territorialBoundaryRevision = nextRevision;
     territorialBoundarySegmentCount = 0;
     territorialBoundaryBufferBytes = 0;
-    if (!available) return false;
     const retained = new Set();
     for (const batch of batches || []) {
       const key = String(batch.styleType || 'territory');
@@ -426,7 +657,7 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
         const dense = densifyBoundarySegmentsForProjection([[segment.a, segment.b]]);
         for (const [[startLon, startLat], [endLon, endLat]] of dense) {
           const ribbon = [];
-          appendRibbonSegment(ribbon, startLon, startLat, endLon, endLat);
+          if (!appendRibbonSegment(ribbon, startLon, startLat, endLon, endLat)) continue;
           for (let offset = 0; offset < ribbon.length; offset += 6) values.push(...ribbon.slice(offset, offset + 6), red, green, blue, alpha);
           territorialBoundarySegmentCount += 1;
         }
@@ -478,10 +709,11 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
         Number(mesh.positions[endIndex * 2 + 1]) / 1e6,
       );
     }
-    const item = pairs.length ? {
+    const validSegmentCount = ribbonValues.length / RIBBON_SEGMENT_SCALAR_COUNT;
+    const item = validSegmentCount ? {
       key: `country:${key}`,
       ribbonVertices: new Float32Array(ribbonValues),
-      segmentCount: pairs.length / 2,
+      segmentCount: validSegmentCount,
     } : null;
     countryRibbonCache.set(cacheKey, item);
     return item;
@@ -719,7 +951,7 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
       const requestedKeys = [...new Set(items[name].map(item => String(item?.key || '')).filter(Boolean))];
       const buildCoverage = coverage[name] || coverageChannel(items[name]);
       const buildSucceeded = !channelMetrics[name].buildFailed;
-      const drawSucceeded = buildSucceeded && channelSucceeded[name] !== false;
+      const drawSucceeded = gpuHealth === 'healthy' && selfTestPassed && buildSucceeded && channelSucceeded[name] !== false;
       const renderedKeys = drawSucceeded ? [...buildCoverage.renderedKeys] : [];
       const renderedSet = new Set(renderedKeys);
       const missingKeys = [...new Set([
@@ -736,6 +968,8 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     const result = Object.freeze({
       succeeded: succeeded && Object.values(channels).every(channel => channel.drawSucceeded),
       contextLost,
+      selfTestPassed,
+      gpuHealth,
       channels,
       error,
     });
@@ -748,6 +982,12 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     viewDrawCount += 1;
     if (!available || !canvas || contextLost || gl?.isContextLost?.()) {
       contextLost = contextLost || !!gl?.isContextLost?.();
+      if (contextLost) {
+        available = false;
+        gpuHealth = 'context-lost';
+        selfTestPassed = false;
+        selfTestFailureReason = 'context-lost';
+      }
       return finishRenderResult({ channelSucceeded: { hover: false, primary: false, secondary: false }, succeeded: false });
     }
     const channelSucceeded = { hover: true, primary: true, secondary: true };
@@ -828,6 +1068,9 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     }
     available = false;
     contextLost = false;
+    gpuHealth = 'unchecked';
+    selfTestPassed = false;
+    selfTestFailureReason = '';
     resetChannelResources();
     territorialBuffers.clear();
   }
@@ -838,14 +1081,15 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   return Object.freeze({
     init, setSelection, updateSelectionData, setCountryBoundaryMesh, setTerritorialBoundaries,
     setInteractionStyle: setInteractionStyle, render, clear, dispose,
-    handleContextLost, handleContextRestored,
-    isAvailable: () => available && !contextLost,
+    handleContextLost, handleContextRestored, runRibbonSelfTest,
+    isAvailable: () => available && !contextLost && gpuHealth === 'healthy' && selfTestPassed,
     stats: () => ({
       primaryCount, secondaryCount, hoverCount, primarySegmentCount, secondarySegmentCount, hoverSegmentCount,
       segmentCount: primarySegmentCount + secondarySegmentCount + hoverSegmentCount,
       ribbonTriangleCount: (primaryCount + secondaryCount + hoverCount) / 3,
       bufferBuildCount, bufferBuildMs, geometryRevision, countryBoundaryRevision,
       viewDrawCount, renderFailureCount, contextLost, contextLossCount, contextRestoreCount,
+      gpuHealth, selfTestPassed, selfTestFailureReason, selfTestCount, selfTestMs, lastSelfTestContextRevision,
       renderSucceeded: lastRenderResult?.succeeded ?? false,
       channels: Object.fromEntries(Object.entries(channelMetrics).map(([name, metrics]) => [name, {
         rebuildCount: metrics.rebuildCount,
