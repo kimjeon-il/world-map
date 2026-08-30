@@ -26,6 +26,12 @@ export function createLayerPanelController({
     });
     elements.terrainStrength?.addEventListener('input', event => commands.previewTerrainStrength(event.target.value));
     elements.terrainStrength?.addEventListener('change', () => commands.commitTerrainStrength());
+    for (const input of elements.distributionModeInputs || []) input?.addEventListener('change', event => {
+      commands.setDistributionRenderMode?.(event.target.value);
+    });
+    elements.distributionBoundaryVisible?.addEventListener('change', event => {
+      commands.setDistributionBoundaryVisible?.(event.target.checked);
+    });
     elements.search?.addEventListener('input', event => {
       commands.setSearchValue(event.target.value || '');
       clearTimeout(searchTimer);
@@ -78,8 +84,8 @@ export function createLayerPanelController({
       if (opacity) commands.updateLayerStyle?.(opacity.dataset.layerStyleOpacity, { opacity: Number(opacity.value) / 100 });
       const boundary = event.target.closest('[data-layer-style-boundary]');
       if (boundary) commands.updateLayerStyle?.(boundary.dataset.layerStyleBoundary, { boundaryVisible: boundary.checked });
-      const distributionMode = event.target.closest('[data-layer-distribution-mode]');
-      if (distributionMode) commands.setDistributionRenderMode?.(distributionMode.value);
+      const blendMode = event.target.closest('[data-layer-style-blend-mode]');
+      if (blendMode) commands.updateLayerStyle?.(blendMode.dataset.layerStyleBlendMode, { blendMode: blendMode.value });
     });
     elements.section?.addEventListener('input', event => {
       const opacity = event.target.closest('[data-layer-style-opacity]');

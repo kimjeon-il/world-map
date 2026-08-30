@@ -177,14 +177,14 @@ for (const layout of layouts) {
     await page.locator('#mapViewTabBtn').click();
     await expect(page.locator('label:has(#basemapLabelsVisible)')).toContainText('국가명 표시');
     await expect(page.locator('label:has(#labelsVisible)')).toContainText('지명 표시');
-    await page.locator('#mapLayersTabBtn').click();
-    await page.locator('[data-layer-style-toggle="distribution"]').click();
     await expect(page.locator('#distributionLayerModeInput option')).toHaveText([
       '영역별 대표 분포',
       '선택 분포 비율',
     ]);
     await page.locator('#distributionLayerModeInput').selectOption('intensity');
     await expect(page.locator('#distributionLayerModeHint')).toHaveText('선택한 분포를 비율이 높을수록 진하게 표시합니다.');
+    await expect(page.locator('label:has(#distributionBoundaryVisibleInput)')).toContainText('분포 경계 표시');
+    await expect(page.locator('[data-layer-style-toggle="distribution"]')).toHaveCount(0);
     await page.locator('#mapViewTabBtn').focus();
     await page.keyboard.press('ArrowLeft');
     await expect(page.locator('#mapLayersTabBtn')).toBeFocused();
