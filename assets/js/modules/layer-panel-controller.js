@@ -56,11 +56,6 @@ export function createLayerPanelController({
         commands.toggleTerritorialUnitFolder(territorialFolder.dataset.territorialUnitFolderToggle);
         return;
       }
-      const hydroFolder = event.target.closest('[data-hydro-folder-toggle]');
-      if (hydroFolder) {
-        commands.toggleHydroFolder?.(hydroFolder.dataset.hydroFolderToggle);
-        return;
-      }
       const folder = event.target.closest('[data-layer-folder-toggle]');
       if (folder) {
         commands.toggleFolder(folder.dataset.layerFolderToggle);
