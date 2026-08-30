@@ -80,6 +80,13 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   let gl = null;
   let program = null;
   let programInfo = null;
+  let territorialProgram = null;
+  let territorialProgramInfo = null;
+  const territorialBuffers = new Map();
+  let territorialBoundaryRevision = '';
+  let territorialBoundarySegmentCount = 0;
+  let territorialBoundaryBufferBytes = 0;
+  let territorialBoundaryBuildCount = 0;
   let primaryBuffer = null;
   let secondaryBuffer = null;
   let primaryPointBuffer = null;
@@ -189,6 +196,47 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
         'uFlatCenter', 'uWorldOffset', 'uMode', 'uHalfWidth', 'uDpr', 'uColor',
       ].map(name => [name, gl.getUniformLocation(program, name)]))),
     });
+    const territorialVertex = webgl2 ? `#version 300 es
+      precision highp float; precision highp int;
+      layout(location=0) in vec2 aStart; layout(location=1) in vec2 aEnd;
+      layout(location=2) in float aSide; layout(location=3) in float aEndpoint; layout(location=4) in vec4 aColor;
+      uniform vec2 uViewport; uniform vec2 uTranslate; uniform float uScale;
+      uniform vec3 uRowX; uniform vec3 uRowY; uniform vec3 uRowZ; uniform vec2 uFlatCenter;
+      uniform float uWorldOffset; uniform int uMode; uniform float uHalfWidth;
+      out float vDepth; out float vAlong; out vec4 vColor;
+      vec3 project(vec2 coord){float lon=coord.x*0.017453292519943;float lat=coord.y*0.017453292519943;vec2 p;float depth;
+        if(uMode==0){vec3 q=vec3(cos(lat)*cos(lon),cos(lat)*sin(lon),sin(lat));p=uTranslate+uScale*vec2(dot(uRowX,q),dot(uRowY,q));depth=dot(uRowZ,q);}
+        else{p=uTranslate+uScale*vec2(lon+uWorldOffset-uFlatCenter.x,-(lat-uFlatCenter.y));depth=1.0;}return vec3(p,depth);}
+      void main(){vec3 start=project(aStart);vec3 end=project(aEnd);vec2 direction=end.xy-start.xy;float lengthPx=max(length(direction),0.0001);direction/=lengthPx;
+        vec2 normal=vec2(-direction.y,direction.x);vec2 center=mix(start.xy,end.xy,aEndpoint)+direction*((aEndpoint<0.5)?-uHalfWidth:uHalfWidth);
+        vec2 p=center+normal*aSide*uHalfWidth;vDepth=mix(start.z,end.z,aEndpoint);vAlong=aEndpoint*lengthPx;vColor=aColor;
+        gl_Position=vec4(p.x*2.0/uViewport.x-1.0,1.0-p.y*2.0/uViewport.y,0.0,1.0);}`
+      : `precision highp float; precision highp int;
+      attribute vec2 aStart;attribute vec2 aEnd;attribute float aSide;attribute float aEndpoint;attribute vec4 aColor;
+      uniform vec2 uViewport;uniform vec2 uTranslate;uniform float uScale;uniform vec3 uRowX;uniform vec3 uRowY;uniform vec3 uRowZ;uniform vec2 uFlatCenter;
+      uniform float uWorldOffset;uniform int uMode;uniform float uHalfWidth;varying float vDepth;varying float vAlong;varying vec4 vColor;
+      vec3 project(vec2 coord){float lon=coord.x*0.017453292519943;float lat=coord.y*0.017453292519943;vec2 p;float depth;
+        if(uMode==0){vec3 q=vec3(cos(lat)*cos(lon),cos(lat)*sin(lon),sin(lat));p=uTranslate+uScale*vec2(dot(uRowX,q),dot(uRowY,q));depth=dot(uRowZ,q);}
+        else{p=uTranslate+uScale*vec2(lon+uWorldOffset-uFlatCenter.x,-(lat-uFlatCenter.y));depth=1.0;}return vec3(p,depth);}
+      void main(){vec3 start=project(aStart);vec3 end=project(aEnd);vec2 direction=end.xy-start.xy;float lengthPx=max(length(direction),0.0001);direction/=lengthPx;
+        vec2 normal=vec2(-direction.y,direction.x);vec2 center=mix(start.xy,end.xy,aEndpoint)+direction*((aEndpoint<0.5)?-uHalfWidth:uHalfWidth);
+        vec2 p=center+normal*aSide*uHalfWidth;vDepth=mix(start.z,end.z,aEndpoint);vAlong=aEndpoint*lengthPx;vColor=aColor;
+        gl_Position=vec4(p.x*2.0/uViewport.x-1.0,1.0-p.y*2.0/uViewport.y,0.0,1.0);}`;
+    const territorialFragment = webgl2 ? `#version 300 es
+      precision mediump float;precision highp int;uniform int uMode;uniform vec2 uDash;in float vDepth;in float vAlong;in vec4 vColor;out vec4 outColor;
+      void main(){if(uMode==0&&vDepth<0.0)discard;float period=max(1.0,uDash.x+uDash.y);if(uDash.x>0.0&&mod(vAlong,period)>uDash.x)discard;outColor=vColor;}`
+      : `precision mediump float;precision highp int;uniform int uMode;uniform vec2 uDash;varying float vDepth;varying float vAlong;varying vec4 vColor;
+      void main(){if(uMode==0&&vDepth<0.0)discard;float period=max(1.0,uDash.x+uDash.y);if(uDash.x>0.0&&mod(vAlong,period)>uDash.x)discard;gl_FragColor=vColor;}`;
+    const territorialVs = compile(gl.VERTEX_SHADER, territorialVertex);
+    const territorialFs = compile(gl.FRAGMENT_SHADER, territorialFragment);
+    territorialProgram = gl.createProgram(); gl.attachShader(territorialProgram, territorialVs); gl.attachShader(territorialProgram, territorialFs); gl.linkProgram(territorialProgram);
+    if (!gl.getProgramParameter(territorialProgram, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(territorialProgram) || 'territorial boundary shader link failed');
+    territorialProgramInfo = Object.freeze({
+      attributes: Object.freeze(Object.fromEntries(['aStart', 'aEnd', 'aSide', 'aEndpoint', 'aColor'].map(name => [name, gl.getAttribLocation(territorialProgram, name)]))),
+      uniforms: Object.freeze(Object.fromEntries([
+        'uViewport', 'uTranslate', 'uScale', 'uRowX', 'uRowY', 'uRowZ', 'uFlatCenter', 'uWorldOffset', 'uMode', 'uHalfWidth', 'uDash',
+      ].map(name => [name, gl.getUniformLocation(territorialProgram, name)]))),
+    });
     primaryBuffer = gl.createBuffer(); secondaryBuffer = gl.createBuffer(); hoverBuffer = gl.createBuffer();
     primaryPointBuffer = gl.createBuffer(); secondaryPointBuffer = gl.createBuffer(); hoverPointBuffer = gl.createBuffer();
     available = true;
@@ -252,6 +300,51 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     countryBoundarySnapshot = snapshot;
     countryLinePairs = { base: new Map(), override: new Map() };
     countryRibbonCache.clear();
+    return true;
+  }
+
+  function setTerritorialBoundaries({ revision = '', batches = [] } = {}) {
+    const nextRevision = String(revision || '');
+    if (nextRevision === territorialBoundaryRevision) return false;
+    territorialBoundaryRevision = nextRevision;
+    territorialBoundarySegmentCount = 0;
+    territorialBoundaryBufferBytes = 0;
+    if (!available) return false;
+    const retained = new Set();
+    for (const batch of batches || []) {
+      const key = String(batch.styleType || 'territory');
+      retained.add(key);
+      const values = [];
+      for (const segment of batch.segments || []) {
+        const [red, green, blue] = colorRgb(segment.color);
+        const alpha = Math.max(0, Math.min(1, Number(segment.opacity ?? 1)));
+        const dense = densifyBoundarySegmentsForProjection([[segment.a, segment.b]]);
+        for (const [[startLon, startLat], [endLon, endLat]] of dense) {
+          const ribbon = [];
+          appendRibbonSegment(ribbon, startLon, startLat, endLon, endLat);
+          for (let offset = 0; offset < ribbon.length; offset += 6) values.push(...ribbon.slice(offset, offset + 6), red, green, blue, alpha);
+          territorialBoundarySegmentCount += 1;
+        }
+      }
+      let record = territorialBuffers.get(key);
+      if (!record) record = { buffer: gl.createBuffer() };
+      const typed = new Float32Array(values);
+      gl.bindBuffer(gl.ARRAY_BUFFER, record.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, typed, gl.STATIC_DRAW);
+      territorialBoundaryBufferBytes += typed.byteLength;
+      territorialBuffers.set(key, {
+        ...record,
+        count: typed.length / 10,
+        width: Math.max(0.5, Number(batch.width) || 1),
+        dash: Array.isArray(batch.dash) ? batch.dash.map(Number) : [0, 0],
+      });
+    }
+    for (const [key, record] of territorialBuffers) {
+      if (retained.has(key)) continue;
+      gl.deleteBuffer(record.buffer);
+      territorialBuffers.delete(key);
+    }
+    territorialBoundaryBuildCount += 1;
     return true;
   }
 
@@ -400,6 +493,46 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     gl.disableVertexAttribArray(location);
   }
 
+  function setViewUniforms(info, { width, height, translate, scale, rows, flatCenter, mode }) {
+    const uniforms = info.uniforms;
+    gl.uniform2f(uniforms.uViewport, width, height);
+    gl.uniform2f(uniforms.uTranslate, translate[0], translate[1]);
+    gl.uniform1f(uniforms.uScale, scale);
+    gl.uniform3fv(uniforms.uRowX, rows.rowX);
+    gl.uniform3fv(uniforms.uRowY, rows.rowY);
+    gl.uniform3fv(uniforms.uRowZ, rows.rowZ);
+    gl.uniform2f(uniforms.uFlatCenter, flatCenter[0] * DEGREES_TO_RADIANS, flatCenter[1] * DEGREES_TO_RADIANS);
+    gl.uniform1i(uniforms.uMode, mode);
+  }
+
+  function drawTerritorialBoundaries(view, viewState) {
+    if (!territorialProgram || !territorialBuffers.size) return;
+    gl.useProgram(territorialProgram);
+    setViewUniforms(territorialProgramInfo, view);
+    const attributes = territorialProgramInfo.attributes;
+    const locations = [attributes.aStart, attributes.aEnd, attributes.aSide, attributes.aEndpoint, attributes.aColor];
+    const sizes = [2, 2, 1, 1, 4];
+    const offsets = [0, 2, 4, 5, 6].map(value => value * Float32Array.BYTES_PER_ELEMENT);
+    const stride = 10 * Float32Array.BYTES_PER_ELEMENT;
+    for (const record of territorialBuffers.values()) {
+      if (!record.count) continue;
+      gl.bindBuffer(gl.ARRAY_BUFFER, record.buffer);
+      locations.forEach((location, index) => {
+        if (location < 0) return;
+        gl.enableVertexAttribArray(location);
+        gl.vertexAttribPointer(location, sizes[index], gl.FLOAT, false, stride, offsets[index]);
+      });
+      gl.uniform1f(territorialProgramInfo.uniforms.uHalfWidth, record.width / 2);
+      gl.uniform2f(territorialProgramInfo.uniforms.uDash, Math.max(0, record.dash[0] || 0), Math.max(0, record.dash[1] || 0));
+      const worldOffsets = viewState.projection === 'globe' ? [0] : [-2 * Math.PI, 0, 2 * Math.PI];
+      for (const offset of worldOffsets) {
+        gl.uniform1f(territorialProgramInfo.uniforms.uWorldOffset, offset);
+        gl.drawArrays(gl.TRIANGLES, 0, record.count);
+      }
+    }
+    for (const location of locations) if (location >= 0) gl.disableVertexAttribArray(location);
+  }
+
   function render(viewState = {}) {
     if (!available || !canvas) return false;
     const size = getSize?.() || viewState.size || { width: 1, height: 1 };
@@ -417,11 +550,12 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     const scale = Number(viewState.scale || projection.scale());
     const flatCenter = viewState.projectionCenter || viewState.flatCenter || [0, 0];
     gl.viewport(0, 0, pixelWidth, pixelHeight); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.useProgram(program);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    const view = { width, height, translate, scale, rows, flatCenter, mode };
+    drawTerritorialBoundaries(view, viewState);
+    gl.useProgram(program);
+    setViewUniforms(programInfo, view);
     const uniforms = programInfo.uniforms;
-    gl.uniform2f(uniforms.uViewport, width, height); gl.uniform2f(uniforms.uTranslate, translate[0], translate[1]);
-    gl.uniform1f(uniforms.uScale, scale); gl.uniform3fv(uniforms.uRowX, rows.rowX); gl.uniform3fv(uniforms.uRowY, rows.rowY); gl.uniform3fv(uniforms.uRowZ, rows.rowZ);
-    gl.uniform2f(uniforms.uFlatCenter, flatCenter[0] * DEGREES_TO_RADIANS, flatCenter[1] * DEGREES_TO_RADIANS); gl.uniform1i(uniforms.uMode, mode);
     gl.uniform1f(uniforms.uDpr, dpr);
     const primary = interactionStyle.selection.primary;
     const secondary = interactionStyle.selection.secondary;
@@ -446,12 +580,14 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   }
 
   return Object.freeze({
-    init, setSelection, setCountryBoundaryMesh, setInteractionStyle: setInteractionStyle, render, clear, isAvailable: () => available,
+    init, setSelection, setCountryBoundaryMesh, setTerritorialBoundaries, setInteractionStyle: setInteractionStyle, render, clear, isAvailable: () => available,
     stats: () => ({
       primaryCount, secondaryCount, hoverCount, primarySegmentCount, secondarySegmentCount, hoverSegmentCount,
       segmentCount: primarySegmentCount + secondarySegmentCount + hoverSegmentCount,
       ribbonTriangleCount: (primaryCount + secondaryCount + hoverCount) / 3,
       bufferBuildCount, bufferBuildMs, geometryRevision, countryBoundaryRevision,
+      territorialBoundaryRevision, territorialBoundarySegmentCount, territorialBoundaryBufferBytes,
+      territorialBoundaryBuildCount, territorialBoundaryDrawCalls: territorialBuffers.size,
     }),
   });
 }
