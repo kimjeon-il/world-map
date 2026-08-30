@@ -8,6 +8,26 @@ export const SELECTION_STYLE = {
   secondaryAlpha: 0.72,
 };
 
+let interactionStyle = Object.freeze({
+  hover: Object.freeze({ color: '#e2c982', width: 1.5, alpha: 1, fillAlpha: 0.07 }),
+  selection: Object.freeze({
+    color: '#346733', casingColor: '#f2f4f6',
+    primary: Object.freeze({ innerWidth: 2.5, innerAlpha: 1, outerWidth: 4, casingAlpha: 0.72, fillAlpha: 0.13 }),
+    secondary: Object.freeze({ innerWidth: 1.5, innerAlpha: 0.72, outerWidth: 2.8, casingAlpha: 0.48, fillAlpha: 0.08 }),
+  }),
+});
+
+export function setInteractionStyle(nextStyle) {
+  if (!nextStyle?.hover || !nextStyle?.selection) return interactionStyle;
+  interactionStyle = nextStyle;
+  SELECTION_STYLE.color = nextStyle.selection.color;
+  SELECTION_STYLE.primaryWidth = nextStyle.selection.primary.innerWidth;
+  SELECTION_STYLE.primaryAlpha = nextStyle.selection.primary.innerAlpha;
+  SELECTION_STYLE.secondaryWidth = nextStyle.selection.secondary.innerWidth;
+  SELECTION_STYLE.secondaryAlpha = nextStyle.selection.secondary.innerAlpha;
+  return interactionStyle;
+}
+
 export function setSelectionColor(color) {
   const value = String(color || '').trim();
   if (/^#[0-9a-f]{6}$/i.test(value)) SELECTION_STYLE.color = value.toLowerCase();
@@ -16,21 +36,19 @@ export function setSelectionColor(color) {
 
 const DEGREES_TO_RADIANS = Math.PI / 180;
 
-function selectionColorRgb() {
-  const match = /^#([0-9a-f]{6})$/i.exec(SELECTION_STYLE.color);
-  if (!match) return [0, 0, 0];
-  const value = Number.parseInt(match[1], 16);
-  return [(value >> 16 & 255) / 255, (value >> 8 & 255) / 255, (value & 255) / 255];
-}
-
 export function buildSelectionBoundarySegments(geometry, { densify = false } = {}) {
   const segments = buildRenderableBoundarySegments(geometry);
   return densify ? densifyBoundarySegmentsForProjection(segments) : segments;
 }
 
-function ribbonVerticesForSegments(segments) {
-  const values = [];
-  for (const [[startLon, startLat], [endLon, endLat]] of segments) {
+function colorRgb(value) {
+  const match = /^#([0-9a-f]{6})$/i.exec(String(value || ''));
+  if (!match) return [0, 0, 0];
+  const packed = Number.parseInt(match[1], 16);
+  return [(packed >> 16 & 255) / 255, (packed >> 8 & 255) / 255, (packed & 255) / 255];
+}
+
+function appendRibbonSegment(values, startLon, startLat, endLon, endLat) {
     // Endpoint extension overlaps adjacent quads, keeping joins continuous
     // without CPU screen-space work on pan/zoom frames.
     values.push(
@@ -41,7 +59,11 @@ function ribbonVerticesForSegments(segments) {
       startLon, startLat, endLon, endLat, 1, 0,
       endLon, endLat, startLon, startLat, 1, 1,
     );
-  }
+}
+
+function ribbonVerticesForSegments(segments) {
+  const values = [];
+  for (const [[startLon, startLat], [endLon, endLat]] of segments) appendRibbonSegment(values, startLon, startLat, endLon, endLat);
   return values;
 }
 
@@ -61,13 +83,22 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   let secondaryBuffer = null;
   let primaryPointBuffer = null;
   let secondaryPointBuffer = null;
+  let hoverBuffer = null;
+  let hoverPointBuffer = null;
   let primaryCount = 0;
   let secondaryCount = 0;
   let primarySegmentCount = 0;
   let secondarySegmentCount = 0;
   let primaryPointCount = 0;
   let secondaryPointCount = 0;
-  let items = { primary: [], secondary: [] };
+  let hoverCount = 0;
+  let hoverSegmentCount = 0;
+  let hoverPointCount = 0;
+  let items = { hover: [], primary: [], secondary: [] };
+  let countryBoundaryRevision = '';
+  let countryBoundarySnapshot = null;
+  let countryLinePairs = { base: new Map(), override: new Map() };
+  const countryRibbonCache = new Map();
   let geometryRevision = -1;
   let bufferBuildCount = 0;
   let bufferBuildMs = 0;
@@ -143,8 +174,8 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     const fs = compile(gl.FRAGMENT_SHADER, fragment);
     program = gl.createProgram(); gl.attachShader(program, vs); gl.attachShader(program, fs); gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program) || 'selection shader link failed');
-    primaryBuffer = gl.createBuffer(); secondaryBuffer = gl.createBuffer();
-    primaryPointBuffer = gl.createBuffer(); secondaryPointBuffer = gl.createBuffer();
+    primaryBuffer = gl.createBuffer(); secondaryBuffer = gl.createBuffer(); hoverBuffer = gl.createBuffer();
+    primaryPointBuffer = gl.createBuffer(); secondaryPointBuffer = gl.createBuffer(); hoverPointBuffer = gl.createBuffer();
     available = true;
     return true;
   }
@@ -159,10 +190,17 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   function updateBuffer(buffer, nextItems) {
     const values = [];
     let segmentCount = 0;
-    for (const item of nextItems) for (const geometry of flattenGeometry(item.geometry)) {
+    for (const item of nextItems) {
+      if (item.ribbonVertices) {
+        for (const value of item.ribbonVertices) values.push(value);
+        segmentCount += Number(item.segmentCount || item.ribbonVertices.length / 36);
+        continue;
+      }
+      for (const geometry of flattenGeometry(item.geometry)) {
       const segments = buildSelectionBoundarySegments(geometry, { densify: true });
       segmentCount += segments.length;
       values.push(...ribbonVerticesForSegments(segments));
+      }
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(values), gl.STATIC_DRAW);
@@ -179,7 +217,65 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     return values.length / 2;
   }
 
+  function countryLinePairsForId(mesh, countryIds, targetId) {
+    const pairs = [];
+    if (!mesh?.lineIndices?.length || !mesh.positions?.length) return pairs;
+    for (let offset = 0; offset < mesh.lineIndices.length; offset += 2) {
+      const startIndex = Number(mesh.lineIndices[offset]);
+      const endIndex = Number(mesh.lineIndices[offset + 1]);
+      const countryIndex = Number(mesh.countryIndices?.[startIndex]);
+      const id = String(countryIds?.[countryIndex] || '');
+      if (id === targetId) pairs.push(startIndex, endIndex);
+    }
+    return pairs;
+  }
+
+  function setCountryBoundaryMesh(snapshot = null) {
+    const revision = String(snapshot?.revision || '');
+    if (revision === countryBoundaryRevision) return false;
+    countryBoundaryRevision = revision;
+    countryBoundarySnapshot = snapshot;
+    countryLinePairs = { base: new Map(), override: new Map() };
+    countryRibbonCache.clear();
+    return true;
+  }
+
+  function countryRibbonItem(id) {
+    const key = String(id || '');
+    const snapshot = countryBoundarySnapshot;
+    if (!key || !snapshot || snapshot.pendingIds?.includes(key) || snapshot.visibleIds && !snapshot.visibleIds.includes(key)) return null;
+    const overridden = snapshot.overriddenIds?.includes(key);
+    const sourceName = overridden ? 'override' : 'base';
+    const cacheKey = `${countryBoundaryRevision}:${sourceName}:${key}`;
+    if (countryRibbonCache.has(cacheKey)) return countryRibbonCache.get(cacheKey);
+    const mesh = snapshot[sourceName];
+    if (!countryLinePairs[sourceName].has(key)) {
+      countryLinePairs[sourceName].set(key, countryLinePairsForId(mesh, snapshot.countryIds, key));
+    }
+    const pairs = countryLinePairs[sourceName].get(key) || [];
+    const ribbonValues = [];
+    for (let offset = 0; offset < pairs.length; offset += 2) {
+      const startIndex = pairs[offset];
+      const endIndex = pairs[offset + 1];
+      appendRibbonSegment(
+        ribbonValues,
+        Number(mesh.positions[startIndex * 2]) / 1e6,
+        Number(mesh.positions[startIndex * 2 + 1]) / 1e6,
+        Number(mesh.positions[endIndex * 2]) / 1e6,
+        Number(mesh.positions[endIndex * 2 + 1]) / 1e6,
+      );
+    }
+    const item = pairs.length ? {
+      key: `country:${key}`,
+      ribbonVertices: new Float32Array(ribbonValues),
+      segmentCount: pairs.length / 2,
+    } : null;
+    countryRibbonCache.set(cacheKey, item);
+    return item;
+  }
+
   function geometryIdentity(feature) {
+    if (feature?.ribbonVertices) return feature.ribbonVertices;
     if (feature?.type === 'FeatureCollection') return (feature.features || []).map(item => item.geometry);
     if (feature?.type === 'Feature') return feature.geometry;
     return feature;
@@ -188,26 +284,44 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   function sameItems(left = [], right = []) {
     return left.length === right.length && left.every((item, index) => {
       const other = right[index];
-      const a = geometryIdentity(item.geometry);
-      const b = geometryIdentity(other?.geometry);
+      const a = item.ribbonVertices || geometryIdentity(item.geometry);
+      const b = other?.ribbonVertices || geometryIdentity(other?.geometry);
       return item.key === other?.key && (Array.isArray(a) ? a.length === b?.length && a.every((value, childIndex) => value === b[childIndex]) : a === b);
     });
   }
 
-  function setSelection({ primary = [], secondary = [], revision = 0 } = {}) {
-    if (Number(revision) === geometryRevision && sameItems(items.primary, primary) && sameItems(items.secondary, secondary)) return false;
-    items = { primary: primary.slice(), secondary: secondary.slice() };
+  function setSelection({
+    hover = [], primary = [], secondary = [], revision = 0,
+    countryHoverId = '', countryPrimaryId = '', countrySecondaryIds = [],
+  } = {}) {
+    const nextHover = hover.slice();
+    const nextPrimary = primary.slice();
+    const nextSecondary = secondary.slice();
+    const countryHover = countryRibbonItem(countryHoverId);
+    const countryPrimary = countryRibbonItem(countryPrimaryId);
+    if (countryHover) nextHover.push(countryHover);
+    if (countryPrimary) nextPrimary.push(countryPrimary);
+    for (const id of countrySecondaryIds || []) {
+      const item = countryRibbonItem(id);
+      if (item) nextSecondary.push(item);
+    }
+    if (Number(revision) === geometryRevision && sameItems(items.hover, nextHover) && sameItems(items.primary, nextPrimary) && sameItems(items.secondary, nextSecondary)) return false;
+    items = { hover: nextHover, primary: nextPrimary, secondary: nextSecondary };
     geometryRevision = Number(revision || 0);
     if (!available) return false;
     const started = performance.now();
     const primaryData = updateBuffer(primaryBuffer, items.primary);
     const secondaryData = updateBuffer(secondaryBuffer, items.secondary);
+    const hoverData = updateBuffer(hoverBuffer, items.hover);
     primaryCount = primaryData.vertexCount;
     secondaryCount = secondaryData.vertexCount;
     primarySegmentCount = primaryData.segmentCount;
     secondarySegmentCount = secondaryData.segmentCount;
+    hoverCount = hoverData.vertexCount;
+    hoverSegmentCount = hoverData.segmentCount;
     primaryPointCount = updatePointBuffer(primaryPointBuffer, items.primary);
     secondaryPointCount = updatePointBuffer(secondaryPointBuffer, items.secondary);
+    hoverPointCount = updatePointBuffer(hoverPointBuffer, items.hover);
     bufferBuildCount += 1;
     bufferBuildMs = performance.now() - started;
     return true;
@@ -238,11 +352,11 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     return locations;
   }
 
-  function drawRibbon(buffer, count, width, alpha, viewState) {
+  function drawRibbon(buffer, count, width, alpha, viewState, color = interactionStyle.selection.color) {
     if (!count) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     const locations = setRibbonAttributes();
-    const [red, green, blue] = selectionColorRgb();
+    const [red, green, blue] = colorRgb(color);
     gl.uniform4f(gl.getUniformLocation(program, 'uColor'), red, green, blue, alpha);
     gl.uniform1f(gl.getUniformLocation(program, 'uHalfWidth'), width / 2);
     const offsets = viewState.projection === 'globe' ? [0] : [-2 * Math.PI, 0, 2 * Math.PI];
@@ -251,7 +365,7 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     for (const location of locations) if (location >= 0) gl.disableVertexAttribArray(location);
   }
 
-  function drawPoints(buffer, count, alpha) {
+  function drawPoints(buffer, count, alpha, color = interactionStyle.selection.color) {
     if (!count) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     const location = gl.getAttribLocation(program, 'aStart');
@@ -263,7 +377,7 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     if (endLocation >= 0) gl.vertexAttrib2f(endLocation, 0, 0);
     if (sideLocation >= 0) gl.vertexAttrib1f(sideLocation, 0);
     if (endpointLocation >= 0) gl.vertexAttrib1f(endpointLocation, 0);
-    const [red, green, blue] = selectionColorRgb();
+    const [red, green, blue] = colorRgb(color);
     gl.uniform4f(gl.getUniformLocation(program, 'uColor'), red, green, blue, alpha);
     gl.uniform1f(gl.getUniformLocation(program, 'uHalfWidth'), 0);
     gl.uniform1f(gl.getUniformLocation(program, 'uWorldOffset'), 0);
@@ -293,27 +407,35 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     gl.uniform1f(gl.getUniformLocation(program, 'uScale'), scale); gl.uniform3fv(gl.getUniformLocation(program, 'uRowX'), rows.rowX); gl.uniform3fv(gl.getUniformLocation(program, 'uRowY'), rows.rowY); gl.uniform3fv(gl.getUniformLocation(program, 'uRowZ'), rows.rowZ);
     gl.uniform2f(gl.getUniformLocation(program, 'uFlatCenter'), flatCenter[0] * DEGREES_TO_RADIANS, flatCenter[1] * DEGREES_TO_RADIANS); gl.uniform1i(gl.getUniformLocation(program, 'uMode'), mode);
     gl.uniform1f(gl.getUniformLocation(program, 'uDpr'), dpr);
-    drawRibbon(primaryBuffer, primaryCount, SELECTION_STYLE.primaryWidth, SELECTION_STYLE.primaryAlpha, viewState);
-    drawRibbon(secondaryBuffer, secondaryCount, SELECTION_STYLE.secondaryWidth, SELECTION_STYLE.secondaryAlpha, viewState);
-    drawPoints(primaryPointBuffer, primaryPointCount, SELECTION_STYLE.primaryAlpha);
-    drawPoints(secondaryPointBuffer, secondaryPointCount, SELECTION_STYLE.secondaryAlpha);
+    const primary = interactionStyle.selection.primary;
+    const secondary = interactionStyle.selection.secondary;
+    drawRibbon(hoverBuffer, hoverCount, interactionStyle.hover.width, interactionStyle.hover.alpha, viewState, interactionStyle.hover.color);
+    drawRibbon(secondaryBuffer, secondaryCount, secondary.outerWidth, secondary.casingAlpha, viewState, interactionStyle.selection.casingColor);
+    drawRibbon(secondaryBuffer, secondaryCount, secondary.innerWidth, secondary.innerAlpha, viewState, interactionStyle.selection.color);
+    drawRibbon(primaryBuffer, primaryCount, primary.outerWidth, primary.casingAlpha, viewState, interactionStyle.selection.casingColor);
+    drawRibbon(primaryBuffer, primaryCount, primary.innerWidth, primary.innerAlpha, viewState, interactionStyle.selection.color);
+    drawPoints(hoverPointBuffer, hoverPointCount, interactionStyle.hover.alpha, interactionStyle.hover.color);
+    drawPoints(secondaryPointBuffer, secondaryPointCount, secondary.casingAlpha, interactionStyle.selection.casingColor);
+    drawPoints(secondaryPointBuffer, secondaryPointCount, secondary.innerAlpha, interactionStyle.selection.color);
+    drawPoints(primaryPointBuffer, primaryPointCount, primary.casingAlpha, interactionStyle.selection.casingColor);
+    drawPoints(primaryPointBuffer, primaryPointCount, primary.innerAlpha, interactionStyle.selection.color);
     gl.disable(gl.BLEND);
     return true;
   }
 
   function clear() {
-    items = { primary: [], secondary: [] }; geometryRevision = -1;
-    primaryCount = secondaryCount = primarySegmentCount = secondarySegmentCount = primaryPointCount = secondaryPointCount = 0;
+    items = { hover: [], primary: [], secondary: [] }; geometryRevision = -1;
+    primaryCount = secondaryCount = hoverCount = primarySegmentCount = secondarySegmentCount = hoverSegmentCount = primaryPointCount = secondaryPointCount = hoverPointCount = 0;
     if (available) render({ projection: 'flat', size: getSize?.() || { width: 1, height: 1 }, dpr: getDpr?.() || 1 });
   }
 
   return Object.freeze({
-    init, setSelection, render, clear, isAvailable: () => available,
+    init, setSelection, setCountryBoundaryMesh, setInteractionStyle: setInteractionStyle, render, clear, isAvailable: () => available,
     stats: () => ({
-      primaryCount, secondaryCount, primarySegmentCount, secondarySegmentCount,
-      segmentCount: primarySegmentCount + secondarySegmentCount,
-      ribbonTriangleCount: (primaryCount + secondaryCount) / 3,
-      bufferBuildCount, bufferBuildMs, geometryRevision,
+      primaryCount, secondaryCount, hoverCount, primarySegmentCount, secondarySegmentCount, hoverSegmentCount,
+      segmentCount: primarySegmentCount + secondarySegmentCount + hoverSegmentCount,
+      ribbonTriangleCount: (primaryCount + secondaryCount + hoverCount) / 3,
+      bufferBuildCount, bufferBuildMs, geometryRevision, countryBoundaryRevision,
     }),
   });
 }

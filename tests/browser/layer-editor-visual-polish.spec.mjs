@@ -20,11 +20,19 @@ async function installTestAnimationFrame(page) {
   });
 }
 
-async function openApp(page, layout) {
+async function openApp(page, layout, { blockPhaseCleanup = false, theme = null } = {}) {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
   await installTestAnimationFrame(page);
+  if (theme) {
+    await page.addInitScript(preferredTheme => {
+      localStorage.setItem('pandolab-user-preferences', JSON.stringify({ version: 1, appearance: { theme: preferredTheme } }));
+    }, theme);
+  }
+  if (blockPhaseCleanup) {
+    await page.route('**/phase1-ui-cleanup.css*', route => route.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+  }
   await page.setViewportSize({ width: layout.width, height: layout.height });
   await page.goto('/?renderer=canvas');
   await expect(page.locator('#bootstrapLoading')).toHaveAttribute('hidden', '', { timeout: 30_000 });
@@ -32,6 +40,50 @@ async function openApp(page, layout) {
   if (layout.name !== 'wide') await page.locator('#mobileMapBtn').click();
   await expect(page.locator('#leftPanel')).toBeVisible();
   return errors;
+}
+
+async function openCountryEditor(page) {
+  const search = page.locator('#layerSearchInput');
+  await search.fill('폴란드');
+  await page.locator('#layerSearchResults .layer-search-result').first().click();
+  if (!await page.locator('#editorObjectHeader').isVisible()) await page.locator('#mobileEditBtn').click();
+  await expect(page.locator('.editor-view-tabs')).toBeVisible();
+}
+
+async function expectFlatIdentificationDisclosure(page) {
+  const country = page.locator('#countryProperties');
+  const identification = country.locator(':scope > .editor-disclosure');
+  await expect(identification.locator(':scope > summary')).toContainText('식별 정보');
+  await expect(country).not.toContainText('추가 정보');
+  await expect(identification.locator('#countryCodeInput')).toBeAttached();
+  await expect(identification.locator('#originalNameValue')).toBeAttached();
+  const styles = await identification.evaluate(element => {
+    const style = getComputedStyle(element);
+    const summary = element.querySelector(':scope > summary');
+    const body = element.querySelector(':scope > .editor-disclosure-body');
+    return {
+      background: style.backgroundColor,
+      borderTop: style.borderTopWidth,
+      borderRight: style.borderRightWidth,
+      borderBottom: style.borderBottomWidth,
+      borderLeft: style.borderLeftWidth,
+      radius: style.borderRadius,
+      shadow: style.boxShadow,
+      summaryPaddingLeft: getComputedStyle(summary).paddingLeft,
+      bodyPaddingLeft: getComputedStyle(body).paddingLeft,
+    };
+  });
+  expect(styles).toMatchObject({
+    background: 'rgba(0, 0, 0, 0)',
+    borderTop: '0px',
+    borderRight: '0px',
+    borderBottom: '0px',
+    borderLeft: '0px',
+    radius: '0px',
+    shadow: 'none',
+    summaryPaddingLeft: '0px',
+    bodyPaddingLeft: '0px',
+  });
 }
 
 for (const layout of layouts) {
@@ -138,11 +190,8 @@ for (const layout of layouts) {
     await expect(page.locator('#mapLayersTabBtn')).toBeFocused();
     await expect(page.locator('#layerSection')).toBeVisible();
 
-    const search = page.locator('#layerSearchInput');
-    await search.fill('폴란드');
-    await page.locator('#layerSearchResults .layer-search-result').first().click();
-    if (!await page.locator('#editorObjectHeader').isVisible()) await page.locator('#mobileEditBtn').click();
-    await expect(page.locator('.editor-view-tabs')).toBeVisible();
+    await openCountryEditor(page);
+    await expectFlatIdentificationDisclosure(page);
 
     const tabMetrics = await page.locator('.editor-view-tabs').evaluate(tabs => {
       const active = tabs.querySelector('[aria-selected="true"]');
@@ -193,6 +242,20 @@ for (const layout of layouts) {
 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);
+    expect(errors).toEqual([]);
+  });
+}
+
+for (const scenario of [
+  { name: 'wide dark', layout: layouts[0], theme: 'dark' },
+  { name: 'mobile light', layout: layouts[2], theme: 'light' },
+]) {
+  test(`${scenario.name} keeps object disclosures flat without the late cleanup stylesheet`, async ({ page }) => {
+    test.setTimeout(180_000);
+    const errors = await openApp(page, scenario.layout, { blockPhaseCleanup: true, theme: scenario.theme });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', scenario.theme);
+    await openCountryEditor(page);
+    await expectFlatIdentificationDisclosure(page);
     expect(errors).toEqual([]);
   });
 }

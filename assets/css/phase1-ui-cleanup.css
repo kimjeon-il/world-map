@@ -52,37 +52,6 @@ body.file-menu-open .mobile-backdrop {
   justify-self: end;
 }
 
-/* Editor: sections are document structure, not stacked cards. */
-.editor-object-form,
-#hydroProperties,
-#distributionProperties,
-#labelProperties,
-#drawingProperties {
-  gap: var(--ui-space-5) !important;
-}
-
-.editor-object-form > .editor-section,
-.editor-object-form > .editor-disclosure,
-#hydroProperties > .editor-section,
-#hydroProperties > .editor-disclosure,
-#distributionProperties > .editor-section,
-#distributionProperties > .editor-disclosure,
-#labelProperties > .editor-section,
-#drawingProperties > .editor-section {
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.editor-section + .editor-section,
-.editor-section + .editor-disclosure,
-.editor-disclosure + .editor-section {
-  padding-top: var(--ui-space-1) !important;
-}
-
 .editor-section-title {
   margin-bottom: var(--ui-space-1);
 }
@@ -125,21 +94,12 @@ body.file-menu-open .mobile-backdrop {
   display: none !important;
 }
 
-/* Info/disclosure blocks should not create a second card hierarchy. */
-.editor-disclosure,
+/* Info lists should not create a second card hierarchy. */
 .ui-info-list.editor-info-list {
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
-}
-
-.editor-disclosure > summary {
-  padding-inline: 0 !important;
-}
-
-.editor-disclosure .editor-disclosure-body {
-  padding-inline: 0 !important;
 }
 
 /* Layer category boxes are semantic grouping only. */
@@ -255,8 +215,7 @@ body.file-menu-open .mobile-backdrop {
 /* Reduce decorative depth without removing functional boundaries. */
 .editor-flag-preview,
 .historical-library-preview-map,
-.ui-info-list,
-.editor-disclosure {
+.ui-info-list {
   box-shadow: none !important;
 }
 

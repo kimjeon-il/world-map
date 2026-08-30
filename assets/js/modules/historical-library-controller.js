@@ -17,6 +17,42 @@ export function createHistoricalLibraryController({
   requestFrame = callback => requestAnimationFrame(callback),
 }) {
   let selectedId = '';
+  let loading = false;
+
+  function setLoadingState(nextLoading) {
+    loading = !!nextLoading;
+    for (const element of [
+      elements.search,
+      elements.clearSearch,
+      elements.type,
+      elements.status,
+      elements.year,
+      elements.geographicRegion,
+      elements.snapshot,
+      elements.childDepth,
+    ]) {
+      if (element) element.disabled = loading;
+    }
+    if (elements.snapshotButton) elements.snapshotButton.disabled = loading || !elements.snapshot.value;
+    if (elements.add) elements.add.disabled = true;
+    if (elements.results) elements.results.setAttribute('aria-busy', String(loading));
+  }
+
+  function renderLoadingResults() {
+    const fragment = document.createDocumentFragment();
+    for (let index = 0; index < 6; index += 1) {
+      const row = document.createElement('div');
+      row.className = 'historical-library-result-skeleton';
+      row.setAttribute('aria-hidden', 'true');
+      const title = document.createElement('span');
+      const meta = document.createElement('span');
+      title.className = 'ui-skeleton-block';
+      meta.className = 'ui-skeleton-block';
+      row.append(title, meta);
+      fragment.appendChild(row);
+    }
+    elements.results.replaceChildren(fragment);
+  }
 
   function period(entity) {
     if (!entity.startDate && !entity.endDate) return '현존';
@@ -127,6 +163,7 @@ export function createHistoricalLibraryController({
   }
 
   function select(id) {
+    if (loading) return;
     selectedId = String(id || '');
     renderResults();
     renderPreview();
@@ -142,20 +179,25 @@ export function createHistoricalLibraryController({
   async function open() {
     closeCreateMenu();
     elements.modal.classList.remove('hidden');
-    elements.results.replaceChildren(Object.assign(document.createElement('p'), { className: 'editor-help', textContent: '라이브러리를 불러오는 중입니다.' }));
+    setLoadingState(true);
+    renderLoadingResults();
     try {
       await service.load();
+      setLoadingState(false);
       syncFilterOptions();
       renderResults();
       renderPreview();
       elements.search.focus();
     } catch (error) {
+      loading = false;
+      elements.results.setAttribute('aria-busy', 'false');
+      elements.results.replaceChildren(createEmptyState('라이브러리를 불러오지 못했습니다.', '잠시 후 다시 시도해 주세요.', { compact: true }));
       reportError(error, '국가·지역 라이브러리를 불러오지 못했습니다.', 'PL-LIB-001', 4800);
     }
   }
 
   function addSelected() {
-    if (!selectedId) return;
+    if (loading || !selectedId) return;
     const count = instantiate([selectedId], elements.year.value, elements.childDepth.value);
     if (!count) setStatus('이미 현재 프로젝트에 있는 항목입니다.', 'success', 2800);
     else setStatus(`라이브러리 항목 ${count}개를 독립 프로젝트 인스턴스로 추가했습니다.`, 'success', 4200);
