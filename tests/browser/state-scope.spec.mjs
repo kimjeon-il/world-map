@@ -14,7 +14,7 @@ async function openApp(page) {
 async function autosaveRecords(page) {
   return page.evaluate(async () => {
     const database = await new Promise((resolve, reject) => {
-      const request = indexedDB.open('pandolab-editor-v010', 2);
+      const request = indexedDB.open('pandolab-editor', 2);
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });

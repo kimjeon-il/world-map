@@ -28,9 +28,9 @@ test('historical entities use stable IDs and select the geometry version for a r
 });
 
 test('library search covers multilingual names aliases dates types and current/past status', () => {
-  const library = createHistoricalLibrary({ schemaVersion: 1, entities: [
-    { libraryId: 'past', type: 'country', canonicalName: 'Czechoslovakia', displayNames: { ko: '체코슬로바키아' }, alternateNames: ['Československo'], startDate: '1918', endDate: '1992', metadata: { region: 'Europe' }, geometryVersions: [{ id: 'past-v', geometry: square() }] },
-    { libraryId: 'current', type: 'region', canonicalName: 'Current region', endDate: null, metadata: { region: 'Asia' }, geometryVersions: [{ id: 'current-v', geometry: square() }] },
+  const library = createHistoricalLibrary({ schemaVersion: 2, entities: [
+    { libraryId: 'past', type: 'country', canonicalName: 'Czechoslovakia', displayNames: { ko: '체코슬로바키아' }, alternateNames: ['Československo'], startDate: '1918', endDate: '1992', metadata: { geographicRegion: 'Europe' }, geometryVersions: [{ id: 'past-v', geometry: square() }] },
+    { libraryId: 'current', type: 'region', canonicalName: 'Current region', endDate: null, metadata: { geographicRegion: 'Asia' }, geometryVersions: [{ id: 'current-v', geometry: square() }] },
   ] });
   assert.equal(library.search({ query: 'česko' }).map(item => item.libraryId).join(), 'past');
   assert.equal(library.search({ query: '체코' }).map(item => item.libraryId).join(), 'past');
@@ -67,7 +67,7 @@ test('pilot geometry is materialized from member countries and instances retain 
 
 test('world snapshots remain templates with independent reference lists', () => {
   const refs = ['one'];
-  const library = createHistoricalLibrary({ schemaVersion: 1, snapshots: [{ id: 'snapshot', name: 'Snapshot', referenceDate: '1914', entityRefs: refs }] });
+  const library = createHistoricalLibrary({ schemaVersion: 2, snapshots: [{ id: 'snapshot', name: 'Snapshot', referenceDate: '1914', entityRefs: refs }] });
   refs.push('two');
   assert.deepEqual(library.getSnapshot('snapshot').entityRefs, ['one']);
 });

@@ -24,7 +24,7 @@ export function createHistoricalLibraryController({
   }
 
   function syncFilterOptions() {
-    const geographicRegions = [...new Set(service.list().map(entity => String(entity.metadata?.region || '')).filter(Boolean))].sort(collator.compare);
+    const geographicRegions = [...new Set(service.list().map(entity => String(entity.metadata?.geographicRegion || '')).filter(Boolean))].sort(collator.compare);
     replaceSelectOptions(elements.geographicRegion, [{ value: '', label: '전체' }, ...geographicRegions.map(geographicRegion => ({ value: geographicRegion, label: geographicRegion }))], elements.geographicRegion.value);
     replaceSelectOptions(elements.snapshot, [
       { value: '', label: '스냅샷 선택' },

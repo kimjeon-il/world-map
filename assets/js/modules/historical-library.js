@@ -5,7 +5,7 @@ import {
   temporalContains,
 } from './temporal.js';
 
-export const HISTORICAL_LIBRARY_SCHEMA_VERSION = 1;
+export const HISTORICAL_LIBRARY_SCHEMA_VERSION = 2;
 
 export const LIBRARY_ENTITY_TYPES = Object.freeze({
   COUNTRY: 'country',
@@ -113,7 +113,7 @@ export function createCurrentCountryLibraryEntities(countriesData, { displayName
         certainty: 'high',
         sourceId: 'natural-earth-5.1.1',
       }],
-      metadata: { currentCountryId: id, region: text(feature.properties?.CONTINENT) },
+      metadata: { currentCountryId: id, geographicRegion: text(feature.properties?.CONTINENT) },
       sourceInfo: { title: 'Natural Earth 5.1.1 Admin 0 Countries', license: 'Public domain' },
     });
   }).filter(Boolean);
@@ -176,7 +176,7 @@ export function createHistoricalLibrary({ schemaVersion, entities = [], snapshot
         if (type && entity.type !== type) return false;
         if (status === 'current' && entity.endDate) return false;
         if (status === 'past' && !entity.endDate) return false;
-        if (geographicRegion && text(entity.metadata?.region) !== text(geographicRegion)) return false;
+        if (geographicRegion && text(entity.metadata?.geographicRegion) !== text(geographicRegion)) return false;
         if (referencePoint && !temporalContains({ validFrom: entity.startDate, validTo: entity.endDate }, referencePoint)) return false;
         if (!needle) return true;
         const names = [entity.canonicalName, ...Object.values(entity.displayNames || {}), ...(entity.alternateNames || [])];

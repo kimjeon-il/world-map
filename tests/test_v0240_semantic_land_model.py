@@ -49,19 +49,19 @@ class V0240TerritorialUnitModelTests(unittest.TestCase):
         for operation in ("transferGeometry", "mergeUnits", "splitUnit", "editBoundary"):
             self.assertIn(f"function {operation}", GEOMETRY)
 
-    def test_parent_and_sovereignty_are_distinct_and_historical_regions_are_explicit(self):
+    def test_parent_and_sovereignty_are_distinct_and_regions_are_explicit(self):
         for field in ("parentId", "sovereignId", "validFrom", "validTo", "sourceLibraryId"):
             self.assertIn(field, MODEL)
         self.assertIn("TERRITORIAL_UNIT_TYPES.REGION", MODEL)
         self.assertIn("TERRITORIAL_COVERAGE_MODES.EXPLICIT", MODEL)
-        for element_id in ("historicalRegionsLayerChildren", "historicalRegionProperties"):
+        for element_id in ("regionsLayerChildren", "regionProperties"):
             self.assertIn(f'id="{element_id}"', INDEX)
 
     def test_dedicated_layers_create_flows_and_editors_exist(self):
         for element_id in (
-            "regionsLayerChildren", "administrativeLayerChildren", "historicalRegionsLayerChildren",
+            "territoriesLayerChildren", "administrativeLayerChildren", "regionsLayerChildren",
             "addTerritoryBtn", "addAdministrativeBtn", "addRegionBtn",
-            "territoryProperties", "administrativeProperties", "historicalRegionProperties",
+            "territoryProperties", "administrativeProperties", "regionProperties",
             "splitTerritoryBtn", "mergeTerritoryBtn", "splitAdministrativeBtn",
             "mergeAdministrativeBtn", "territorialCreateMethod",
         ):
@@ -90,7 +90,7 @@ class V0240TerritorialUnitModelTests(unittest.TestCase):
         self.assertIn("unitType: TERRITORIAL_UNIT_TYPES.REGION", direct_create)
         self.assertIn("coverageMode: TERRITORIAL_COVERAGE_MODES.EXPLICIT", direct_create)
         self.assertIn("isRemainder: false", direct_create)
-        self.assertIn("state.layerVisibility.historicalRegions = true", direct_create)
+        self.assertIn("state.layerVisibility.regions = true", direct_create)
         self.assertIn("function importGeoJsonRegions", APP)
 
     def test_country_geometry_remains_canonical_and_remainders_are_preserved(self):
@@ -102,7 +102,7 @@ class V0240TerritorialUnitModelTests(unittest.TestCase):
         self.assertIn("properties?.isRemainder", APP)
 
     def test_geopackage_and_geojson_round_trip_dedicated_layers(self):
-        for table in ("territories", "administrative_units"):
+        for table in ("territories", "administrative", "regions"):
             self.assertIn(table, GIS_ADAPTERS)
         self.assertNotIn("administrative_areas", GIS_ADAPTERS)
         for field in ("sovereign_id", "parent_id", "admin_level", "is_remainder", "properties_json"):

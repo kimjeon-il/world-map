@@ -10,7 +10,7 @@ const square = offset => ({
 
 function fixture() {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     entities: [
       {
         libraryId: 'historical-country:parent',

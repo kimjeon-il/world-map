@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "entities": [
     {
       "libraryId": "historical-country:czechoslovakia",
@@ -21,7 +21,7 @@
           "notes": "현대 후계국 외곽선 합집으로 만든 기능 시험용 근사 경계입니다."
         }
       ],
-      "metadata": { "region": "Europe", "pilot": true, "approximateGeometry": true },
+      "metadata": { "geographicRegion": "Europe", "pilot": true, "approximateGeometry": true },
       "sourceInfo": {
         "title": "판도연구소 pilot derived from Natural Earth 5.1.1 successor states",
         "license": "Public domain derivative",
@@ -48,7 +48,7 @@
           "notes": "현대 후계국 외곽선 합집으로 만든 기능 시험용 근사 경계입니다."
         }
       ],
-      "metadata": { "region": "Europe/Asia", "pilot": true, "approximateGeometry": true },
+      "metadata": { "geographicRegion": "Europe/Asia", "pilot": true, "approximateGeometry": true },
       "sourceInfo": {
         "title": "판도연구소 pilot derived from Natural Earth 5.1.1 successor states",
         "license": "Public domain derivative",

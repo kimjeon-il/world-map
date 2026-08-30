@@ -20,7 +20,7 @@ async function openFolder(page, group) {
 async function autosavedCountryLock(page, countryId) {
   return page.evaluate(async expectedId => {
     const database = await new Promise((resolve, reject) => {
-      const request = indexedDB.open('pandolab-editor-v010', 2);
+      const request = indexedDB.open('pandolab-editor', 2);
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
@@ -41,7 +41,7 @@ async function autosavedCountryLock(page, countryId) {
 async function autosavedHydroEdit(page, name) {
   return page.evaluate(async expectedName => {
     const database = await new Promise((resolve, reject) => {
-      const request = indexedDB.open('pandolab-editor-v010', 2);
+      const request = indexedDB.open('pandolab-editor', 2);
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
