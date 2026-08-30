@@ -73,6 +73,8 @@ test('country lock is per-object, preserves inspection, rejects geometry edits, 
   await page.locator('#objectLockMenuBtn').click();
   await expect.poll(() => page.evaluate(id => window.PANDOLAB_TERRITORIAL.isLocked('country', id), countryId)).toBe(true);
   expect(await page.evaluate(id => window.PANDOLAB_TERRITORIAL.isLocked('country', id), otherCountryId)).toBe(false);
+  await expect(firstRow.locator('.layer-lock-indicator')).toBeVisible();
+  await expect(firstRow.locator('.layer-child-name')).toHaveAttribute('aria-label', /잠김/);
   await expect(firstRow).toHaveClass(/is-selected/);
   await expect(page.locator('#countryProperties')).toBeVisible();
 
@@ -93,6 +95,7 @@ test('country lock is per-object, preserves inspection, rejects geometry edits, 
   expect(await page.evaluate(id => window.PANDOLAB_TERRITORIAL.isLocked('country', id), countryId)).toBe(true);
   await openFolder(page, 'countries');
   const restoredRow = page.locator(`#countriesLayerChildren .layer-child[data-item-id="${countryId}"]`);
+  await expect(restoredRow.locator('.layer-lock-indicator')).toBeVisible();
   await restoredRow.locator('.layer-child-name').click();
   await expect(page.locator('#countryProperties')).toBeVisible();
   await restoredRow.locator('.layer-child-menu').click();
