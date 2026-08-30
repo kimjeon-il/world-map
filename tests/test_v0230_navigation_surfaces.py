@@ -78,7 +78,9 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertIn('renderVirtualizedLayerGroup', APP)
         self.assertIn('const folderKeys = activeLayerFolderKeys();', APP)
         self.assertIn("const HYDRO_FOLDER_STATE_PREFIX = 'hydro-folder:';", APP)
-        self.assertIn('if (!key.startsWith(COUNTRY_REGION_FOLDER_STATE_PREFIX) && !key.startsWith(HYDRO_FOLDER_STATE_PREFIX)) state.layerFolders[key] = false;', APP)
+        self.assertIn("const TERRITORIAL_UNIT_FOLDER_STATE_PREFIX = 'territorial-unit-folder:';", APP)
+        self.assertIn("!key.startsWith(TERRITORIAL_UNIT_FOLDER_STATE_PREFIX)", APP)
+        self.assertIn("!key.startsWith(HYDRO_FOLDER_STATE_PREFIX)", APP)
         self.assertIn('searchText: id', APP)
 
     def test_sheet_content_owns_vertical_scrolling(self):

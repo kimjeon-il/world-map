@@ -35,7 +35,7 @@ test('historical library controller owns modal loading and close focus', async (
     createDocumentFragment() { return fakeElement(document); },
   };
   const names = [
-    'open', 'modal', 'card', 'close', 'backdrop', 'search', 'clearSearch', 'type', 'status', 'year', 'region',
+    'open', 'modal', 'card', 'close', 'backdrop', 'search', 'clearSearch', 'type', 'status', 'year', 'geographicRegion',
     'results', 'preview', 'snapshot', 'snapshotButton', 'childDepth', 'add', 'addOptions', 'optionsBack',
   ];
   const elements = Object.fromEntries(names.map(name => [name, fakeElement(document)]));

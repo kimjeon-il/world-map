@@ -16,7 +16,7 @@ PROJECT_STATE = (ROOT / "assets" / "js" / "modules" / "project-state.js").read_t
 DRAWING_SERVICE = (ROOT / "assets" / "js" / "modules" / "drawing-service.js").read_text(encoding="utf-8")
 
 
-class V0240CountryRegionModelTests(unittest.TestCase):
+class V0240TerritorialUnitModelTests(unittest.TestCase):
     def test_region_state_is_separate_from_generic_drawings(self):
         self.assertIn("name: 'territorialUnits', scope: 'document', fallback: () => []", PROJECT_STATE)
         self.assertIn("name: 'territorialRelations', scope: 'document', fallback: () => []", PROJECT_STATE)
@@ -59,20 +59,43 @@ class V0240CountryRegionModelTests(unittest.TestCase):
 
     def test_dedicated_layers_create_flows_and_editors_exist(self):
         for element_id in (
-            "regionsLayerChildren", "administrativeLayerChildren", "addRegionBtn",
-            "addAdministrativeBtn", "regionProperties", "administrativeProperties",
-            "splitRegionBtn", "mergeRegionBtn", "splitAdministrativeBtn",
-            "mergeAdministrativeBtn", "countryRegionCreateMethod",
+            "regionsLayerChildren", "administrativeLayerChildren", "historicalRegionsLayerChildren",
+            "addTerritoryBtn", "addAdministrativeBtn", "addRegionBtn",
+            "territoryProperties", "administrativeProperties", "historicalRegionProperties",
+            "splitTerritoryBtn", "mergeTerritoryBtn", "splitAdministrativeBtn",
+            "mergeAdministrativeBtn", "territorialCreateMethod",
         ):
             self.assertIn(f'id="{element_id}"', INDEX)
-        self.assertIn("function startCountryRegionCreate", APP)
-        self.assertIn("function finishCountryRegionSplitDraft", APP)
-        self.assertIn("function completeCountryRegionMerge", APP)
-        self.assertIn("function finishCountryRegionRedrawDraft", APP)
+        self.assertIn("function startTerritorialUnitCreate", APP)
+        self.assertIn("function finishTerritorialUnitSplitDraft", APP)
+        self.assertIn("function completeTerritorialUnitMerge", APP)
+        self.assertIn("function finishTerritorialUnitRedrawDraft", APP)
+
+    def test_create_menu_and_code_use_canonical_territorial_names(self):
+        territorial_buttons = [
+            INDEX.index('id="addCountryBtn"'),
+            INDEX.index('id="addTerritoryBtn"'),
+            INDEX.index('id="addAdministrativeBtn"'),
+            INDEX.index('id="addRegionBtn"'),
+        ]
+        self.assertEqual(territorial_buttons, sorted(territorial_buttons))
+        self.assertIn("openTerritorialCreateModal(TERRITORIAL_UNIT_TYPES.TERRITORY)", APP)
+        self.assertIn("openTerritorialCreateModal(TERRITORIAL_UNIT_TYPES.REGION)", APP)
+        self.assertNotIn("COUNTRY_REGION_KINDS", APP)
+        self.assertNotIn("region: '권역'", APP)
+        self.assertIn("territory: '권역'", APP)
+
+    def test_region_creation_is_explicit_and_not_a_partition_alias(self):
+        direct_create = APP[APP.index("function finishTerritorialUnitDirectDraft"):APP.index("function normalizeEditorColor")]
+        self.assertIn("unitType: TERRITORIAL_UNIT_TYPES.REGION", direct_create)
+        self.assertIn("coverageMode: TERRITORIAL_COVERAGE_MODES.EXPLICIT", direct_create)
+        self.assertIn("isRemainder: false", direct_create)
+        self.assertIn("state.layerVisibility.historicalRegions = true", direct_create)
+        self.assertIn("function importGeoJsonRegions", APP)
 
     def test_country_geometry_remains_canonical_and_remainders_are_preserved(self):
-        self.assertIn("function reconcileCountryRegionCompleteness", APP)
-        self.assertIn("function addUnassignedCountryRegionGeometry", APP)
+        self.assertIn("function reconcileTerritorialUnitCompleteness", APP)
+        self.assertIn("function addUnassignedTerritorialUnitGeometry", APP)
         self.assertIn("syncHardLandDependents", APP)
         self.assertIn("transferLandDependents", APP)
         self.assertIn("reassignLandDependents", APP)
@@ -88,7 +111,8 @@ class V0240CountryRegionModelTests(unittest.TestCase):
         self.assertIn("gisAdapters.importTerritorialFeature", GIS)
         self.assertIn('id="gisTargetType"', INDEX)
         self.assertIn('id="gisAdvancedMapping"', INDEX)
-        self.assertIn("function importGeoJsonCountryRegions", APP)
+        self.assertIn("function importGeoJsonTerritorialUnits", APP)
+        self.assertIn("function importGeoJsonRegions", APP)
 
 
 if __name__ == "__main__":

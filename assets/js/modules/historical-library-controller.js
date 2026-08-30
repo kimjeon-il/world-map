@@ -24,8 +24,8 @@ export function createHistoricalLibraryController({
   }
 
   function syncFilterOptions() {
-    const regions = [...new Set(service.list().map(entity => String(entity.metadata?.region || '')).filter(Boolean))].sort(collator.compare);
-    replaceSelectOptions(elements.region, [{ value: '', label: '전체' }, ...regions.map(region => ({ value: region, label: region }))], elements.region.value);
+    const geographicRegions = [...new Set(service.list().map(entity => String(entity.metadata?.region || '')).filter(Boolean))].sort(collator.compare);
+    replaceSelectOptions(elements.geographicRegion, [{ value: '', label: '전체' }, ...geographicRegions.map(geographicRegion => ({ value: geographicRegion, label: geographicRegion }))], elements.geographicRegion.value);
     replaceSelectOptions(elements.snapshot, [
       { value: '', label: '스냅샷 선택' },
       ...service.snapshots().map(snapshot => ({ value: snapshot.id, label: `${snapshot.name}${snapshot.metadata?.partial ? ' · 부분' : ''}` })),
@@ -38,7 +38,7 @@ export function createHistoricalLibraryController({
       type: elements.type.value,
       status: elements.status.value,
       referenceDate: elements.year.value,
-      region: elements.region.value,
+      geographicRegion: elements.geographicRegion.value,
     });
   }
 
@@ -150,7 +150,7 @@ export function createHistoricalLibraryController({
       renderPreview();
       elements.search.focus();
     } catch (error) {
-      reportError(error, '역사 지리 라이브러리를 불러오지 못했습니다.', 'PL-LIB-001', 4800);
+      reportError(error, '국가·지역 라이브러리를 불러오지 못했습니다.', 'PL-LIB-001', 4800);
     }
   }
 
@@ -210,7 +210,7 @@ export function createHistoricalLibraryController({
       [elements.type, 'change'],
       [elements.status, 'change'],
       [elements.year, 'input'],
-      [elements.region, 'change'],
+      [elements.geographicRegion, 'change'],
     ]) {
       element?.addEventListener(eventName, () => {
         renderResults();

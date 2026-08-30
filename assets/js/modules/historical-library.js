@@ -169,14 +169,14 @@ export function createHistoricalLibrary({ schemaVersion, entities = [], snapshot
     list: () => [...entityMap.values()],
     snapshots: () => [...snapshotMap.values()],
     getSnapshot: id => snapshotMap.get(text(id)) || null,
-    search({ query = '', type = '', status = 'all', referenceDate = '', region = '' } = {}) {
+    search({ query = '', type = '', status = 'all', referenceDate = '', geographicRegion = '' } = {}) {
       const needle = text(query).toLocaleLowerCase('ko');
       const referencePoint = parseTemporal(referenceDate);
       return [...entityMap.values()].filter(entity => {
         if (type && entity.type !== type) return false;
         if (status === 'current' && entity.endDate) return false;
         if (status === 'past' && !entity.endDate) return false;
-        if (region && text(entity.metadata?.region) !== text(region)) return false;
+        if (geographicRegion && text(entity.metadata?.region) !== text(geographicRegion)) return false;
         if (referencePoint && !temporalContains({ validFrom: entity.startDate, validTo: entity.endDate }, referencePoint)) return false;
         if (!needle) return true;
         const names = [entity.canonicalName, ...Object.values(entity.displayNames || {}), ...(entity.alternateNames || [])];

@@ -29,14 +29,15 @@ test('historical entities use stable IDs and select the geometry version for a r
 
 test('library search covers multilingual names aliases dates types and current/past status', () => {
   const library = createHistoricalLibrary({ schemaVersion: 1, entities: [
-    { libraryId: 'past', type: 'country', canonicalName: 'Czechoslovakia', displayNames: { ko: '체코슬로바키아' }, alternateNames: ['Československo'], startDate: '1918', endDate: '1992', geometryVersions: [{ id: 'past-v', geometry: square() }] },
-    { libraryId: 'current', type: 'region', canonicalName: 'Current region', endDate: null, geometryVersions: [{ id: 'current-v', geometry: square() }] },
+    { libraryId: 'past', type: 'country', canonicalName: 'Czechoslovakia', displayNames: { ko: '체코슬로바키아' }, alternateNames: ['Československo'], startDate: '1918', endDate: '1992', metadata: { region: 'Europe' }, geometryVersions: [{ id: 'past-v', geometry: square() }] },
+    { libraryId: 'current', type: 'region', canonicalName: 'Current region', endDate: null, metadata: { region: 'Asia' }, geometryVersions: [{ id: 'current-v', geometry: square() }] },
   ] });
   assert.equal(library.search({ query: 'česko' }).map(item => item.libraryId).join(), 'past');
   assert.equal(library.search({ query: '체코' }).map(item => item.libraryId).join(), 'past');
   assert.equal(library.search({ status: 'past', referenceDate: '1950', type: 'country' }).length, 1);
   assert.equal(library.search({ status: 'current' }).length, 1);
   assert.equal(library.search({ referenceDate: '2000', type: 'country' }).length, 0);
+  assert.equal(library.search({ geographicRegion: 'Europe' }).map(item => item.libraryId).join(), 'past');
 });
 
 test('current countries are exposed through a library adapter without mutating source geometry', () => {

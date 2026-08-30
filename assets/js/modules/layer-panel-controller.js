@@ -51,9 +51,9 @@ export function createLayerPanelController({
         commands.openItemMenu(menu.dataset.layerItemMenu, menu.dataset.itemId, menu);
         return;
       }
-      const regionFolder = event.target.closest('[data-country-region-folder-toggle]');
-      if (regionFolder) {
-        commands.toggleRegionFolder(regionFolder.dataset.countryRegionFolderToggle);
+      const territorialFolder = event.target.closest('[data-territorial-unit-folder-toggle]');
+      if (territorialFolder) {
+        commands.toggleTerritorialUnitFolder(territorialFolder.dataset.territorialUnitFolderToggle);
         return;
       }
       const hydroFolder = event.target.closest('[data-hydro-folder-toggle]');

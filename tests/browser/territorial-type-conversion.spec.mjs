@@ -53,7 +53,7 @@ test('a region changes to an administrative area with one-step undo', async ({ p
 
   await page.evaluate(unitId => window.PANDOLAB_TERRITORIAL.select('territory', unitId), id);
   await page.locator('#actionsTabBtn').click();
-  await page.locator('#changeRegionTypeBtn').click();
+  await page.locator('#changeTerritoryTypeBtn').click();
   await expect(page.locator('#territorialTypeModal')).toBeVisible();
   await selectUiOption(page, '#territorialTypeInput', 'admin');
   await expect(page.locator('#territorialTypeTitle')).toHaveText('지역을 행정구역으로 전환');

@@ -49,11 +49,11 @@ for (const layout of layouts) {
     await expect(page.locator('#countriesLocked')).toHaveCount(0);
     const rowAlignment = await page.locator('.layer-folder-row').evaluateAll(rows => rows.slice(0, 4).map(row => {
       const toggle = row.querySelector(':scope > .layer-folder-toggle').getBoundingClientRect();
-      const checkbox = row.querySelector(':scope > input[type="checkbox"]:not([hidden])').getBoundingClientRect();
+      const visibility = row.querySelector(':scope > .layer-visibility-control').getBoundingClientRect();
       const name = row.querySelector(':scope > .layer-folder-name').getBoundingClientRect();
-      return { toggle: toggle.left, checkbox: checkbox.left, name: name.left };
+      return { toggle: toggle.left, visibility: visibility.left, name: name.left };
     }));
-    for (const key of ['toggle', 'checkbox', 'name']) {
+    for (const key of ['toggle', 'visibility', 'name']) {
       const positions = rowAlignment.map(row => row[key]);
       expect(Math.max(...positions) - Math.min(...positions)).toBeLessThanOrEqual(1);
     }
@@ -76,24 +76,25 @@ for (const layout of layouts) {
 
     const countryVisibility = page.locator('#countriesVisible');
     const visibleEye = await countryVisibility.evaluate(input => {
-      const box = input.getBoundingClientRect();
-      const icon = getComputedStyle(input, '::before');
-      return { width: box.width, height: box.height, iconWidth: icon.width, mask: icon.maskImage || icon.webkitMaskImage };
+      const control = input.closest('.layer-visibility-control');
+      const icon = control.querySelector('.layer-visibility-eye');
+      const box = control.getBoundingClientRect();
+      return { width: box.width, height: box.height, iconWidth: icon.getBoundingClientRect().width, href: icon.querySelector('use').getAttribute('href') };
     });
     const expectedVisibilityTarget = layout.name === 'mobile' ? 48 : 42;
     expect(visibleEye.width).toBeCloseTo(expectedVisibilityTarget, 1);
     expect(visibleEye.height).toBeCloseTo(expectedVisibilityTarget, 1);
-    expect(visibleEye.iconWidth).toBe('20px');
-    expect(visibleEye.mask).toContain('svg');
+    expect(visibleEye.iconWidth).toBe(20);
+    expect(visibleEye.href).toBe('#icon-eye');
     await expect(countryVisibility).toHaveAttribute('data-tooltip', '국가 숨기기');
     await countryVisibility.click();
     await expect(countryVisibility).not.toBeChecked();
     await expect(countryVisibility).toHaveAttribute('data-tooltip', '국가 표시');
-    const hiddenEyeMask = await countryVisibility.evaluate(input => {
-      const icon = getComputedStyle(input, '::before');
-      return icon.maskImage || icon.webkitMaskImage;
+    const hiddenEyeHref = await countryVisibility.evaluate(input => {
+      const icon = input.closest('.layer-visibility-control').querySelector('.layer-visibility-eye-off');
+      return icon.querySelector('use').getAttribute('href');
     });
-    expect(hiddenEyeMask).not.toBe(visibleEye.mask);
+    expect(hiddenEyeHref).toBe('#icon-eye-off');
     await countryVisibility.click();
     await expect(countryVisibility).toBeChecked();
 
@@ -121,8 +122,8 @@ for (const layout of layouts) {
     await expect(page.locator('#projectionControl')).toContainText('지구본');
     await expect(page.locator('#projectionControl')).toContainText('평면');
     await page.locator('#mapLayersTabBtn').click();
-    await expect(page.locator('label:has(#basemapLabelsVisible)')).toContainText('국가명 라벨');
-    await expect(page.locator('label:has(#labelsVisible)')).toContainText('도시·지명');
+    await expect(page.locator('.layer-presentation-row:has(#basemapLabelsVisible) .layer-presentation-name')).toHaveText('국가명 라벨');
+    await expect(page.locator('.layer-presentation-row:has(#labelsVisible) .layer-presentation-name')).toHaveText('도시·지명');
     await page.locator('[data-layer-style-toggle="distribution"]').click();
     await expect(page.locator('#distributionLayerModeInput option')).toHaveText([
       '영역별 가장 높은 비율',
