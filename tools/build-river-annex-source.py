@@ -240,6 +240,18 @@ def bounds_for_parts(parts: list[list[list[float]]]) -> list[float]:
     ]
 
 
+def stable_source_geometry_id(source_ids: set[str], parts: list[list[list[float]]]) -> str:
+    digest = hashlib.sha256()
+    for source_id in sorted(source_ids, key=lambda value: (0, int(value)) if value.isdigit() else (1, value)):
+        digest.update(source_id.encode("utf-8"))
+        digest.update(b"\0")
+    for part in parts:
+        digest.update(b"\x1e")
+        for longitude, latitude in part:
+            digest.update(f"{longitude:.6f},{latitude:.6f};".encode("ascii"))
+    return f"source-{digest.hexdigest()[:20]}"
+
+
 def build(source: Path, countries_path: Path, output: Path, corridor_km: float) -> None:
     raw = decode_raw_rivers(source)
     borders = shared_country_borders(countries_path)
@@ -253,7 +265,7 @@ def build(source: Path, countries_path: Path, output: Path, corridor_km: float) 
             "type": "LineString" if len(row["parts"]) == 1 else "MultiLineString",
             "coordinates": row["parts"][0] if len(row["parts"]) == 1 else row["parts"],
         }
-        feature_id = f"source-{logical_id}"
+        feature_id = stable_source_geometry_id(row["sourceIds"], row["parts"])
         selected_coordinate_count += sum(len(part) for part in row["parts"])
         features.append({
             "type": "Feature",

@@ -251,6 +251,35 @@ export function buildSharedFrontierChains(segments = []) {
   return chains.sort((left, right) => left.key.localeCompare(right.key));
 }
 
+function buildWorkingWindows(chain, config) {
+  const maximum = Math.max(1, Number(config.workingWindowMaxM));
+  const overlap = Math.max(0, Math.min(maximum - 1, Number(config.workingWindowOverlapM)));
+  if (chain.lengthM <= maximum) return [{ ...chain, parentLengthM: chain.lengthM, offsetS: 0, windowIndex: 0 }];
+  const windows = [];
+  const step = maximum - overlap;
+  for (let startS = 0, windowIndex = 0; startS < chain.lengthM - 1e-6; startS += step, windowIndex += 1) {
+    const endS = Math.min(chain.lengthM, startS + maximum);
+    const points = slicePolyline(chain.points, chain.cumulative, startS, endS);
+    const workspace = createLocalMetricWorkspace(points);
+    const metricPoints = points.map(workspace.toMeters);
+    const cumulative = lineCumulative(metricPoints);
+    const lengthM = cumulative[cumulative.length - 1] || 0;
+    if (lengthM > 0) windows.push({
+      key: chain.key,
+      points,
+      workspace,
+      metricPoints,
+      cumulative,
+      lengthM,
+      parentLengthM: chain.lengthM,
+      offsetS: startS,
+      windowIndex,
+    });
+    if (endS >= chain.lengthM - 1e-6) break;
+  }
+  return windows;
+}
+
 function buildFrontierIndex(chain, cellSize) {
   const buckets = new Map();
   const segments = [];
@@ -339,19 +368,35 @@ function validateMonotonicRun(samples, config) {
   return backtrack <= length * 0.1;
 }
 
-function matchRunsForPart(sourcePoints, chain, config, diagnostics) {
-  const metricPoints = sourcePoints.map(chain.workspace.toMeters);
+function matchRunsForPart(sourcePoints, parentChain, windows, config, diagnostics) {
+  const sourceWorkspace = createLocalMetricWorkspace(sourcePoints);
+  const metricPoints = sourcePoints.map(sourceWorkspace.toMeters);
   const sampled = samplePolyline(metricPoints, config.sampleSpacingM);
   if (!sampled.samples.length) return [];
-  const index = chain.frontierIndex || (chain.frontierIndex = buildFrontierIndex(chain, config.frontierGridCellM));
   const evaluated = sampled.samples.map(sample => {
     diagnostics.scannedRiverSamples += 1;
-    const frontier = index.nearest(sample.coordinate, config.matchMaxDistanceM);
+    const lonLat = sourceWorkspace.toLonLat(sample.coordinate);
+    let frontier = null;
+    for (const window of windows) {
+      const index = window.frontierIndex || (window.frontierIndex = buildFrontierIndex(window, config.frontierGridCellM));
+      const localPoint = window.workspace.toMeters(lonLat);
+      const nearest = index.nearest(localPoint, config.matchMaxDistanceM);
+      if (!nearest || (frontier && frontier.distance <= nearest.distance)) continue;
+      const riverLeft = window.workspace.toMeters(sourcePoints[sample.segmentIndex]);
+      const riverRight = window.workspace.toMeters(sourcePoints[sample.segmentIndex + 1]);
+      frontier = {
+        ...nearest,
+        direction: nearest.direction,
+        riverDirection: directionForSegment(riverLeft, riverRight),
+        s: window.offsetS + nearest.s,
+        lonLat: window.workspace.toLonLat(nearest.coordinate),
+      };
+    }
     if (!frontier || frontier.distance > config.matchMaxDistanceM) {
       diagnostics.rejectedByDistance += 1;
       return { ...sample, valid: false, reason: 'distance' };
     }
-    const angle = undirectedAngleDegrees(sample.direction, frontier.direction);
+    const angle = undirectedAngleDegrees(frontier.riverDirection, frontier.direction);
     if (angle > config.maxDirectionDeltaDeg) {
       diagnostics.rejectedByDirection += 1;
       return { ...sample, frontier, angle, valid: false, reason: 'direction' };
@@ -364,7 +409,8 @@ function matchRunsForPart(sourcePoints, chain, config, diagnostics) {
   const flush = () => {
     if (current.length >= 2) {
       const runLength = current[current.length - 1].distanceAlong - current[0].distanceAlong;
-      const minimum = Math.min(config.minParallelRunM, Math.max(config.shortFrontierMinRunM, chain.lengthM * config.minRunFrontierRatio));
+      const frontierLength = parentChain.lengthM;
+      const minimum = Math.min(config.minParallelRunM, Math.max(config.shortFrontierMinRunM, frontierLength * config.minRunFrontierRatio));
       if (runLength < minimum) diagnostics.rejectedByRunLength += 1;
       else if (!validateMonotonicRun(current, config)) diagnostics.rejectedByMonotonicity += 1;
       else runs.push({
@@ -372,6 +418,7 @@ function matchRunsForPart(sourcePoints, chain, config, diagnostics) {
         end: current[current.length - 1],
         samples: current.slice(),
         sourcePoints,
+        sourceWorkspace,
         metricPoints,
         cumulative: sampled.cumulative,
         lengthM: runLength,
@@ -453,6 +500,62 @@ function segmentsIntersect(a, b, c, d, allowEndpoints = true) {
   return on(c, a, b) || on(d, a, b) || on(a, c, d) || on(b, c, d);
 }
 
+function segmentIntersection(leftA, rightA, leftB, rightB) {
+  const ax = rightA[0] - leftA[0];
+  const ay = rightA[1] - leftA[1];
+  const bx = rightB[0] - leftB[0];
+  const by = rightB[1] - leftB[1];
+  const denominator = ax * by - ay * bx;
+  if (Math.abs(denominator) <= 1e-9) return null;
+  const dx = leftB[0] - leftA[0];
+  const dy = leftB[1] - leftA[1];
+  const t = (dx * by - dy * bx) / denominator;
+  const u = (dx * ay - dy * ax) / denominator;
+  if (t < -1e-9 || t > 1 + 1e-9 || u < -1e-9 || u > 1 + 1e-9) return null;
+  return {
+    t: Math.max(0, Math.min(1, t)),
+    u: Math.max(0, Math.min(1, u)),
+    coordinate: [leftA[0] + ax * t, leftA[1] + ay * t],
+  };
+}
+
+function actualIntersectionNear(run, chain, desiredDistance, config) {
+  const searchRadius = Math.max(config.sampleSpacingM * 2, config.maxMatchGapM);
+  const workspace = createLocalMetricWorkspace([...run.sourcePoints, ...chain.points]);
+  const riverPoints = run.sourcePoints.map(workspace.toMeters);
+  const frontierPoints = chain.points.map(workspace.toMeters);
+  let best = null;
+  for (let riverIndex = 0; riverIndex < riverPoints.length - 1; riverIndex += 1) {
+    const riverStart = run.cumulative[riverIndex];
+    const riverEnd = run.cumulative[riverIndex + 1];
+    if (riverEnd < desiredDistance - searchRadius || riverStart > desiredDistance + searchRadius) continue;
+    for (let frontierIndex = 0; frontierIndex < chain.metricPoints.length - 1; frontierIndex += 1) {
+      const intersection = segmentIntersection(
+        riverPoints[riverIndex], riverPoints[riverIndex + 1],
+        frontierPoints[frontierIndex], frontierPoints[frontierIndex + 1],
+      );
+      if (!intersection) continue;
+      const riverDistance = riverStart + (riverEnd - riverStart) * intersection.t;
+      const delta = Math.abs(riverDistance - desiredDistance);
+      if (delta > searchRadius || (best && best.delta <= delta)) continue;
+      const frontierStart = chain.cumulative[frontierIndex];
+      const frontierEnd = chain.cumulative[frontierIndex + 1];
+      best = {
+        delta,
+        riverDistance,
+        frontier: {
+          coordinate: intersection.coordinate,
+          lonLat: workspace.toLonLat(intersection.coordinate),
+          distance: 0,
+          segmentIndex: frontierIndex,
+          s: frontierStart + (frontierEnd - frontierStart) * intersection.u,
+        },
+      };
+    }
+  }
+  return best;
+}
+
 function ringSelfIntersects(ring, workspace) {
   const points = ring.map(workspace.toMeters);
   const count = points.length - 1;
@@ -482,6 +585,18 @@ function validateConnector(connector, chain, donorGeometry, targetGeometry, conf
   return { valid: true, length };
 }
 
+function connectorCrossesPath(connector, points, workspace) {
+  const [left, right] = connector.map(workspace.toMeters);
+  const connectorEndpoints = [left, right];
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const a = workspace.toMeters(points[index]);
+    const b = workspace.toMeters(points[index + 1]);
+    const sharedEndpoint = connectorEndpoints.some(endpoint => distance(endpoint, a) <= 1e-5 || distance(endpoint, b) <= 1e-5);
+    if (segmentsIntersect(left, right, a, b, !sharedEndpoint)) return true;
+  }
+  return false;
+}
+
 function componentGeometries(coordinates) {
   return (coordinates || []).filter(polygon => Array.isArray(polygon) && polygon[0]?.length >= 4)
     .map(polygon => ({ type: 'Polygon', coordinates: clone(polygon) }));
@@ -500,7 +615,25 @@ function segmentRows(points) {
 }
 
 function boundarySegmentsInside(points, geometry) {
-  return segmentRows(points).filter(([left, right]) => pointInGeometry(interpolate(left, right, 0.5), geometry));
+  const boundary = polygonCoordinates(geometry).flatMap(polygon => polygon.flatMap(ring => segmentRows(closeRing(ring))));
+  const output = [];
+  for (const [left, right] of segmentRows(points)) {
+    const parameters = [0, 1];
+    for (const [a, b] of boundary) {
+      const hit = segmentIntersection(left, right, a, b);
+      if (hit && hit.t > 1e-9 && hit.t < 1 - 1e-9) parameters.push(hit.t);
+    }
+    parameters.sort((a, b) => a - b);
+    const unique = parameters.filter((value, index) => !index || value - parameters[index - 1] > 1e-9);
+    for (let index = 0; index < unique.length - 1; index += 1) {
+      const start = unique[index];
+      const end = unique[index + 1];
+      if (end - start <= 1e-9) continue;
+      if (!pointInGeometry(interpolate(left, right, (start + end) / 2), geometry)) continue;
+      output.push([interpolate(left, right, start), interpolate(left, right, end)]);
+    }
+  }
+  return output;
 }
 
 function canonicalGeometryKey(geometry) {
@@ -589,11 +722,10 @@ export function buildMetricRiverAnnexCandidates({
     if (!donorCountryId || !donorFeature?.geometry || !row?.segments?.length) continue;
     const chains = buildSharedFrontierChains(row.segments);
     if (!chains.length) continue;
+    const windowsByChain = new Map(chains.map(chain => [chain.key, buildWorkingWindows(chain, config)]));
     diagnostics.scannedDonors += 1;
     diagnostics.frontierChainCount += chains.length;
-    diagnostics.frontierWindowCount += chains.reduce((sum, chain) => (
-      sum + Math.max(1, Math.ceil(Math.max(0, chain.lengthM - config.workingWindowOverlapM) / Math.max(1, config.workingWindowMaxM - config.workingWindowOverlapM)))
-    ), 0);
+    diagnostics.frontierWindowCount += [...windowsByChain.values()].reduce((sum, windows) => sum + windows.length, 0);
     for (const river of riverFeatures) {
       const riverParts = lineParts(river?.geometry).map(dedupeLine).filter(part => part.length >= 2);
       if (!riverParts.length) continue;
@@ -602,13 +734,21 @@ export function buildMetricRiverAnnexCandidates({
       for (const sourcePoints of riverParts) {
         diagnostics.scannedRiverParts += 1;
         for (const chain of chains) {
-          const runs = matchRunsForPart(sourcePoints, chain, config, diagnostics);
+          const runs = matchRunsForPart(sourcePoints, chain, windowsByChain.get(chain.key) || [chain], config, diagnostics);
           for (const run of runs) {
             diagnostics.matchedParallelRuns += 1;
-            const startAnchor = run.start.frontier;
-            const endAnchor = run.end.frontier;
-            const riverForwardMetric = slicePolyline(run.metricPoints, run.cumulative, run.start.distanceAlong, run.end.distanceAlong);
-            const riverForward = riverForwardMetric.map(chain.workspace.toLonLat);
+            const startIntersection = actualIntersectionNear(run, chain, run.start.distanceAlong, config);
+            const endIntersection = actualIntersectionNear(run, chain, run.end.distanceAlong, config);
+            const startAnchor = startIntersection?.frontier || run.start.frontier;
+            const endAnchor = endIntersection?.frontier || run.end.frontier;
+            const riverStartDistance = startIntersection?.riverDistance ?? run.start.distanceAlong;
+            const riverEndDistance = endIntersection?.riverDistance ?? run.end.distanceAlong;
+            if (Math.abs(riverEndDistance - riverStartDistance) < 1e-6 || Math.abs(endAnchor.s - startAnchor.s) < 1e-6) {
+              diagnostics.rejectedByRunLength += 1;
+              continue;
+            }
+            const riverForwardMetric = slicePolyline(run.metricPoints, run.cumulative, riverStartDistance, riverEndDistance);
+            const riverForward = riverForwardMetric.map(run.sourceWorkspace.toLonLat);
             const frontierForward = sliceFrontier(chain, startAnchor.s, endAnchor.s);
             if (riverForward.length < 2 || frontierForward.length < 2) {
               diagnostics.rejectedByRunLength += 1;
@@ -618,9 +758,21 @@ export function buildMetricRiverAnnexCandidates({
             const frontierEnd = frontierForward[frontierForward.length - 1];
             const riverStart = riverForward[0];
             const riverEnd = riverForward[riverForward.length - 1];
+            const candidateWorkspace = createLocalMetricWorkspace([...frontierForward, ...riverForward]);
+            const candidateMetricPoints = frontierForward.map(candidateWorkspace.toMeters);
+            const candidateCumulative = lineCumulative(candidateMetricPoints);
+            const candidateChain = {
+              ...chain,
+              points: frontierForward,
+              workspace: candidateWorkspace,
+              metricPoints: candidateMetricPoints,
+              cumulative: candidateCumulative,
+              lengthM: candidateCumulative[candidateCumulative.length - 1] || 0,
+              frontierIndex: null,
+            };
             const connectors = [];
-            const startDistance = distance(chain.workspace.toMeters(frontierStart), chain.workspace.toMeters(riverStart));
-            const endDistance = distance(chain.workspace.toMeters(frontierEnd), chain.workspace.toMeters(riverEnd));
+            const startDistance = distance(candidateWorkspace.toMeters(frontierStart), candidateWorkspace.toMeters(riverStart));
+            const endDistance = distance(candidateWorkspace.toMeters(frontierEnd), candidateWorkspace.toMeters(riverEnd));
             const normalizedRiver = riverForward.map(point => point.slice());
             if (startDistance <= config.exactJoinToleranceM) normalizedRiver[0] = frontierStart.slice();
             else connectors.push([riverStart.slice(), frontierStart.slice()]);
@@ -628,9 +780,10 @@ export function buildMetricRiverAnnexCandidates({
             else connectors.push([frontierEnd.slice(), riverEnd.slice()]);
             let connectorsValid = true;
             for (const connector of connectors) {
-              const validation = validateConnector(connector, chain, donorFeature.geometry, targetFeature.geometry, config);
+              const validation = validateConnector(connector, candidateChain, donorFeature.geometry, targetFeature.geometry, config);
               if (!validation.valid) {
                 if (validation.reason === 'length') diagnostics.rejectedByConnectorLength += 1;
+                else if (validation.reason === 'outside-donor') diagnostics.rejectedOutsideDonor += 1;
                 else diagnostics.rejectedByConnectorGeometry += 1;
                 connectorsValid = false;
                 break;
@@ -638,21 +791,28 @@ export function buildMetricRiverAnnexCandidates({
             }
             if (!connectorsValid) continue;
             if (connectors.length === 2) {
-              const metricConnectors = connectors.map(connector => connector.map(chain.workspace.toMeters));
+              const metricConnectors = connectors.map(connector => connector.map(candidateWorkspace.toMeters));
               if (segmentsIntersect(metricConnectors[0][0], metricConnectors[0][1], metricConnectors[1][0], metricConnectors[1][1], false)) {
                 diagnostics.rejectedByConnectorGeometry += 1;
                 continue;
               }
             }
+            if (connectors.some(connector => (
+              connectorCrossesPath(connector, frontierForward, candidateWorkspace)
+              || connectorCrossesPath(connector, normalizedRiver, candidateWorkspace)
+            ))) {
+              diagnostics.rejectedByConnectorGeometry += 1;
+              continue;
+            }
             const ring = closeRing([
               ...frontierForward,
               ...normalizedRiver.slice().reverse(),
             ]);
-            if (ring.length < 4 || ringSelfIntersects(ring, chain.workspace)) {
+            if (ring.length < 4 || ringSelfIntersects(ring, candidateWorkspace)) {
               diagnostics.rejectedSelfIntersection += 1;
               continue;
             }
-            if (metricRingArea(ring, chain.workspace) < config.minCandidateAreaM2) {
+            if (metricRingArea(ring, candidateWorkspace) < config.minCandidateAreaM2) {
               diagnostics.rejectedBelowArea += 1;
               continue;
             }
@@ -714,4 +874,3 @@ export function buildMetricRiverAnnexCandidates({
   diagnostics.computeMs = (globalThis.performance?.now?.() ?? Date.now()) - startedAt;
   return { candidates, diagnostics };
 }
-

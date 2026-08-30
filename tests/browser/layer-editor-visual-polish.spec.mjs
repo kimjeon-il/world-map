@@ -27,7 +27,7 @@ async function openApp(page, layout, { blockPhaseCleanup = false, theme = null }
   await installTestAnimationFrame(page);
   if (theme) {
     await page.addInitScript(preferredTheme => {
-      localStorage.setItem('pandolab-user-preferences', JSON.stringify({ version: 1, appearance: { theme: preferredTheme } }));
+      localStorage.setItem('pandolab-user-preferences', JSON.stringify({ version: 2, appearance: { theme: preferredTheme } }));
     }, theme);
   }
   if (blockPhaseCleanup) {
