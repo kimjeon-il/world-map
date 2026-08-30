@@ -51,7 +51,7 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         )
         self.assertIsNotNone(compact_header)
         self.assertIn('height: var(--ui-sheet-header-height-compact)', compact_header.group(1))
-        self.assertIn('padding: var(--ui-panel-padding)', compact_header.group(1))
+        self.assertIn('padding-block: var(--ui-panel-padding)', compact_header.group(1))
 
     def test_transient_panels_preserve_projection_but_update_control_safe_insets(self):
         self.assertIn('--projection-safe-left', CSS)
@@ -101,6 +101,17 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertIsNotNone(children)
         self.assertIn('overscroll-behavior-y: auto', children.group(1))
         self.assertIn('touch-action: pan-y', children.group(1))
+
+    def test_sheet_chrome_uses_one_visual_content_rail(self):
+        for token in (
+            '--ui-sheet-content-padding-x: var(--ui-panel-padding);',
+            '--ui-sheet-scrollbar-compensation: var(--ui-scrollbar-size);',
+            '--ui-sheet-visual-rail-x: calc(var(--ui-sheet-content-padding-x) + var(--ui-sheet-scrollbar-compensation));',
+        ):
+            self.assertIn(token, CSS)
+        self.assertIn('class="ui-tabs ui-sheet-tabs map-panel-tabs"', INDEX)
+        self.assertIn('class="ui-tabs ui-sheet-tabs editor-view-tabs hidden"', INDEX)
+        self.assertIn('.ui-sheet-tabs {', CSS)
 
     def test_build_version_is_v0230(self):
         self.assertIn('data-app-version="0.30.0"', INDEX)

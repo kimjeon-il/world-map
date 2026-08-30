@@ -90,28 +90,28 @@ export function buildSelectionBoundaryBufferData(nextItems = []) {
   const missingKeys = [];
   for (const item of nextItems) {
     const key = String(item?.key || '');
-    const itemValues = [];
+    const itemValueOffset = values.length;
     let itemSegmentCount = 0;
     try {
       if (item?.ribbonVertices?.length) {
-        for (const value of item.ribbonVertices) itemValues.push(value);
+        for (const value of item.ribbonVertices) values.push(value);
         itemSegmentCount = Math.max(0, Number(item.segmentCount || item.ribbonVertices.length / 36));
       } else if (!item?.missing) {
         for (const geometry of flattenSelectionGeometry(item?.geometry)) {
           const segments = buildSelectionBoundarySegments(geometry, { densify: true });
           itemSegmentCount += segments.length;
-          itemValues.push(...ribbonVerticesForSegments(segments));
+          for (const value of ribbonVerticesForSegments(segments)) values.push(value);
         }
       }
     } catch (_) {
       itemSegmentCount = 0;
-      itemValues.length = 0;
+      values.length = itemValueOffset;
     }
-    if (itemSegmentCount > 0 && itemValues.length > 0) {
-      values.push(...itemValues);
+    if (itemSegmentCount > 0 && values.length > itemValueOffset) {
       segmentCount += itemSegmentCount;
       if (key) renderedKeys.push(key);
     } else if (key) {
+      values.length = itemValueOffset;
       missingKeys.push(key);
     }
   }
