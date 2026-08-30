@@ -108,6 +108,36 @@ async function finishBodyTouch(page, target, start, deltaY, identifier = 81, dur
 
 test('mobile sheets hide header close buttons and resize from the full header', async ({ page }) => {
   await openApp(page);
+  const headerMetrics = [];
+  for (const [trigger, panel] of [
+    ['#mobileMapBtn', '#leftPanel'],
+    ['#mobileCreateBtn', '#createMenu'],
+    ['#mobileEditBtn', '#rightPanel'],
+  ]) {
+    await openSheet(page, trigger, panel);
+    headerMetrics.push(await page.locator(`${panel} .map-sheet-header`).evaluate(header => {
+      const box = header.getBoundingClientRect();
+      const handle = header.querySelector('.sheet-drag-handle').getBoundingClientRect();
+      const title = header.querySelector('strong').getBoundingClientRect();
+      const style = getComputedStyle(header);
+      return {
+        height: box.height,
+        paddingTop: style.paddingTop,
+        paddingBottom: style.paddingBottom,
+        handleTop: handle.top - box.top,
+        titleTop: title.top - box.top,
+      };
+    }));
+  }
+  expect(headerMetrics.map(value => value.height)).toEqual([72, 72, 72]);
+  expect(headerMetrics.map(value => [value.paddingTop, value.paddingBottom])).toEqual([
+    ['24px', '8px'], ['24px', '8px'], ['24px', '8px'],
+  ]);
+  for (const value of headerMetrics) {
+    expect(value.handleTop).toBeGreaterThanOrEqual(0);
+    expect(value.titleTop).toBeGreaterThanOrEqual(16);
+  }
+
   await openSheet(page, '#mobileMapBtn', '#leftPanel');
   await expect(page.locator('#mobileCloseLeftBtn')).toBeHidden();
   await expect(page.locator('#mobileCloseCreateBtn')).toBeHidden();

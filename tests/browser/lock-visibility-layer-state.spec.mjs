@@ -101,6 +101,10 @@ test('country lock is per-object, preserves inspection, rejects geometry edits, 
   await restoredRow.locator('.layer-child-menu').click();
   await expect(page.locator('#objectLockMenuBtn')).toHaveText('잠금 해제');
   await expect(page.locator('#objectDeleteMenuBtn')).toBeDisabled();
+  await page.locator('#objectLockMenuBtn').click();
+  await expect.poll(() => page.evaluate(id => window.PANDOLAB_TERRITORIAL.isLocked('country', id), countryId)).toBe(false);
+  await expect(restoredRow.locator('.layer-lock-indicator')).toHaveCount(0);
+  await expect(restoredRow.locator('.layer-child-name')).not.toHaveAttribute('aria-label', /잠김/);
   expect(errors).toEqual([]);
 });
 

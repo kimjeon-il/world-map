@@ -163,51 +163,6 @@ body.file-menu-open .mobile-backdrop {
   box-shadow: none !important;
 }
 
-/* GIS importer: compact desktop dialog; one body scroll, stable actions. */
-#gisImportModal .ui-dialog-card {
-  width: min(640px, calc(100vw - (var(--ui-dialog-edge) * 2))) !important;
-  max-width: 640px !important;
-  max-height: calc(100dvh - (var(--ui-dialog-edge) * 2)) !important;
-  display: grid !important;
-  grid-template-rows: auto minmax(0, 1fr) !important;
-  overflow: hidden !important;
-}
-
-#gisImportModal .ui-dialog-header {
-  position: relative;
-  z-index: 2;
-  background: var(--modal-card-bg);
-}
-
-#gisImportForm {
-  min-height: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-}
-
-#gisImportForm > .gis-import-content-rail {
-  min-height: 0 !important;
-  flex: 1 1 auto;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-  padding-inline-start: var(--ui-scrollbar-size);
-}
-
-#gisImportForm > .gis-import-content-rail > .gis-form-grid {
-  min-height: 260px;
-  overflow: visible;
-}
-
-#gisImportModal .ui-dialog-actions {
-  flex: 0 0 auto;
-  margin-top: 0 !important;
-  padding-top: var(--ui-space-3);
-  background: var(--modal-card-bg);
-}
-
 /* Do not reserve blank visual regions for conditional content. */
 .gis-import-status:empty,
 .territorial-type-impact:empty,
@@ -227,9 +182,7 @@ body.file-menu-open .mobile-backdrop {
 
 /* Mobile: import/library are full-screen navigation flows, not shrunken desktop modals. */
 body[data-layout="mobile"] .historical-library-card,
-body[data-layout="mobile"] #gisImportModal .ui-dialog-card,
-#app[data-layout="mobile"] .historical-library-card,
-#app[data-layout="mobile"] #gisImportModal .ui-dialog-card {
+#app[data-layout="mobile"] .historical-library-card {
   width: 100% !important;
   max-width: none !important;
   height: 100dvh !important;
@@ -242,12 +195,6 @@ body[data-layout="mobile"] .historical-library-layout,
   grid-template-columns: 1fr !important;
 }
 
-body[data-layout="mobile"] #gisImportModal,
-#app[data-layout="mobile"] #gisImportModal {
-  padding: 0 !important;
-  align-items: stretch !important;
-}
-
 /* Mobile surfaces should have one primary scroll region. */
 body[data-layout="mobile"] .historical-library-results,
 body[data-layout="mobile"] .historical-library-preview,
@@ -257,8 +204,7 @@ body[data-layout="mobile"] .historical-library-preview,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .historical-library-card,
-  #gisImportModal .ui-dialog-card {
+  .historical-library-card {
     transition-duration: 0.01ms !important;
   }
 }

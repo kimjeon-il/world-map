@@ -118,7 +118,17 @@ export function buildSelectionBoundaryBufferData(nextItems = []) {
   return { values, segmentCount, renderedKeys, missingKeys };
 }
 
-export function createSelectionEmphasisRenderer({ canvas, projectionForView, getSize, getDpr } = {}) {
+export function buildSelectionChannelSignature(name, nextItems = []) {
+  const itemSignature = item => [
+    String(item?.key || ''),
+    String(item?.geometryRevision ?? item?.revision ?? 0),
+    String(item?.ribbonRevision ?? ''),
+    item?.missing ? 'missing' : 'ready',
+  ].join('@');
+  return `${String(name || '')}:${nextItems.map(itemSignature).join('|')}`;
+}
+
+export function createSelectionEmphasisRenderer({ canvas, projectionForView, getSize, getDpr, onContextChange, onRenderError } = {}) {
   let gl = null;
   let program = null;
   let programInfo = null;
@@ -154,6 +164,18 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   let bufferBuildCount = 0;
   let bufferBuildMs = 0;
   let available = false;
+  let contextLost = false;
+  let contextLossCount = 0;
+  let contextRestoreCount = 0;
+  let viewDrawCount = 0;
+  let renderFailureCount = 0;
+  let lastRenderResult = null;
+  let territorialBoundaryRequest = { revision: '', batches: [] };
+  const channelMetrics = {
+    hover: { signature: '', rebuildCount: 0, rebuildMs: 0, buildFailed: false },
+    primary: { signature: '', rebuildCount: 0, rebuildMs: 0, buildFailed: false },
+    secondary: { signature: '', rebuildCount: 0, rebuildMs: 0, buildFailed: false },
+  };
 
   function coverageChannel(nextItems = [], renderedKeys = [], missingKeys = [], segmentCount = 0) {
     const requestedKeys = [...new Set(nextItems.map(item => String(item?.key || '')).filter(Boolean))];
@@ -187,6 +209,7 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   }
 
   function init() {
+    if (available && !contextLost) return true;
     if (!canvas || !globalThis.WebGLRenderingContext) return false;
     gl = canvas.getContext('webgl2', { alpha: true, antialias: true }) || canvas.getContext('webgl', { alpha: true, antialias: true });
     if (!gl) return false;
@@ -305,35 +328,60 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     });
     primaryBuffer = gl.createBuffer(); secondaryBuffer = gl.createBuffer(); hoverBuffer = gl.createBuffer();
     primaryPointBuffer = gl.createBuffer(); secondaryPointBuffer = gl.createBuffer(); hoverPointBuffer = gl.createBuffer();
+    contextLost = false;
     available = true;
     return true;
   }
 
-  function updateBuffer(buffer, nextItems) {
-    const data = buildSelectionBoundaryBufferData(nextItems);
-    try {
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.values), gl.STATIC_DRAW);
-    } catch (_) {
-      return {
-        vertexCount: 0,
-        coverage: coverageChannel(nextItems, [], nextItems.map(item => item?.key).filter(Boolean), 0),
-      };
+  function resetChannelResources() {
+    primaryBuffer = secondaryBuffer = hoverBuffer = null;
+    primaryPointBuffer = secondaryPointBuffer = hoverPointBuffer = null;
+    primaryCount = secondaryCount = hoverCount = 0;
+    primarySegmentCount = secondarySegmentCount = hoverSegmentCount = 0;
+    primaryPointCount = secondaryPointCount = hoverPointCount = 0;
+    for (const metrics of Object.values(channelMetrics)) {
+      metrics.signature = '';
+      metrics.buildFailed = false;
     }
-    return {
-      vertexCount: data.values.length / 6,
-      coverage: coverageChannel(nextItems, data.renderedKeys, data.missingKeys, data.segmentCount),
-    };
+    coverage = emptyCoverage(items);
   }
 
-  function updatePointBuffer(buffer, nextItems) {
-    const values = [];
-    for (const item of nextItems) for (const geometry of flattenSelectionGeometry(item.geometry)) {
-      for (const point of buildSelectionPointCoordinates(geometry)) values.push(...point);
+  function handleContextLost(event) {
+    event?.preventDefault?.();
+    contextLost = true;
+    available = false;
+    contextLossCount += 1;
+    lastRenderResult = finishRenderResult({
+      channelSucceeded: { hover: false, primary: false, secondary: false },
+      succeeded: false,
+    });
+    onContextChange?.({ type: 'lost', contextLost: true });
+  }
+
+  function handleContextRestored() {
+    contextLost = false;
+    available = false;
+    contextRestoreCount += 1;
+    program = programInfo = territorialProgram = territorialProgramInfo = null;
+    territorialBuffers.clear();
+    territorialBoundaryRevision = '';
+    resetChannelResources();
+    try {
+      if (!init()) throw new Error('selection WebGL context restore failed');
+      const requestItems = { hover: items.hover.slice(), primary: items.primary.slice(), secondary: items.secondary.slice() };
+      for (const name of ['hover', 'primary', 'secondary']) {
+        rebuildChannel(name, requestItems[name], channelSignature(name, requestItems[name]));
+      }
+      if (territorialBoundaryRequest.revision || territorialBoundaryRequest.batches.length) {
+        setTerritorialBoundaries(territorialBoundaryRequest);
+      }
+      onContextChange?.({ type: 'restored', contextLost: false });
+    } catch (error) {
+      available = false;
+      contextLost = false;
+      onRenderError?.({ stage: 'selection-context-restore', error });
+      onContextChange?.({ type: 'restore-failed', contextLost: false, error });
     }
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(values), gl.STATIC_DRAW);
-    return values.length / 2;
   }
 
   function countryLinePairsForId(mesh, countryIds, targetId) {
@@ -360,6 +408,7 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   }
 
   function setTerritorialBoundaries({ revision = '', batches = [] } = {}) {
+    territorialBoundaryRequest = { revision: String(revision || ''), batches };
     const nextRevision = String(revision || '');
     if (nextRevision === territorialBoundaryRevision) return false;
     territorialBoundaryRevision = nextRevision;
@@ -441,71 +490,129 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   function countryRequestItem(id) {
     const key = String(id || '');
     if (!key) return null;
-    return countryRibbonItem(key) || { key: `country:${key}`, missing: true };
+    const item = countryRibbonItem(key);
+    return item
+      ? { ...item, geometryRevision: countryBoundaryRevision, ribbonRevision: countryBoundaryRevision }
+      : { key: `country:${key}`, missing: true, geometryRevision: countryBoundaryRevision };
   }
 
-  function geometryIdentity(feature) {
-    if (feature?.ribbonVertices) return feature.ribbonVertices;
-    if (feature?.type === 'FeatureCollection') return (feature.features || []).map(item => item.geometry);
-    if (feature?.type === 'Feature') return feature.geometry;
-    return feature;
+  function channelSignature(name, nextItems = []) {
+    return buildSelectionChannelSignature(name, nextItems);
   }
 
-  function sameItems(left = [], right = []) {
-    return left.length === right.length && left.every((item, index) => {
-      const other = right[index];
-      const a = item.ribbonVertices || geometryIdentity(item.geometry);
-      const b = other?.ribbonVertices || geometryIdentity(other?.geometry);
-      return item.key === other?.key && (Array.isArray(a) ? a.length === b?.length && a.every((value, childIndex) => value === b[childIndex]) : a === b);
-    });
+  function pointBufferValues(nextItems = []) {
+    const values = [];
+    for (const item of nextItems) for (const geometry of flattenSelectionGeometry(item.geometry)) {
+      for (const point of buildSelectionPointCoordinates(geometry)) values.push(...point);
+    }
+    return values;
   }
 
-  function setSelection({
+  function activeChannelBuffers(name) {
+    if (name === 'hover') return { line: hoverBuffer, point: hoverPointBuffer };
+    if (name === 'primary') return { line: primaryBuffer, point: primaryPointBuffer };
+    return { line: secondaryBuffer, point: secondaryPointBuffer };
+  }
+
+  function assignChannelBuffers(name, line, point) {
+    if (name === 'hover') { hoverBuffer = line; hoverPointBuffer = point; return; }
+    if (name === 'primary') { primaryBuffer = line; primaryPointBuffer = point; return; }
+    secondaryBuffer = line; secondaryPointBuffer = point;
+  }
+
+  function assignChannelCounts(name, boundaryData, pointCount) {
+    if (name === 'hover') {
+      hoverCount = boundaryData.values.length / 6;
+      hoverSegmentCount = boundaryData.segmentCount;
+      hoverPointCount = pointCount;
+      return;
+    }
+    if (name === 'primary') {
+      primaryCount = boundaryData.values.length / 6;
+      primarySegmentCount = boundaryData.segmentCount;
+      primaryPointCount = pointCount;
+      return;
+    }
+    secondaryCount = boundaryData.values.length / 6;
+    secondarySegmentCount = boundaryData.segmentCount;
+    secondaryPointCount = pointCount;
+  }
+
+  function rebuildChannel(name, nextItems, signature) {
+    const metrics = channelMetrics[name];
+    if (signature === metrics.signature && !metrics.buildFailed) return { changed: false, succeeded: true };
+    const started = performance.now();
+    let stagedLine = null;
+    let stagedPoint = null;
+    try {
+      const boundaryData = buildSelectionBoundaryBufferData(nextItems);
+      const pointValues = pointBufferValues(nextItems);
+      stagedLine = gl.createBuffer();
+      stagedPoint = gl.createBuffer();
+      if (!stagedLine || !stagedPoint) throw new Error('selection buffer allocation failed');
+      gl.bindBuffer(gl.ARRAY_BUFFER, stagedLine);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(boundaryData.values), gl.STATIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, stagedPoint);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pointValues), gl.STATIC_DRAW);
+      const previous = activeChannelBuffers(name);
+      assignChannelBuffers(name, stagedLine, stagedPoint);
+      if (previous.line) gl.deleteBuffer(previous.line);
+      if (previous.point) gl.deleteBuffer(previous.point);
+      assignChannelCounts(name, boundaryData, pointValues.length / 2);
+      coverage = Object.freeze({
+        ...coverage,
+        [name]: coverageChannel(nextItems, boundaryData.renderedKeys, boundaryData.missingKeys, boundaryData.segmentCount),
+      });
+      metrics.signature = signature;
+      metrics.buildFailed = false;
+      return { changed: true, succeeded: true };
+    } catch (error) {
+      if (stagedLine) gl.deleteBuffer(stagedLine);
+      if (stagedPoint) gl.deleteBuffer(stagedPoint);
+      metrics.buildFailed = true;
+      coverage = Object.freeze({ ...coverage, [name]: coverageChannel(nextItems) });
+      onRenderError?.({ stage: 'selection-buffer-build', channel: name, error });
+      return { changed: true, succeeded: false, error };
+    } finally {
+      const elapsed = performance.now() - started;
+      metrics.rebuildCount += 1;
+      metrics.rebuildMs = elapsed;
+      bufferBuildCount += 1;
+      bufferBuildMs += elapsed;
+    }
+  }
+
+  function updateSelectionData({
     hover = [], primary = [], secondary = [], revision = 0,
     countryHoverId = '', countryPrimaryId = '', countrySecondaryIds = [],
   } = {}) {
-    const nextHover = hover.slice();
-    const nextPrimary = primary.slice();
-    const nextSecondary = secondary.slice();
+    const next = { hover: hover.slice(), primary: primary.slice(), secondary: secondary.slice() };
     const countryHover = countryRequestItem(countryHoverId);
     const countryPrimary = countryRequestItem(countryPrimaryId);
-    if (countryHover) nextHover.push(countryHover);
-    if (countryPrimary) nextPrimary.push(countryPrimary);
+    if (countryHover) next.hover.push(countryHover);
+    if (countryPrimary) next.primary.push(countryPrimary);
     for (const id of countrySecondaryIds || []) {
       const item = countryRequestItem(id);
-      if (item) nextSecondary.push(item);
+      if (item) next.secondary.push(item);
     }
-    if (Number(revision) === geometryRevision && sameItems(items.hover, nextHover) && sameItems(items.primary, nextPrimary) && sameItems(items.secondary, nextSecondary)) return false;
-    items = { hover: nextHover, primary: nextPrimary, secondary: nextSecondary };
+    items = next;
     geometryRevision = Number(revision || 0);
-    if (!available) {
+    if (!available || contextLost) {
       coverage = emptyCoverage(items);
-      primaryCount = secondaryCount = hoverCount = 0;
-      primarySegmentCount = secondarySegmentCount = hoverSegmentCount = 0;
-      primaryPointCount = secondaryPointCount = hoverPointCount = 0;
-      return false;
+      return { succeeded: false, changedChannels: [], failedChannels: Object.keys(items), coverage };
     }
-    const started = performance.now();
-    const primaryData = updateBuffer(primaryBuffer, items.primary);
-    const secondaryData = updateBuffer(secondaryBuffer, items.secondary);
-    const hoverData = updateBuffer(hoverBuffer, items.hover);
-    primaryCount = primaryData.vertexCount;
-    secondaryCount = secondaryData.vertexCount;
-    primarySegmentCount = primaryData.coverage.segmentCount;
-    secondarySegmentCount = secondaryData.coverage.segmentCount;
-    hoverCount = hoverData.vertexCount;
-    hoverSegmentCount = hoverData.coverage.segmentCount;
-    coverage = Object.freeze({
-      hover: hoverData.coverage,
-      primary: primaryData.coverage,
-      secondary: secondaryData.coverage,
-    });
-    primaryPointCount = updatePointBuffer(primaryPointBuffer, items.primary);
-    secondaryPointCount = updatePointBuffer(secondaryPointBuffer, items.secondary);
-    hoverPointCount = updatePointBuffer(hoverPointBuffer, items.hover);
-    bufferBuildCount += 1;
-    bufferBuildMs = performance.now() - started;
-    return true;
+    const changedChannels = [];
+    const failedChannels = [];
+    for (const name of ['hover', 'primary', 'secondary']) {
+      const result = rebuildChannel(name, items[name], channelSignature(name, items[name]));
+      if (result.changed) changedChannels.push(name);
+      if (!result.succeeded) failedChannels.push(name);
+    }
+    return { succeeded: !failedChannels.length, changedChannels, failedChannels, coverage };
+  }
+
+  function setSelection(request = {}) {
+    return updateSelectionData(request);
   }
 
   function rowsForProjection(projection) {
@@ -606,60 +713,146 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     for (const location of locations) if (location >= 0) gl.disableVertexAttribArray(location);
   }
 
+  function renderCoverage(channelSucceeded = {}) {
+    const channels = {};
+    for (const name of ['hover', 'primary', 'secondary']) {
+      const requestedKeys = [...new Set(items[name].map(item => String(item?.key || '')).filter(Boolean))];
+      const buildCoverage = coverage[name] || coverageChannel(items[name]);
+      const buildSucceeded = !channelMetrics[name].buildFailed;
+      const drawSucceeded = buildSucceeded && channelSucceeded[name] !== false;
+      const renderedKeys = drawSucceeded ? [...buildCoverage.renderedKeys] : [];
+      const renderedSet = new Set(renderedKeys);
+      const missingKeys = [...new Set([
+        ...buildCoverage.missingKeys,
+        ...requestedKeys.filter(key => !renderedSet.has(key)),
+      ])];
+      channels[name] = Object.freeze({ buildSucceeded, drawSucceeded, renderedKeys, missingKeys });
+    }
+    return Object.freeze(channels);
+  }
+
+  function finishRenderResult({ channelSucceeded = {}, succeeded = true, error = null } = {}) {
+    const channels = renderCoverage(channelSucceeded);
+    const result = Object.freeze({
+      succeeded: succeeded && Object.values(channels).every(channel => channel.drawSucceeded),
+      contextLost,
+      channels,
+      error,
+    });
+    if (!result.succeeded) renderFailureCount += 1;
+    lastRenderResult = result;
+    return result;
+  }
+
   function render(viewState = {}) {
-    if (!available || !canvas) return false;
-    const size = getSize?.() || viewState.size || { width: 1, height: 1 };
-    const dpr = Number(getDpr?.() || viewState.dpr || 1);
-    const width = Math.max(1, Number(size.width || 1));
-    const height = Math.max(1, Number(size.height || 1));
-    const pixelWidth = Math.max(1, Math.round(width * dpr));
-    const pixelHeight = Math.max(1, Math.round(height * dpr));
-    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) { canvas.width = pixelWidth; canvas.height = pixelHeight; }
-    const projection = projectionForView?.(viewState);
-    if (!projection) return false;
-    const mode = viewState.projection === 'globe' ? 0 : 1;
-    const rows = mode === 0 ? rowsForProjection(projection) : { rowX: [1, 0, 0], rowY: [0, 1, 0], rowZ: [0, 0, 1] };
-    const translate = viewState.translate || projection.translate();
-    const scale = Number(viewState.scale || projection.scale());
-    const flatCenter = viewState.projectionCenter || viewState.flatCenter || [0, 0];
-    gl.viewport(0, 0, pixelWidth, pixelHeight); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    const view = { width, height, translate, scale, rows, flatCenter, mode };
-    drawTerritorialBoundaries(view, viewState);
-    gl.useProgram(program);
-    setViewUniforms(programInfo, view);
-    const uniforms = programInfo.uniforms;
-    gl.uniform1f(uniforms.uDpr, dpr);
-    const primary = interactionStyle.selection.primary;
-    const secondary = interactionStyle.selection.secondary;
-    drawRibbon(hoverBuffer, hoverCount, interactionStyle.hover.width, interactionStyle.hover.alpha, viewState, interactionStyle.hover.color);
-    drawRibbon(secondaryBuffer, secondaryCount, secondary.outerWidth, secondary.casingAlpha, viewState, interactionStyle.selection.casingColor);
-    drawRibbon(secondaryBuffer, secondaryCount, secondary.innerWidth, secondary.innerAlpha, viewState, interactionStyle.selection.color);
-    drawRibbon(primaryBuffer, primaryCount, primary.outerWidth, primary.casingAlpha, viewState, interactionStyle.selection.casingColor);
-    drawRibbon(primaryBuffer, primaryCount, primary.innerWidth, primary.innerAlpha, viewState, interactionStyle.selection.color);
-    drawPoints(hoverPointBuffer, hoverPointCount, interactionStyle.hover.alpha, interactionStyle.hover.color);
-    drawPoints(secondaryPointBuffer, secondaryPointCount, secondary.casingAlpha, interactionStyle.selection.casingColor);
-    drawPoints(secondaryPointBuffer, secondaryPointCount, secondary.innerAlpha, interactionStyle.selection.color);
-    drawPoints(primaryPointBuffer, primaryPointCount, primary.casingAlpha, interactionStyle.selection.casingColor);
-    drawPoints(primaryPointBuffer, primaryPointCount, primary.innerAlpha, interactionStyle.selection.color);
-    gl.disable(gl.BLEND);
-    return true;
+    viewDrawCount += 1;
+    if (!available || !canvas || contextLost || gl?.isContextLost?.()) {
+      contextLost = contextLost || !!gl?.isContextLost?.();
+      return finishRenderResult({ channelSucceeded: { hover: false, primary: false, secondary: false }, succeeded: false });
+    }
+    const channelSucceeded = { hover: true, primary: true, secondary: true };
+    try {
+      const size = getSize?.() || viewState.size || { width: 1, height: 1 };
+      const dpr = Number(getDpr?.() || viewState.dpr || 1);
+      const width = Math.max(1, Number(size.width || 1));
+      const height = Math.max(1, Number(size.height || 1));
+      const pixelWidth = Math.max(1, Math.round(width * dpr));
+      const pixelHeight = Math.max(1, Math.round(height * dpr));
+      if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) { canvas.width = pixelWidth; canvas.height = pixelHeight; }
+      const projection = projectionForView?.(viewState);
+      if (!projection) return finishRenderResult({ channelSucceeded: { hover: false, primary: false, secondary: false }, succeeded: false });
+      const mode = viewState.projection === 'globe' ? 0 : 1;
+      const rows = mode === 0 ? rowsForProjection(projection) : { rowX: [1, 0, 0], rowY: [0, 1, 0], rowZ: [0, 0, 1] };
+      const translate = viewState.translate || projection.translate();
+      const scale = Number(viewState.scale || projection.scale());
+      const flatCenter = viewState.projectionCenter || viewState.flatCenter || [0, 0];
+      gl.viewport(0, 0, pixelWidth, pixelHeight); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      const view = { width, height, translate, scale, rows, flatCenter, mode };
+      try { drawTerritorialBoundaries(view, viewState); }
+      catch (error) { onRenderError?.({ stage: 'selection-territorial-render', error }); }
+      gl.useProgram(program);
+      setViewUniforms(programInfo, view);
+      gl.uniform1f(programInfo.uniforms.uDpr, dpr);
+      const primary = interactionStyle.selection.primary;
+      const secondary = interactionStyle.selection.secondary;
+      const drawChannel = (name, draw) => {
+        if (channelMetrics[name].buildFailed) { channelSucceeded[name] = false; return; }
+        try { draw(); }
+        catch (error) {
+          channelSucceeded[name] = false;
+          onRenderError?.({ stage: 'selection-gpu-render', channel: name, error });
+        }
+      };
+      drawChannel('hover', () => {
+        drawRibbon(hoverBuffer, hoverCount, interactionStyle.hover.width, interactionStyle.hover.alpha, viewState, interactionStyle.hover.color);
+        drawPoints(hoverPointBuffer, hoverPointCount, interactionStyle.hover.alpha, interactionStyle.hover.color);
+      });
+      drawChannel('secondary', () => {
+        drawRibbon(secondaryBuffer, secondaryCount, secondary.outerWidth, secondary.casingAlpha, viewState, interactionStyle.selection.casingColor);
+        drawRibbon(secondaryBuffer, secondaryCount, secondary.innerWidth, secondary.innerAlpha, viewState, interactionStyle.selection.color);
+        drawPoints(secondaryPointBuffer, secondaryPointCount, secondary.casingAlpha, interactionStyle.selection.casingColor);
+        drawPoints(secondaryPointBuffer, secondaryPointCount, secondary.innerAlpha, interactionStyle.selection.color);
+      });
+      drawChannel('primary', () => {
+        drawRibbon(primaryBuffer, primaryCount, primary.outerWidth, primary.casingAlpha, viewState, interactionStyle.selection.casingColor);
+        drawRibbon(primaryBuffer, primaryCount, primary.innerWidth, primary.innerAlpha, viewState, interactionStyle.selection.color);
+        drawPoints(primaryPointBuffer, primaryPointCount, primary.casingAlpha, interactionStyle.selection.casingColor);
+        drawPoints(primaryPointBuffer, primaryPointCount, primary.innerAlpha, interactionStyle.selection.color);
+      });
+      gl.disable(gl.BLEND);
+      return finishRenderResult({ channelSucceeded });
+    } catch (error) {
+      try { gl?.disable?.(gl.BLEND); } catch (_) {}
+      onRenderError?.({ stage: 'selection-gpu-render', error });
+      return finishRenderResult({ channelSucceeded: { hover: false, primary: false, secondary: false }, succeeded: false, error });
+    }
   }
 
   function clear() {
-    items = { hover: [], primary: [], secondary: [] }; geometryRevision = -1;
-    coverage = emptyCoverage(items);
-    primaryCount = secondaryCount = hoverCount = primarySegmentCount = secondarySegmentCount = hoverSegmentCount = primaryPointCount = secondaryPointCount = hoverPointCount = 0;
+    updateSelectionData({ hover: [], primary: [], secondary: [], revision: -1 });
+    geometryRevision = -1;
     if (available) render({ projection: 'flat', size: getSize?.() || { width: 1, height: 1 }, dpr: getDpr?.() || 1 });
   }
 
+  function dispose() {
+    canvas?.removeEventListener?.('webglcontextlost', handleContextLost);
+    canvas?.removeEventListener?.('webglcontextrestored', handleContextRestored);
+    if (available && gl && !gl.isContextLost?.()) {
+      for (const buffer of [primaryBuffer, secondaryBuffer, hoverBuffer, primaryPointBuffer, secondaryPointBuffer, hoverPointBuffer]) {
+        if (buffer) gl.deleteBuffer(buffer);
+      }
+      for (const record of territorialBuffers.values()) if (record.buffer) gl.deleteBuffer(record.buffer);
+      if (program) gl.deleteProgram(program);
+      if (territorialProgram) gl.deleteProgram(territorialProgram);
+    }
+    available = false;
+    contextLost = false;
+    resetChannelResources();
+    territorialBuffers.clear();
+  }
+
+  canvas?.addEventListener?.('webglcontextlost', handleContextLost);
+  canvas?.addEventListener?.('webglcontextrestored', handleContextRestored);
+
   return Object.freeze({
-    init, setSelection, setCountryBoundaryMesh, setTerritorialBoundaries, setInteractionStyle: setInteractionStyle, render, clear, isAvailable: () => available,
+    init, setSelection, updateSelectionData, setCountryBoundaryMesh, setTerritorialBoundaries,
+    setInteractionStyle: setInteractionStyle, render, clear, dispose,
+    handleContextLost, handleContextRestored,
+    isAvailable: () => available && !contextLost,
     stats: () => ({
       primaryCount, secondaryCount, hoverCount, primarySegmentCount, secondarySegmentCount, hoverSegmentCount,
       segmentCount: primarySegmentCount + secondarySegmentCount + hoverSegmentCount,
       ribbonTriangleCount: (primaryCount + secondaryCount + hoverCount) / 3,
       bufferBuildCount, bufferBuildMs, geometryRevision, countryBoundaryRevision,
+      viewDrawCount, renderFailureCount, contextLost, contextLossCount, contextRestoreCount,
+      renderSucceeded: lastRenderResult?.succeeded ?? false,
+      channels: Object.fromEntries(Object.entries(channelMetrics).map(([name, metrics]) => [name, {
+        rebuildCount: metrics.rebuildCount,
+        rebuildMs: metrics.rebuildMs,
+        buildFailed: metrics.buildFailed,
+        drawSucceeded: lastRenderResult?.channels?.[name]?.drawSucceeded ?? false,
+      }])),
       territorialBoundaryRevision, territorialBoundarySegmentCount, territorialBoundaryBufferBytes,
       territorialBoundaryBuildCount, territorialBoundaryDrawCalls: territorialBuffers.size,
       coverage: {
@@ -667,6 +860,11 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
         primary: { ...coverage.primary, renderedKeys: [...coverage.primary.renderedKeys], missingKeys: [...coverage.primary.missingKeys] },
         secondary: { ...coverage.secondary, renderedKeys: [...coverage.secondary.renderedKeys], missingKeys: [...coverage.secondary.missingKeys] },
       },
+      drawCoverage: lastRenderResult ? Object.fromEntries(Object.entries(lastRenderResult.channels).map(([name, channel]) => [name, {
+        ...channel,
+        renderedKeys: [...channel.renderedKeys],
+        missingKeys: [...channel.missingKeys],
+      }])) : null,
     }),
   });
 }

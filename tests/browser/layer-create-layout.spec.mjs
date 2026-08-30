@@ -85,6 +85,62 @@ test('territory and region creation expose different canonical methods', async (
   expect(errors).toEqual([]);
 });
 
+test('compact create menu uses the shared floating drawer shell', async ({ page }) => {
+  const viewport = viewports.find(candidate => candidate.width === 1200);
+  const errors = await openApp(page, viewport, 'light');
+  await openCreateMenu(page, 'compact');
+  await page.waitForTimeout(200);
+  const geometry = await page.evaluate(() => {
+    const menu = document.querySelector('#createMenu');
+    const drawer = document.querySelector('#leftPanel');
+    const workspace = document.querySelector('.workspace');
+    const style = element => getComputedStyle(element);
+    const menuBox = menu.getBoundingClientRect();
+    const workspaceBox = workspace.getBoundingClientRect();
+    return {
+      menu: {
+        top: style(menu).top,
+        bottom: style(menu).bottom,
+        left: style(menu).left,
+        width: style(menu).width,
+        border: style(menu).borderTopWidth,
+        radius: style(menu).borderTopLeftRadius,
+        shadow: style(menu).boxShadow,
+        visibility: style(menu).visibility,
+        pointerEvents: style(menu).pointerEvents,
+        renderedTop: menuBox.top,
+        renderedBottom: menuBox.bottom,
+        renderedLeft: menuBox.left,
+      },
+      drawer: {
+        top: style(drawer).top,
+        bottom: style(drawer).bottom,
+        left: style(drawer).left,
+        width: style(drawer).width,
+        border: style(drawer).borderTopWidth,
+        radius: style(drawer).borderTopLeftRadius,
+        shadow: style(drawer).boxShadow,
+      },
+      workspace: {
+        top: workspaceBox.top,
+        bottom: workspaceBox.bottom,
+      },
+    };
+  });
+  expect(geometry.menu.bottom).toBe(geometry.drawer.bottom);
+  expect(geometry.menu.left).toBe(geometry.drawer.left);
+  expect(geometry.menu.width).toBe(geometry.drawer.width);
+  expect(geometry.menu.border).toBe(geometry.drawer.border);
+  expect(geometry.menu.radius).toBe(geometry.drawer.radius);
+  expect(geometry.menu.shadow).toBe(geometry.drawer.shadow);
+  expect(geometry.menu.visibility).toBe('visible');
+  expect(geometry.menu.pointerEvents).toBe('auto');
+  expect(geometry.menu.renderedLeft).toBe(8);
+  expect(geometry.menu.renderedTop).toBe(geometry.workspace.top + Number.parseFloat(geometry.drawer.top));
+  expect(geometry.menu.renderedBottom).toBe(geometry.workspace.bottom - Number.parseFloat(geometry.drawer.bottom));
+  expect(errors).toEqual([]);
+});
+
 for (const colorScheme of ['light', 'dark']) {
   for (const viewport of viewports) {
     test(`${viewport.width}px ${colorScheme} keeps layer and create-menu geometry`, async ({ page }) => {
@@ -114,6 +170,7 @@ for (const colorScheme of ['light', 'dark']) {
         };
       });
       if (viewport.layout === 'mobile') expect(createMetrics.menuWidth).toBe(viewport.width);
+      else if (viewport.layout === 'compact') expect(createMetrics.menuWidth).toBe(Math.min(352, viewport.width - 24));
       else expect(createMetrics.menuWidth).toBe(280);
       expect(createMetrics.itemHeight).toBe(viewport.layout === 'mobile' ? 68 : 64);
       expect(createMetrics.columns.split(' ')[0]).toBe('38px');
