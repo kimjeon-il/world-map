@@ -79,6 +79,7 @@ export function buildSelectionPointCoordinates(geometry) {
 export function createSelectionEmphasisRenderer({ canvas, projectionForView, getSize, getDpr } = {}) {
   let gl = null;
   let program = null;
+  let programInfo = null;
   let primaryBuffer = null;
   let secondaryBuffer = null;
   let primaryPointBuffer = null;
@@ -119,6 +120,7 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     const webgl2 = typeof globalThis.WebGL2RenderingContext !== 'undefined' && gl instanceof globalThis.WebGL2RenderingContext;
     const vertex = webgl2 ? `#version 300 es
       precision highp float;
+      precision highp int;
       layout(location=0) in vec2 aStart;
       layout(location=1) in vec2 aEnd;
       layout(location=2) in float aSide;
@@ -144,6 +146,7 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
         gl_PointSize=6.0*uDpr;
       }`
       : `precision highp float;
+      precision highp int;
       attribute vec2 aStart; attribute vec2 aEnd; attribute float aSide; attribute float aEndpoint;
       uniform vec2 uViewport; uniform vec2 uTranslate; uniform float uScale;
       uniform vec3 uRowX; uniform vec3 uRowY; uniform vec3 uRowZ; uniform vec2 uFlatCenter;
@@ -166,14 +169,26 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
         gl_PointSize=6.0*uDpr;
       }`;
     const fragment = webgl2 ? `#version 300 es
-      precision mediump float; uniform vec4 uColor; uniform int uMode; in float vDepth; out vec4 outColor;
+      precision mediump float; precision highp int; uniform vec4 uColor; uniform int uMode; in float vDepth; out vec4 outColor;
       void main(){if(uMode==0&&vDepth<0.0)discard;outColor=uColor;}`
-      : `precision mediump float; uniform vec4 uColor; uniform int uMode; varying float vDepth;
+      : `precision mediump float; precision highp int; uniform vec4 uColor; uniform int uMode; varying float vDepth;
       void main(){if(uMode==0&&vDepth<0.0)discard;gl_FragColor=uColor;}`;
     const vs = compile(gl.VERTEX_SHADER, vertex);
     const fs = compile(gl.FRAGMENT_SHADER, fragment);
     program = gl.createProgram(); gl.attachShader(program, vs); gl.attachShader(program, fs); gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program) || 'selection shader link failed');
+    programInfo = Object.freeze({
+      attributes: Object.freeze({
+        start: gl.getAttribLocation(program, 'aStart'),
+        end: gl.getAttribLocation(program, 'aEnd'),
+        side: gl.getAttribLocation(program, 'aSide'),
+        endpoint: gl.getAttribLocation(program, 'aEndpoint'),
+      }),
+      uniforms: Object.freeze(Object.fromEntries([
+        'uViewport', 'uTranslate', 'uScale', 'uRowX', 'uRowY', 'uRowZ',
+        'uFlatCenter', 'uWorldOffset', 'uMode', 'uHalfWidth', 'uDpr', 'uColor',
+      ].map(name => [name, gl.getUniformLocation(program, name)]))),
+    });
     primaryBuffer = gl.createBuffer(); secondaryBuffer = gl.createBuffer(); hoverBuffer = gl.createBuffer();
     primaryPointBuffer = gl.createBuffer(); secondaryPointBuffer = gl.createBuffer(); hoverPointBuffer = gl.createBuffer();
     available = true;
@@ -340,8 +355,8 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
 
   function setRibbonAttributes() {
     const locations = [
-      gl.getAttribLocation(program, 'aStart'), gl.getAttribLocation(program, 'aEnd'),
-      gl.getAttribLocation(program, 'aSide'), gl.getAttribLocation(program, 'aEndpoint'),
+      programInfo.attributes.start, programInfo.attributes.end,
+      programInfo.attributes.side, programInfo.attributes.endpoint,
     ];
     const stride = 6 * Float32Array.BYTES_PER_ELEMENT;
     for (const [index, location] of locations.entries()) {
@@ -357,10 +372,10 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     const locations = setRibbonAttributes();
     const [red, green, blue] = colorRgb(color);
-    gl.uniform4f(gl.getUniformLocation(program, 'uColor'), red, green, blue, alpha);
-    gl.uniform1f(gl.getUniformLocation(program, 'uHalfWidth'), width / 2);
+    gl.uniform4f(programInfo.uniforms.uColor, red, green, blue, alpha);
+    gl.uniform1f(programInfo.uniforms.uHalfWidth, width / 2);
     const offsets = viewState.projection === 'globe' ? [0] : [-2 * Math.PI, 0, 2 * Math.PI];
-    const worldLocation = gl.getUniformLocation(program, 'uWorldOffset');
+    const worldLocation = programInfo.uniforms.uWorldOffset;
     for (const offset of offsets) { gl.uniform1f(worldLocation, offset); gl.drawArrays(gl.TRIANGLES, 0, count); }
     for (const location of locations) if (location >= 0) gl.disableVertexAttribArray(location);
   }
@@ -368,19 +383,19 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
   function drawPoints(buffer, count, alpha, color = interactionStyle.selection.color) {
     if (!count) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    const location = gl.getAttribLocation(program, 'aStart');
-    const endLocation = gl.getAttribLocation(program, 'aEnd');
-    const sideLocation = gl.getAttribLocation(program, 'aSide');
-    const endpointLocation = gl.getAttribLocation(program, 'aEndpoint');
+    const location = programInfo.attributes.start;
+    const endLocation = programInfo.attributes.end;
+    const sideLocation = programInfo.attributes.side;
+    const endpointLocation = programInfo.attributes.endpoint;
     gl.enableVertexAttribArray(location); gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0);
     for (const attribute of [endLocation, sideLocation, endpointLocation]) if (attribute >= 0) gl.disableVertexAttribArray(attribute);
     if (endLocation >= 0) gl.vertexAttrib2f(endLocation, 0, 0);
     if (sideLocation >= 0) gl.vertexAttrib1f(sideLocation, 0);
     if (endpointLocation >= 0) gl.vertexAttrib1f(endpointLocation, 0);
     const [red, green, blue] = colorRgb(color);
-    gl.uniform4f(gl.getUniformLocation(program, 'uColor'), red, green, blue, alpha);
-    gl.uniform1f(gl.getUniformLocation(program, 'uHalfWidth'), 0);
-    gl.uniform1f(gl.getUniformLocation(program, 'uWorldOffset'), 0);
+    gl.uniform4f(programInfo.uniforms.uColor, red, green, blue, alpha);
+    gl.uniform1f(programInfo.uniforms.uHalfWidth, 0);
+    gl.uniform1f(programInfo.uniforms.uWorldOffset, 0);
     gl.drawArrays(gl.POINTS, 0, count);
     gl.disableVertexAttribArray(location);
   }
@@ -403,10 +418,11 @@ export function createSelectionEmphasisRenderer({ canvas, projectionForView, get
     const flatCenter = viewState.projectionCenter || viewState.flatCenter || [0, 0];
     gl.viewport(0, 0, pixelWidth, pixelHeight); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.useProgram(program);
-    gl.uniform2f(gl.getUniformLocation(program, 'uViewport'), width, height); gl.uniform2f(gl.getUniformLocation(program, 'uTranslate'), translate[0], translate[1]);
-    gl.uniform1f(gl.getUniformLocation(program, 'uScale'), scale); gl.uniform3fv(gl.getUniformLocation(program, 'uRowX'), rows.rowX); gl.uniform3fv(gl.getUniformLocation(program, 'uRowY'), rows.rowY); gl.uniform3fv(gl.getUniformLocation(program, 'uRowZ'), rows.rowZ);
-    gl.uniform2f(gl.getUniformLocation(program, 'uFlatCenter'), flatCenter[0] * DEGREES_TO_RADIANS, flatCenter[1] * DEGREES_TO_RADIANS); gl.uniform1i(gl.getUniformLocation(program, 'uMode'), mode);
-    gl.uniform1f(gl.getUniformLocation(program, 'uDpr'), dpr);
+    const uniforms = programInfo.uniforms;
+    gl.uniform2f(uniforms.uViewport, width, height); gl.uniform2f(uniforms.uTranslate, translate[0], translate[1]);
+    gl.uniform1f(uniforms.uScale, scale); gl.uniform3fv(uniforms.uRowX, rows.rowX); gl.uniform3fv(uniforms.uRowY, rows.rowY); gl.uniform3fv(uniforms.uRowZ, rows.rowZ);
+    gl.uniform2f(uniforms.uFlatCenter, flatCenter[0] * DEGREES_TO_RADIANS, flatCenter[1] * DEGREES_TO_RADIANS); gl.uniform1i(uniforms.uMode, mode);
+    gl.uniform1f(uniforms.uDpr, dpr);
     const primary = interactionStyle.selection.primary;
     const secondary = interactionStyle.selection.secondary;
     drawRibbon(hoverBuffer, hoverCount, interactionStyle.hover.width, interactionStyle.hover.alpha, viewState, interactionStyle.hover.color);
