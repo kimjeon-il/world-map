@@ -186,13 +186,18 @@ body.file-menu-open .mobile-backdrop {
   overflow: hidden !important;
 }
 
-#gisImportForm > .gis-form-grid {
+#gisImportForm > .gis-import-content-rail {
   min-height: 0 !important;
   flex: 1 1 auto;
   overflow-x: hidden !important;
   overflow-y: auto !important;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
+}
+
+#gisImportForm > .gis-import-content-rail > .gis-form-grid {
+  min-height: 260px;
+  overflow: visible;
 }
 
 #gisImportModal .ui-dialog-actions {
