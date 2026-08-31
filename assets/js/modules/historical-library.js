@@ -126,6 +126,11 @@ export function materializePilotEntities(definitions, countriesData, combineGeom
   ]));
   return (definitions || []).map(definition => {
     const versions = (definition.geometryVersions || []).map(version => {
+      if (POLYGON_TYPES.has(version?.geometry?.type)
+        && Array.isArray(version.geometry.coordinates)
+        && version.geometry.coordinates.length) {
+        return { ...version, geometry: clone(version.geometry) };
+      }
       const memberGeometries = (version.memberCountryIds || []).map(id => countryGeometry.get(text(id))).filter(Boolean);
       if (!memberGeometries.length) return null;
       const geometry = typeof combineGeometries === 'function' ? combineGeometries(memberGeometries) : memberGeometries[0];
