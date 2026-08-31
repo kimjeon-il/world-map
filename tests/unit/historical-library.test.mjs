@@ -65,6 +65,26 @@ test('pilot geometry is materialized from member countries and instances retain 
   assert.equal(instance.geometryVersionId, 'ab-v1');
   assert.equal(instance.type, 'country');
   assert.notEqual(instance.geometry, entity.geometryVersions[0].geometry);
+  assert.deepEqual(instance.instantiation, { mode: 'independent', countryUpdates: {} });
+});
+
+test('pilot geometry accepts immutable inline polygons and territory-priority metadata', () => {
+  const inline = square(10, 11);
+  const [entity] = materializePilotEntities([{
+    libraryId: 'historical-country:inline', type: 'country', canonicalName: 'Inline',
+    alternateNames: ['Alias'],
+    instantiation: { mode: 'country-territory-priority', countryUpdates: { DEU: { name: 'Federal Republic' } } },
+    geometryVersions: [{ id: 'inline-v1', geometry: inline, certainty: 'medium' }],
+  }], { type: 'FeatureCollection', features: [] }, () => null);
+  inline.coordinates[0][0][0] = 999;
+  assert.equal(entity.geometryVersions[0].geometry.coordinates[0][0][0], 10);
+  assert.deepEqual(entity.instantiation, {
+    mode: 'country-territory-priority',
+    countryUpdates: { DEU: { name: 'Federal Republic' } },
+  });
+  const instance = instantiateLibraryEntity(entity);
+  instance.geometry.coordinates[0][0][0] = 888;
+  assert.equal(entity.geometryVersions[0].geometry.coordinates[0][0][0], 10);
 });
 
 const historicalData = JSON.parse(readFileSync(new URL('../../assets/data/historical-library-pilot.json', import.meta.url), 'utf8'));

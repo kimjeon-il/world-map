@@ -16,6 +16,7 @@ export const LIBRARY_ENTITY_TYPES = Object.freeze({
 
 const TYPES = new Set(Object.values(LIBRARY_ENTITY_TYPES));
 const POLYGON_TYPES = new Set(['Polygon', 'MultiPolygon']);
+const INSTANTIATION_MODES = new Set(['independent', 'country-territory-priority']);
 const text = value => String(value ?? '').trim();
 const clone = value => structuredClone(value);
 function dateContains(version, referenceDate) {
@@ -24,6 +25,20 @@ function dateContains(version, referenceDate) {
 }
 
 const startYear = value => parseTemporal(value)?.year ?? null;
+
+function normalizeInstantiation(raw) {
+  const mode = text(raw?.mode) || 'independent';
+  if (!INSTANTIATION_MODES.has(mode)) throw new Error(`지원하지 않는 라이브러리 추가 방식입니다: ${mode}`);
+  const countryUpdates = {};
+  for (const [countryId, update] of Object.entries(raw?.countryUpdates || {})) {
+    const id = text(countryId);
+    if (!id || !update || typeof update !== 'object') continue;
+    const normalized = {};
+    if (text(update.name)) normalized.name = text(update.name);
+    if (Object.keys(normalized).length) countryUpdates[id] = normalized;
+  }
+  return { mode, countryUpdates };
+}
 
 export function normalizeGeometryVersion(raw) {
   const geometry = POLYGON_TYPES.has(raw?.geometry?.type)
@@ -74,6 +89,7 @@ export function normalizeHistoricalLibraryEntity(raw) {
     sovereignLibraryId: text(raw.sovereignLibraryId),
     adminLevel: type === LIBRARY_ENTITY_TYPES.ADMIN ? Math.max(1, Number(raw.adminLevel || 1)) : null,
     geometryVersions,
+    instantiation: normalizeInstantiation(raw.instantiation),
     metadata: raw.metadata && typeof raw.metadata === 'object' ? clone(raw.metadata) : {},
     sourceInfo: raw.sourceInfo && typeof raw.sourceInfo === 'object' ? clone(raw.sourceInfo) : {},
   };
@@ -211,5 +227,6 @@ export function instantiateLibraryEntity(entity, referenceDate = null) {
       geometryCertainty: version.certainty,
       geometryDatePrecision: version.datePrecision,
     },
+    instantiation: clone(entity.instantiation || { mode: 'independent', countryUpdates: {} }),
   };
 }
