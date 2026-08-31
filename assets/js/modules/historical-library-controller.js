@@ -104,10 +104,19 @@ export function createHistoricalLibraryController({
     title.textContent = entity.displayNames?.ko || entity.canonicalName;
     const meta = document.createElement('p');
     meta.className = 'editor-help';
-    meta.textContent = `${typeLabels[entity.type]} · ${period(entity)}`;
+    meta.textContent = [
+      `${typeLabels[entity.type]} · ${period(entity)}`,
+      entity.metadata?.referenceDate ? `기준일 ${entity.metadata.referenceDate}` : '',
+      version.certainty ? `신뢰도 ${version.certainty}` : '',
+      entity.metadata?.pilot ? '시험 데이터' : '',
+      entity.metadata?.approximateGeometry ? '근사 경계' : '',
+    ].filter(Boolean).join(' · ');
     const source = document.createElement('p');
     source.className = 'editor-help';
-    source.textContent = `출처: ${entity.sourceInfo?.title || version.sourceId || '미지정'}`;
+    const sourceEntries = Array.isArray(entity.sourceInfo?.sources) ? entity.sourceInfo.sources : [];
+    source.textContent = `출처: ${sourceEntries.length
+      ? sourceEntries.map(item => item?.title).filter(Boolean).join(' · ')
+      : (entity.sourceInfo?.title || version.sourceId || '미지정')}`;
     const advanced = document.createElement('details');
     advanced.className = 'ui-disclosure';
     const summary = document.createElement('summary');
@@ -121,7 +130,7 @@ export function createHistoricalLibraryController({
       dd.textContent = String(value || '—');
       body.append(dt, dd);
     };
-    const alternativeNames = [...new Set([...(entity.aliases || []), ...Object.values(entity.displayNames || {})].filter(Boolean))].join(' · ');
+    const alternativeNames = [...new Set([...(entity.alternateNames || []), ...Object.values(entity.displayNames || {})].filter(Boolean))].join(' · ');
     addAdvanced('별칭·다국어 이름', alternativeNames);
     addAdvanced('GeometryVersion', version.id || version.geometryVersionId);
     addAdvanced('날짜 정밀도', version.datePrecision);
@@ -196,12 +205,24 @@ export function createHistoricalLibraryController({
     }
   }
 
-  function addSelected() {
+  async function addSelected() {
     if (loading || !selectedId) return;
-    const count = instantiate([selectedId], elements.year.value, elements.childDepth.value);
-    if (!count) setStatus('이미 현재 프로젝트에 있는 항목입니다.', 'success', 2800);
-    else setStatus(`라이브러리 항목 ${count}개를 독립 프로젝트 인스턴스로 추가했습니다.`, 'success', 4200);
-    close();
+    setLoadingState(true);
+    try {
+      const result = await instantiate([selectedId], elements.year.value, elements.childDepth.value);
+      const added = Number(result?.added || 0);
+      if (!added) setStatus('이미 현재 프로젝트에 있는 항목입니다.', 'success', 2800);
+      else if (Number(result?.subtracted || 0)) {
+        setStatus(`라이브러리 국가 ${added}개를 추가하고 기존 국가 ${result.subtracted}개에서 영토를 차감했습니다.`, 'success', 4200);
+      } else {
+        setStatus(`라이브러리 항목 ${added}개를 독립 프로젝트 인스턴스로 추가했습니다.`, 'success', 4200);
+      }
+      close();
+    } catch (error) {
+      setLoadingState(false);
+      renderPreview();
+      reportError(error, '라이브러리 항목을 프로젝트에 추가하지 못했습니다.', 'PL-LIB-002', 4800);
+    }
   }
 
   function advanceAdd() {
@@ -215,7 +236,7 @@ export function createHistoricalLibraryController({
       requestFrame(() => elements.childDepth?.focus());
       return;
     }
-    addSelected();
+    void addSelected();
   }
 
   function returnToDetail() {
@@ -235,10 +256,14 @@ export function createHistoricalLibraryController({
         ? '이 스냅샷은 라이브러리 기능 시험용 부분 구성입니다. 현재 프로젝트에 없는 항목만 추가합니다.'
         : '현재 프로젝트에 없는 스냅샷 항목만 추가합니다.',
       confirmText: '없는 항목 추가',
-      onConfirm: () => {
-        const count = instantiate(snapshot.entityRefs, snapshot.referenceDate, 'all');
-        setStatus(`${snapshot.name}에서 ${count}개 항목을 추가했습니다.`, 'success', 4200);
-        close();
+      onConfirm: async () => {
+        try {
+          const result = await instantiate(snapshot.entityRefs, snapshot.referenceDate, 'all');
+          setStatus(`${snapshot.name}에서 ${Number(result?.added || 0)}개 항목을 추가했습니다.`, 'success', 4200);
+          close();
+        } catch (error) {
+          reportError(error, '세계 스냅샷을 프로젝트에 추가하지 못했습니다.', 'PL-LIB-003', 4800);
+        }
       },
     });
   }
