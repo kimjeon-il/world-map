@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -63,6 +65,35 @@ test('pilot geometry is materialized from member countries and instances retain 
   assert.equal(instance.geometryVersionId, 'ab-v1');
   assert.equal(instance.type, 'country');
   assert.notEqual(instance.geometry, entity.geometryVersions[0].geometry);
+});
+
+const historicalData = JSON.parse(readFileSync(new URL('../../assets/data/historical-library-pilot.json', import.meta.url), 'utf8'));
+
+test('historical library preserves embedded polygon geometry without a modern-country materialization source', () => {
+  const embedded = { type: 'MultiPolygon', coordinates: [square().coordinates] };
+  const [entity] = materializePilotEntities([{
+    libraryId: 'historical-country:embedded', type: 'country', canonicalName: 'Embedded',
+    geometryVersions: [{ id: 'embedded-r1', geometry: embedded, certainty: 'high' }],
+  }], { type: 'FeatureCollection', features: [] }, () => null);
+  assert.equal(entity.geometryVersions[0].geometry.type, 'MultiPolygon');
+  assert.deepEqual(entity.geometryVersions[0].geometry, embedded);
+  assert.notEqual(entity.geometryVersions[0].geometry, embedded);
+});
+
+test('East Prussia r2 library geometry and production metadata remain exact', () => {
+  const entity = historicalData.entities.find(item => item.libraryId === 'historical-country:east-prussia');
+  const version = entity.geometryVersions[0];
+  const coordinates = version.geometry.coordinates.flat(2);
+  const coordinateKeys = new Set(coordinates.map(coordinate => coordinate.join(',')));
+  const geometrySha256 = createHash('sha256').update(JSON.stringify(version.geometry)).digest('hex');
+  assert.equal(geometrySha256, 'ee2f1f2d2ca285adeddd787f1243fc34ac49945ea4bb100b1a74651f84e8ef3e');
+  assert.equal(version.geometry.coordinates.length, 2);
+  assert.equal(coordinates.length, 862);
+  assert.ok(coordinateKeys.has('19.789943299809654,54.43327152291397'));
+  assert.ok(coordinateKeys.has('22.788853193618436,54.36826840398982'));
+  assert.ok(!coordinateKeys.has('21.119884,55.493415'));
+  assert.ok(!coordinateKeys.has('21.119884,55.506196'));
+  assert.equal(entity.metadata.artifactSha256, '93786f2dbcdfd31539890cba070ed09a47d5818a08c49b4638ce7c5db03d0f65');
 });
 
 test('world snapshots remain templates with independent reference lists', () => {
