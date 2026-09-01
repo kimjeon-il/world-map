@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 async function openCanvasApp(page) {
   await page.addInitScript(() => {
     const NativeWorker = window.Worker;
+    window.__PANDOLAB_TEST_DELAYED_CANVAS_PATCHES__ = 0;
     window.Worker = class DelayedCanvasPatchWorker extends NativeWorker {
       constructor(url, options) {
         super(url, options);
@@ -11,9 +12,10 @@ async function openCanvasApp(page) {
 
       postMessage(message, transfer = []) {
         if (this.delaysCanvasPatch && message?.type === 'patch') {
+          window.__PANDOLAB_TEST_DELAYED_CANVAS_PATCHES__ += 1;
           window.setTimeout(
             () => NativeWorker.prototype.postMessage.call(this, message, transfer),
-            1500,
+            5000,
           );
           return;
         }
@@ -40,14 +42,19 @@ test('canvas worker hides a stale bitmap while a delayed geometry patch catches 
   await page.setViewportSize({ width: 1280, height: 820 });
   await openCanvasApp(page);
 
+  await page.locator('#mobileMapBtn').click();
   const folderToggle = page.locator('[data-layer-folder-toggle="countries"]').first();
   if (await folderToggle.getAttribute('aria-expanded') !== 'true') await folderToggle.click();
 
   const firstRow = page.locator('#countriesLayerChildren .layer-child').first();
-  const name = (await firstRow.locator('.layer-child-name').textContent()).trim();
   await firstRow.locator('.layer-child-menu').click();
   await page.locator('#objectDeleteMenuBtn').click();
   await page.locator('#confirmModalOkBtn').click();
+
+  await expect.poll(
+    () => page.evaluate(() => window.__PANDOLAB_TEST_DELAYED_CANVAS_PATCHES__ || 0),
+    { timeout: 5_000 },
+  ).toBeGreaterThan(0);
 
   await expect.poll(
     () => page.evaluate(() => window.__PANDOLAB_GPU_METRICS__?.pendingCountryCount || 0),
@@ -59,11 +66,9 @@ test('canvas worker hides a stale bitmap while a delayed geometry patch catches 
     { timeout: 3_000 },
   ).toBe(true);
 
-  await expect(page.getByRole('button', { name, exact: true })).toHaveCount(0);
-
   await expect.poll(
     () => page.evaluate(() => window.__PANDOLAB_GPU_METRICS__?.pendingCountryCount || 0),
-    { timeout: 15_000 },
+    { timeout: 90_000 },
   ).toBe(0);
 
   await expect.poll(

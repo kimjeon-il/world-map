@@ -62,9 +62,10 @@ async function readRails(page, kind) {
         firstItem: [item.left, item.right],
       };
     }
+    const editorContent = document.querySelector('#editorScrollBody > :not(.hidden)') || document.querySelector('#editorScrollBody');
     return {
       header: inset('.editor-shell-header'),
-      content: inset('.editor-empty'),
+      content: inset(`#${editorContent.id}`),
     };
   }, kind);
 }
@@ -92,7 +93,8 @@ test('sheet headers, tabs, and content share one rail in every layout', async ({
     await expect(page.locator('#createMenu')).toBeVisible();
     expectAligned(await readRails(page, 'create'));
 
-    await page.locator(layout.name === 'wide' ? '#togglePanelBtn' : '#mobileEditBtn').click();
+    await page.evaluate(() => window.PANDOLAB_TERRITORIAL.select('country', 'DEU'));
+    if (layout.name !== 'wide' && !await page.locator('#rightPanel').isVisible()) await page.locator('#mobileEditBtn').click();
     await expect(page.locator('#rightPanel')).toBeVisible();
     expectAligned(await readRails(page, 'editor'));
   }

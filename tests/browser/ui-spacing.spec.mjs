@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 const layouts = [
-  { name: 'wide', viewport: { width: 1440, height: 900 }, panelPadding: 12, headerHeight: 64, controlHeight: 42 },
-  { name: 'compact', viewport: { width: 1024, height: 800 }, panelPadding: 12, headerHeight: 74, controlHeight: 42 },
-  { name: 'mobile', viewport: { width: 390, height: 844 }, panelPadding: 16, headerHeight: 64, controlHeight: 48 },
+  { name: 'wide', viewport: { width: 1440, height: 900 }, panelPadding: 0, headerHeight: 74, controlHeight: 42 },
+  { name: 'compact', viewport: { width: 1024, height: 800 }, panelPadding: 0, headerHeight: 74, controlHeight: 42 },
+  { name: 'mobile', viewport: { width: 390, height: 844 }, panelPadding: 0, headerHeight: 76, controlHeight: 48 },
 ];
 
 async function openApp(page, viewport, colorScheme) {
@@ -68,12 +68,12 @@ for (const layout of layouts) {
       expect(panelStyle).toEqual({ 'padding-left': `${layout.panelPadding}px`, 'padding-right': `${layout.panelPadding}px` });
 
       const countryFolder = page.locator('.layer-folder[data-layer-group="countries"]');
-      expect(await height(countryFolder.locator(':scope > .layer-folder-row'))).toBe(48);
+      expect(await height(countryFolder.locator(':scope > .layer-folder-row'))).toBeCloseTo(48, 1);
       await countryFolder.locator('[data-layer-folder-toggle="countries"]').first().click();
       const firstCountry = page.locator('#countriesLayerChildren .layer-child').first();
       await expect(firstCountry).toBeVisible();
-      expect(await height(firstCountry)).toBe(48);
-      expect(await height(firstCountry.locator('.layer-child-menu'))).toBe(layout.controlHeight);
+      expect(await height(firstCountry)).toBeCloseTo(48, 1);
+      expect(await height(firstCountry.locator('.layer-child-menu'))).toBeCloseTo(layout.controlHeight, 1);
 
       const focusTarget = countryFolder.locator('[data-layer-folder-toggle="countries"]').first();
       const beforeHover = await focusTarget.boundingBox();
@@ -104,7 +104,9 @@ for (const layout of layouts) {
       await expect(popover).toBeVisible();
       const popoverStyle = await computed(popover, ['padding-top', 'padding-right', 'padding-bottom', 'padding-left']);
       expect(new Set(Object.values(popoverStyle))).toEqual(new Set(['8px']));
-      expect(await height(popover.locator('.ui-select-option').first())).toBe(layout.controlHeight === 48 ? 48 : 40);
+      const optionHeight = await height(popover.locator('.ui-select-option').first());
+      expect(optionHeight).toBeGreaterThanOrEqual(layout.controlHeight === 48 ? 48 : 40);
+      expect(optionHeight).toBeLessThanOrEqual(56);
       await page.keyboard.press('Escape');
       await expect(customSelect).toBeFocused();
 

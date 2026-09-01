@@ -129,9 +129,9 @@ test('mobile sheets hide header close buttons and resize from the full header', 
       };
     }));
   }
-  expect(headerMetrics.map(value => value.height)).toEqual([72, 72, 72]);
+  expect(headerMetrics.map(value => value.height)).toEqual([76, 76, 76]);
   expect(headerMetrics.map(value => [value.paddingTop, value.paddingBottom])).toEqual([
-    ['24px', '8px'], ['24px', '8px'], ['24px', '8px'],
+    ['28px', '8px'], ['28px', '8px'], ['28px', '8px'],
   ]);
   for (const value of headerMetrics) {
     expect(value.handleTop).toBeGreaterThanOrEqual(0);

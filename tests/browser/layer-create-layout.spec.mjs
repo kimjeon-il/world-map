@@ -192,7 +192,8 @@ for (const colorScheme of ['light', 'dark']) {
       expect(createMetrics.columns.split(' ')[0]).toBe('38px');
       expect(createMetrics.columnGap).toBe('12px');
       expect(createMetrics.itemPadding).toEqual(['8px', '8px', '8px', '8px']);
-      expect(createMetrics.iconSize).toEqual([38, 38]);
+      expect(createMetrics.iconSize[0]).toBeCloseTo(38, 3);
+      expect(createMetrics.iconSize[1]).toBeCloseTo(38, 3);
       expect(createMetrics.title).toEqual(['15px', '600']);
       expect(createMetrics.description).toEqual(['13px', '400', '19.5px']);
       expect(createMetrics.category.slice(0, 3)).toEqual(['13px', '600', '17.55px']);
@@ -221,7 +222,7 @@ for (const colorScheme of ['light', 'dark']) {
         };
       });
       const actionSize = viewport.layout === 'mobile' ? 48 : 42;
-      expect(folderMetrics.height).toBe(48);
+      expect(folderMetrics.height).toBeCloseTo(48, 3);
       expect(folderMetrics.gap).toBe('4px');
       expect(folderMetrics.actionSize).toEqual([actionSize, actionSize]);
       expect(folderMetrics.visibilitySize).toEqual([actionSize, actionSize]);
@@ -230,31 +231,37 @@ for (const colorScheme of ['light', 'dark']) {
       expect(folderMetrics.nameOverflow).toBe(false);
       expect(folderMetrics.rowOverflow).toBe(false);
 
-      await folder.locator('[data-layer-folder-toggle="countries"]').first().click();
+      const folderToggle = folder.locator('[data-layer-folder-toggle="countries"]').first();
+      if (await folderToggle.getAttribute('aria-expanded') !== 'true') await folderToggle.click();
       const children = page.locator('#countriesLayerChildren');
       const child = children.locator('.layer-child').first();
       await expect(child).toBeVisible();
-      const childMetrics = await child.evaluate(row => {
-        const style = getComputedStyle(row);
-        const size = element => {
-          if (!element) return null;
-          const bounds = element.getBoundingClientRect();
-          return [Math.round(bounds.width), Math.round(bounds.height)];
-        };
-        const name = row.querySelector('.layer-child-name');
-        return {
-          height: row.getBoundingClientRect().height,
-          gap: style.columnGap,
-          visibilitySize: size(row.querySelector('.layer-visibility-control')),
-          menuSize: size(row.querySelector('.layer-child-menu')),
-          nameWidth: name.clientWidth,
-          rowOverflow: row.scrollWidth > row.clientWidth + 1,
-          childrenOverflow: row.parentElement
-            ? row.parentElement.scrollWidth > row.parentElement.clientWidth + 1
-            : false,
-        };
-      });
-      expect(childMetrics.height).toBe(48);
+      let childMetrics = null;
+      await expect.poll(async () => {
+        const handle = await child.elementHandle();
+        if (!handle) return 0;
+        childMetrics = await handle.evaluate(row => {
+          const style = getComputedStyle(row);
+          const size = element => {
+            if (!element) return null;
+            const bounds = element.getBoundingClientRect();
+            return [Math.round(bounds.width), Math.round(bounds.height)];
+          };
+          const name = row.querySelector('.layer-child-name');
+          return {
+            height: row.getBoundingClientRect().height,
+            gap: style.columnGap,
+            visibilitySize: size(row.querySelector('.layer-visibility-control')),
+            menuSize: size(row.querySelector('.layer-child-menu')),
+            nameWidth: name.clientWidth,
+            rowOverflow: row.scrollWidth > row.clientWidth + 1,
+            childrenOverflow: row.parentElement
+              ? row.parentElement.scrollWidth > row.parentElement.clientWidth + 1
+              : false,
+          };
+        });
+        return childMetrics.height;
+      }, { timeout: 30_000 }).toBeCloseTo(48, 3);
       expect(childMetrics.gap).toBe('4px');
       expect(childMetrics.visibilitySize).toEqual([actionSize, actionSize]);
       expect(childMetrics.menuSize).toEqual([actionSize, actionSize]);
