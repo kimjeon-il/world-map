@@ -7,13 +7,6 @@ export function createLayerPanelController({
   let searchTimer = 0;
 
   function bind() {
-    elements.layersTab?.addEventListener('click', () => commands.setPanelView?.('layers'));
-    elements.viewTab?.addEventListener('click', () => commands.setPanelView?.('view'));
-    elements.panelTabs?.addEventListener('keydown', event => {
-      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-      event.preventDefault();
-      commands.setPanelView?.(event.key === 'ArrowRight' || event.key === 'End' ? 'view' : 'layers', { focus: true });
-    });
     for (const [group, input] of Object.entries(elements.visibilityInputs || {})) {
       input?.addEventListener('change', event => {
         commands.syncVisibilityToggle?.(event.target);

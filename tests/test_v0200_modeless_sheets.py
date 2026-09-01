@@ -36,12 +36,14 @@ class V0200ModelessSheetTests(unittest.TestCase):
         self.assertIn("body.map-sheet-dragging", CSS)
 
     def test_add_menu_is_a_modeless_map_sheet_on_mobile(self):
-        self.assertEqual(INDEX.count("map-sheet-surface"), 3)
-        self.assertIn("#app[data-layout=\"mobile\"] .create-menu.mobile-open", CSS)
+        self.assertEqual(INDEX.count("workspace-surface"), 3)
+        self.assertIn('#app[data-layout="mobile"] .workspace-surface.mobile-open', CSS)
         self.assertIn("height: var(--sheet-height, 60dvh);", CSS)
         self.assertIn("$('mobileCloseCreateBtn')?.addEventListener", APP)
         self.assertIn("panel.setAttribute('aria-modal', 'false')", SURFACE)
-        self.assertIn("item.removeAttribute('role')", SURFACE)
+        self.assertIn("panel.setAttribute('role', 'dialog')", SURFACE)
+        create_markup = INDEX[INDEX.index('id="createMenu"'):INDEX.index('id="rightPanel"')]
+        self.assertNotIn('role="menuitem"', create_markup)
         outside_click = re.search(r"document\.addEventListener\('click', e => \{([\s\S]+?)\n\s*\}\);", APP)
         self.assertIsNotNone(outside_click)
         self.assertNotIn("closeCreateMenu", outside_click.group(1))
@@ -83,12 +85,12 @@ class V0200ModelessSheetTests(unittest.TestCase):
         self.assertIn("left: 0;", CSS)
         self.assertGreaterEqual(CSS.count("bottom: var(--mobile-nav-height);"), 2)
         self.assertIn("border-radius: var(--ui-radius-sheet) var(--ui-radius-sheet) 0 0;", CSS)
-        self.assertIn(".map-sheet-body-layers .layer-list", CSS)
+        self.assertIn(".surface-map > .surface-body-delegated .layer-list", CSS)
         self.assertIn("overflow-y: auto;", CSS)
         self.assertIn("body.map-sheet-open #app[data-layout=\"mobile\"] .map-bottom-status", CSS)
 
     def test_drag_handle_has_no_general_button_chrome_and_supports_keyboard(self):
-        self.assertIn(".map-sheet-header .sheet-drag-handle", CSS)
+        self.assertIn(".surface-header .sheet-drag-handle", CSS)
         self.assertIn("background: transparent !important;", CSS)
         self.assertIn("event.key === 'ArrowUp' || event.key === 'PageUp'", APP)
         self.assertIn("event.key === 'Escape'", APP)

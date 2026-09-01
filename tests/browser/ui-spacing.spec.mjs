@@ -63,7 +63,7 @@ for (const layout of layouts) {
       expect(tokens).toEqual({ control: '42px', touch: '48px', fieldX: '12px', treeRow: '48px', dialogPadding: '24px' });
 
       await openLayers(page, layout.name);
-      expect(await height(page.locator('#leftPanel .layer-panel-header'))).toBe(layout.headerHeight);
+      expect(await height(page.locator('#leftPanel > .surface-header'))).toBe(layout.headerHeight);
       const panelStyle = await computed(page.locator('#layerSection'), ['padding-left', 'padding-right']);
       expect(panelStyle).toEqual({ 'padding-left': `${layout.panelPadding}px`, 'padding-right': `${layout.panelPadding}px` });
 

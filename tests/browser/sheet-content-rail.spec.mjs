@@ -36,7 +36,7 @@ async function readRails(page, kind) {
     if (kind === 'layers') {
       const list = box('.layer-list');
       return {
-        header: inset('.layer-panel-header'),
+        header: inset('#leftPanel > .surface-header'),
         tabs: inset('.map-panel-tabs'),
         search: (() => { const value = box('.layer-search'); return [value.left, value.right]; })(),
         content: [
@@ -47,14 +47,14 @@ async function readRails(page, kind) {
     }
     if (kind === 'view') {
       return {
-        header: inset('.layer-panel-header'),
+        header: inset('#leftPanel > .surface-header'),
         tabs: inset('.map-panel-tabs'),
         content: inset('.map-view-settings'),
       };
     }
     if (kind === 'create') {
-      const header = box('.create-sheet-header');
-      const content = inset('.create-sheet-content');
+      const header = box('#createMenu > .surface-header');
+      const content = inset('.surface-content-create');
       const item = box('.create-menu-item');
       return {
         ...(header.offsetWidth > 0 ? { header: [header.left + header.paddingLeft, header.right - header.paddingRight] } : {}),
@@ -64,7 +64,7 @@ async function readRails(page, kind) {
     }
     const editorContent = document.querySelector('#editorScrollBody > :not(.hidden)') || document.querySelector('#editorScrollBody');
     return {
-      header: inset('.editor-shell-header'),
+      header: inset('#rightPanel > .surface-header'),
       content: inset(`#${editorContent.id}`),
     };
   }, kind);

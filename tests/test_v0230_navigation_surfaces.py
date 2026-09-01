@@ -10,6 +10,7 @@ INDEX = (ROOT / "index.html").read_text(encoding="utf-8")
 APP = (ROOT / "assets/js/app.js").read_text(encoding="utf-8")
 CSS = (ROOT / "assets/css/app.css").read_text(encoding="utf-8")
 SURFACE = (ROOT / "assets/js/modules/surface-controller.js").read_text(encoding="utf-8")
+SURFACE_TABS = (ROOT / "assets/js/modules/surface-tabs-controller.js").read_text(encoding="utf-8")
 
 
 class V0230NavigationSurfaceTests(unittest.TestCase):
@@ -46,11 +47,11 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
     def test_sheet_headers_and_row_buttons_use_shared_component_rules(self):
         self.assertIn('.ui-row-button { width: 100%; box-sizing: border-box; }', CSS)
         compact_header = re.search(
-            r'#app\[data-layout="compact"\] \.mobile-sheet-header \{([^}]+)\}',
+            r'#app\[data-layout="compact"\] \.surface-header \{([^}]+)\}',
             CSS,
         )
         self.assertIsNotNone(compact_header)
-        self.assertIn('height: var(--ui-sheet-header-height-compact)', compact_header.group(1))
+        self.assertIn('height: var(--ui-surface-header-height-compact)', compact_header.group(1))
         self.assertIn('padding-block: var(--ui-panel-padding)', compact_header.group(1))
 
     def test_transient_panels_preserve_projection_but_update_control_safe_insets(self):
@@ -104,14 +105,49 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
 
     def test_sheet_chrome_uses_one_visual_content_rail(self):
         for token in (
-            '--ui-sheet-content-padding-x: var(--ui-panel-padding);',
-            '--ui-sheet-scrollbar-compensation: var(--ui-scrollbar-size);',
-            '--ui-sheet-visual-rail-x: calc(var(--ui-sheet-content-padding-x) + var(--ui-sheet-scrollbar-compensation));',
+            '--ui-surface-content-padding-x: var(--ui-panel-padding);',
+            '--ui-surface-scrollbar-compensation: var(--ui-scrollbar-size);',
+            '--ui-surface-visual-rail-x: calc(var(--ui-surface-content-padding-x) + var(--ui-surface-scrollbar-compensation));',
         ):
             self.assertIn(token, CSS)
-        self.assertIn('class="ui-tabs ui-sheet-tabs map-panel-tabs"', INDEX)
-        self.assertIn('class="ui-tabs ui-sheet-tabs editor-view-tabs hidden"', INDEX)
-        self.assertIn('.ui-sheet-tabs {', CSS)
+        self.assertIn('class="ui-tabs surface-tabs map-panel-tabs"', INDEX)
+        self.assertIn('class="ui-tabs surface-tabs editor-view-tabs hidden"', INDEX)
+        self.assertIn('.surface-tabs {', CSS)
+
+    def test_all_primary_panels_use_the_same_surface_structure(self):
+        roots = {
+            "leftPanel": ("surface-map", "</aside>"),
+            "createMenu": ("surface-create", "</section>"),
+            "rightPanel": ("surface-editor", "</aside>"),
+        }
+        for element_id, (variant, closing_tag) in roots.items():
+            start = INDEX.index(f'id="{element_id}"')
+            markup = INDEX[start:INDEX.index(closing_tag, start)]
+            self.assertIn('workspace-surface', markup)
+            self.assertIn(variant, markup)
+            self.assertLess(markup.index('surface-header'), markup.index('surface-tabs'))
+            self.assertLess(markup.index('surface-tabs'), markup.index('surface-body'))
+            self.assertLess(markup.index('surface-body'), markup.index('surface-content'))
+        for legacy in (
+            'map-sheet-header', 'layer-panel-header', 'create-sheet-header',
+            'editor-shell-header', 'create-sheet-body', 'map-sheet-body-layers',
+        ):
+            self.assertNotIn(legacy, INDEX + CSS)
+
+    def test_surface_tabs_share_one_roving_tab_controller(self):
+        self.assertEqual(INDEX.count('data-surface-tab='), 6)
+        self.assertEqual(APP.count('createSurfaceTabsController({'), 3)
+        for key in ('ArrowLeft', 'ArrowRight', 'Home', 'End'):
+            self.assertIn(key, SURFACE_TABS)
+        self.assertIn("tab.setAttribute('aria-selected', String(active))", SURFACE_TABS)
+        self.assertIn('tab.tabIndex = active ? 0 : -1', SURFACE_TABS)
+
+    def test_generic_feature_folder_is_conditional(self):
+        self.assertIn('class="layer-folder" data-layer-group="genericFeatures" hidden', INDEX)
+        self.assertIn('category.layerGroups.forEach(group => {', APP)
+        self.assertIn("if (group === 'genericFeatures')", APP)
+        self.assertIn('const hidden = !allItems.length;', APP)
+        self.assertNotIn('data-map-object-type="generic"', INDEX)
 
     def test_build_version_is_v0230(self):
         self.assertIn('data-app-version="0.30.0"', INDEX)

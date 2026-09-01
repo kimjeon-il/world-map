@@ -23,7 +23,7 @@ class ScrollbarSurfaceTests(unittest.TestCase):
 
     def test_panel_scroll_owners_use_the_shared_surface_class(self):
         self.assertIn('class="layer-list ui-scroll-surface"', INDEX)
-        self.assertIn('class="editor-scroll-body ui-scroll-surface"', INDEX)
+        self.assertIn('class="surface-body editor-scroll-body ui-scroll-surface"', INDEX)
         self.assertIn('class="layer-search-results ui-scroll-surface hidden"', INDEX)
         self.assertIn('class="object-chooser-list ui-scroll-surface"', INDEX)
         self.assertIn('class="ui-menu ui-popover ui-floating-surface top-actions ui-scroll-surface"', INDEX)
@@ -33,7 +33,7 @@ class ScrollbarSurfaceTests(unittest.TestCase):
         mobile_auto_start = CSS.index('body[data-layout="mobile"] :is(')
         mobile_auto_end = CSS.index('\n) {', mobile_auto_start)
         mobile_auto = CSS[mobile_auto_start:mobile_auto_end]
-        self.assertNotIn(".map-sheet-body-layers .layer-list", mobile_auto)
+        self.assertNotIn(".surface-map > .surface-body-delegated .layer-list", mobile_auto)
         self.assertNotIn(".editor-scroll-body", mobile_auto)
         self.assertNotIn(".layer-children", mobile_auto)
 
@@ -41,11 +41,11 @@ class ScrollbarSurfaceTests(unittest.TestCase):
         self.assertRegex(CSS, r"#fileMenu\s*\{[^}]*padding-inline-start:\s*var\(--ui-scrollbar-size\);")
         self.assertRegex(CSS, r"\.ui-select-listbox\s*\{[^}]*padding-inline-start:\s*var\(--ui-scrollbar-size\);")
         self.assertRegex(CSS, r"\.layer-children\s*\{[^}]*calc\(var\(--ui-space-0-5\) \+ var\(--ui-scrollbar-size\)\)")
-        self.assertIn('.create-sheet-content {', CSS)
-        self.assertIn('padding-inline-start: var(--ui-sheet-visual-rail-x);', CSS)
+        self.assertIn('.surface-content-create {', CSS)
+        self.assertIn('padding-inline-start: var(--ui-surface-visual-rail-x);', CSS)
         self.assertRegex(CSS, r"\.editor-scroll-body\s*\{(?![^}]*padding-inline-start)")
-        self.assertRegex(CSS, r"\.map-view-settings\s*\{[^}]*padding-inline-start:\s*var\(--ui-sheet-visual-rail-x\);")
-        self.assertNotIn(".map-sheet-body:not(.map-sheet-body-layers)", CSS)
+        self.assertRegex(CSS, r"\.map-view-settings\s*\{[^}]*padding-inline-start:\s*var\(--ui-surface-visual-rail-x\);")
+        self.assertNotIn(".surface-body:not(.surface-body-delegated)", CSS)
 
 
 if __name__ == "__main__":

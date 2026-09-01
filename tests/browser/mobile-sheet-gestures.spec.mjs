@@ -14,7 +14,7 @@ async function openSheet(page, trigger, panel) {
 }
 
 async function dragHeader(page, panel, deltaY, duration = 320) {
-  const header = page.locator(`${panel} .map-sheet-header`);
+  const header = page.locator(`${panel} .surface-header`);
   const start = await header.evaluate(element => {
     const view = element.ownerDocument.defaultView;
     const rect = element.getBoundingClientRect();
@@ -115,7 +115,7 @@ test('mobile sheets hide header close buttons and resize from the full header', 
     ['#mobileEditBtn', '#rightPanel'],
   ]) {
     await openSheet(page, trigger, panel);
-    headerMetrics.push(await page.locator(`${panel} .map-sheet-header`).evaluate(header => {
+    headerMetrics.push(await page.locator(`${panel} .surface-header`).evaluate(header => {
       const box = header.getBoundingClientRect();
       const handle = header.querySelector('.sheet-drag-handle').getBoundingClientRect();
       const title = header.querySelector('strong').getBoundingClientRect();
