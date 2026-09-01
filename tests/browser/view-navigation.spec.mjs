@@ -176,10 +176,10 @@ test('mobile pinch keeps the geographic anchor under the moving midpoint', async
   }
 });
 
-test('MapLibre mouse drag makes the flat map and globe follow every pointer direction', async ({ page }) => {
+test('Legacy Pando mouse drag makes the flat map and globe follow every pointer direction', async ({ page }) => {
   test.setTimeout(240_000);
   const errors = await openDebugMap(page, { width: 1440, height: 900 }, '/?debug', { requireEnhanced: false });
-  await expect(page.locator('body')).toHaveAttribute('data-map-host', 'maplibre');
+  await expect(page.locator('body')).toHaveAttribute('data-map-host', 'legacy');
   for (const projection of ['flat', 'globe']) {
     await setProjection(page, projection);
     for (const delta of [[56, 0], [-56, 0], [0, 56], [0, -56]]) {
@@ -189,13 +189,13 @@ test('MapLibre mouse drag makes the flat map and globe follow every pointer dire
   expect(errors).toEqual([]);
 });
 
-test('MapLibre touch drag makes the flat map and globe follow every finger direction', async ({ browser }) => {
+test('Legacy Pando touch drag makes the flat map and globe follow every finger direction', async ({ browser }) => {
   test.setTimeout(240_000);
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const page = await context.newPage();
   try {
     const errors = await openDebugMap(page, { width: 390, height: 844 }, '/?debug', { requireEnhanced: false });
-    await expect(page.locator('body')).toHaveAttribute('data-map-host', 'maplibre');
+    await expect(page.locator('body')).toHaveAttribute('data-map-host', 'legacy');
     for (const projection of ['flat', 'globe']) {
       await setProjection(page, projection);
       for (const delta of [[44, 0], [-44, 0], [0, 44], [0, -44]]) {
@@ -208,13 +208,13 @@ test('MapLibre touch drag makes the flat map and globe follow every finger direc
   }
 });
 
-test('MapLibre mobile pinch keeps the original geographic anchor under its moving midpoint', async ({ browser }) => {
+test('Legacy Pando mobile pinch keeps the original geographic anchor under its moving midpoint', async ({ browser }) => {
   test.setTimeout(240_000);
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const page = await context.newPage();
   try {
     const errors = await openDebugMap(page, { width: 390, height: 844 }, '/?debug', { requireEnhanced: false });
-    await expect(page.locator('body')).toHaveAttribute('data-map-host', 'maplibre');
+    await expect(page.locator('body')).toHaveAttribute('data-map-host', 'legacy');
     const box = await page.locator('#map').boundingBox();
     expect(box).not.toBeNull();
     const before = await page.evaluate(() => window.__PANDOLAB_VIEW_DEBUG__.snapshot());
