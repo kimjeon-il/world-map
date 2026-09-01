@@ -21,11 +21,16 @@ export function createPandoMapLibreCustomLayers({
   let device = null;
   let contextRevision = 0;
   let attachedLayerCount = 0;
+  // MapLibre invokes prerender, scene and interaction for one frame as
+  // separate callbacks. Keep one immutable view snapshot across that cycle
+  // so the cache signature cannot change between passes.
+  let frameViewState = null;
 
   function ensureDevice(nextMap, gl) {
     map = nextMap || map;
     if (device?.gl === gl) return device;
     contextRevision += 1;
+    frameViewState = null;
     device = createRenderDevice({
       gl,
       canvas: map?.getCanvas?.() || gl.canvas || null,
@@ -36,14 +41,14 @@ export function createPandoMapLibreCustomLayers({
     return device;
   }
 
-  function scoped(stage, gl, options, callback) {
+  function scoped(stage, gl, options, callback, viewStateOverride = null) {
     try {
       return withGpuStateScope(gl, state => callback({
         gl,
         device,
         map,
         options,
-        viewState: getViewState?.() || null,
+        viewState: viewStateOverride || getViewState?.() || null,
         targetFramebuffer: state?.framebuffer || null,
       })).value;
     } catch (error) {
@@ -63,12 +68,22 @@ export function createPandoMapLibreCustomLayers({
     prerender(gl, maybeOptions) {
       ensureDevice(map, gl);
       const options = renderOptions(gl, maybeOptions);
-      return scoped('maplibre-scene-prerender', gl, options, prerenderScene);
+      const nextViewState = getViewState?.() || null;
+      frameViewState = nextViewState && typeof nextViewState === 'object'
+        ? Object.freeze({ ...nextViewState })
+        : nextViewState;
+      return scoped('maplibre-scene-prerender', gl, options, prerenderScene, frameViewState);
     },
     render(gl, maybeOptions) {
       ensureDevice(map, gl);
       const options = renderOptions(gl, maybeOptions);
-      const result = scoped('maplibre-scene-render', gl, options, renderScene);
+      if (!frameViewState) {
+        const nextViewState = getViewState?.() || null;
+        frameViewState = nextViewState && typeof nextViewState === 'object'
+          ? Object.freeze({ ...nextViewState })
+          : nextViewState;
+      }
+      const result = scoped('maplibre-scene-render', gl, options, renderScene, frameViewState);
       if (result != null && result?.succeeded !== false) onFrameRendered?.('scene', result);
       return result;
     },
@@ -93,8 +108,9 @@ export function createPandoMapLibreCustomLayers({
     render(gl, maybeOptions) {
       ensureDevice(map, gl);
       const options = renderOptions(gl, maybeOptions);
-      const result = scoped('maplibre-interaction-render', gl, options, renderInteraction);
+      const result = scoped('maplibre-interaction-render', gl, options, renderInteraction, frameViewState);
       if (result != null && result?.succeeded !== false) onFrameRendered?.('interaction', result);
+      frameViewState = null;
       return result;
     },
     onRemove() {
@@ -123,6 +139,7 @@ export function createPandoMapLibreCustomLayers({
         onDeviceRemoved?.(removedDevice);
       }
       map = null;
+      frameViewState = null;
       attachedLayerCount = 0;
     },
   });
