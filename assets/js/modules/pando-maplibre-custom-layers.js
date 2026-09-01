@@ -7,6 +7,13 @@ function renderOptions(first, second) {
   return {};
 }
 
+function detectContextVersion(gl) {
+  if (typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext) return 2;
+  // Cross-realm MapLibre contexts do not always satisfy instanceof.  The
+  // WebGL2-only API is a safe secondary capability probe.
+  return typeof gl?.texStorage2D === 'function' && typeof gl?.createVertexArray === 'function' ? 2 : 1;
+}
+
 export function createPandoMapLibreCustomLayers({
   getViewState,
   onDevice,
@@ -35,7 +42,7 @@ export function createPandoMapLibreCustomLayers({
     device = createRenderDevice({
       gl,
       canvas: map?.getCanvas?.() || gl.canvas || null,
-      version: 2,
+      version: detectContextVersion(gl),
       contextRevision,
     });
     onDevice?.(device, { map, contextRevision });

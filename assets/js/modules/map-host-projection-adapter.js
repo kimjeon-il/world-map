@@ -3,8 +3,13 @@ import { normalizeMapProjectionKind } from './map-host.js';
 const TILE_SIZE = 512;
 const MIN_GLOBE_LATITUDE = -89;
 const MAX_GLOBE_LATITUDE = 89;
-const MIN_MERCATOR_LATITUDE = -85.051129;
-const MAX_MERCATOR_LATITUDE = 85.051129;
+// Pando's flat view is equirectangular.  The native MapLibre host remains a
+// Mercator transport, but it must not impose the Mercator pole limit on the
+// authoritative Pando view state.
+const MIN_FLAT_LATITUDE = -89.999;
+const MAX_FLAT_LATITUDE = 89.999;
+const MIN_MAPLIBRE_LATITUDE = -85.051129;
+const MAX_MAPLIBRE_LATITUDE = 85.051129;
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, Number(value) || 0));
@@ -66,7 +71,7 @@ export function pandoViewToMapHostView({ projection = 'flat', view = {}, size = 
   const kind = normalizeMapProjectionKind(projection);
   const center = kind === 'globe'
     ? [wrapLongitude(-Number(view.globeRotation?.[0] || 0)), clamp(-Number(view.globeRotation?.[1] || 0), MIN_GLOBE_LATITUDE, MAX_GLOBE_LATITUDE)]
-    : [wrapLongitude(view.flatCenter?.[0] || 0), clamp(view.flatCenter?.[1] || 0, MIN_MERCATOR_LATITUDE, MAX_MERCATOR_LATITUDE)];
+    : [wrapLongitude(view.flatCenter?.[0] || 0), clamp(view.flatCenter?.[1] || 0, MIN_FLAT_LATITUDE, MAX_FLAT_LATITUDE)];
   const pandoZoom = kind === 'globe' ? view.globeZoom : view.flatZoom;
   return Object.freeze({
     projection: kind,
@@ -91,7 +96,7 @@ export function mapHostViewToPandoView(hostView = {}, previousView = {}, { size 
     next.globeRotation = [-wrapLongitude(center[0]), -clamp(center[1], MIN_GLOBE_LATITUDE, MAX_GLOBE_LATITUDE), 0];
     next.globeZoom = pandoZoom;
   } else {
-    next.flatCenter = [wrapLongitude(center[0]), clamp(center[1], MIN_MERCATOR_LATITUDE, MAX_MERCATOR_LATITUDE)];
+    next.flatCenter = [wrapLongitude(center[0]), clamp(center[1], MIN_FLAT_LATITUDE, MAX_FLAT_LATITUDE)];
     next.flatZoom = pandoZoom;
   }
   return next;
@@ -99,7 +104,7 @@ export function mapHostViewToPandoView(hostView = {}, previousView = {}, { size 
 
 export function mercatorCoordinateForLongitudeLatitude(coordinate) {
   const lon = wrapLongitude(coordinate?.[0] || 0);
-  const lat = clamp(coordinate?.[1] || 0, MIN_MERCATOR_LATITUDE, MAX_MERCATOR_LATITUDE);
+  const lat = clamp(coordinate?.[1] || 0, MIN_MAPLIBRE_LATITUDE, MAX_MAPLIBRE_LATITUDE);
   const radians = lat * Math.PI / 180;
   return Object.freeze([
     (lon + 180) / 360,
