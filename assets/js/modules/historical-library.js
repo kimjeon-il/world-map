@@ -109,9 +109,9 @@ export function selectGeometryVersion(entity, referenceDate = null) {
   })[0];
 }
 
-export function createCurrentCountryLibraryEntities(countriesData, { displayName = feature => feature?.properties?.editor_name || feature?.properties?.NAME_KO || feature?.properties?.NAME || feature?.properties?.ADMIN } = {}) {
+export function createCurrentCountryLibraryEntities(countriesData, { displayName = feature => feature?.properties?.name } = {}) {
   return (countriesData?.features || []).map(feature => {
-    const id = text(feature?.properties?.editor_id || feature?.properties?.iso_a3 || feature?.id);
+    const id = text(feature?.id);
     if (!id || !POLYGON_TYPES.has(feature?.geometry?.type)) return null;
     const canonicalName = text(displayName(feature)) || id;
     return normalizeHistoricalLibraryEntity({
@@ -119,7 +119,7 @@ export function createCurrentCountryLibraryEntities(countriesData, { displayName
       type: LIBRARY_ENTITY_TYPES.COUNTRY,
       canonicalName,
       displayNames: { ko: canonicalName },
-      alternateNames: [feature.properties?.NAME, feature.properties?.ADMIN, feature.properties?.SOVEREIGNT].map(text).filter(Boolean),
+      alternateNames: [],
       startDate: null,
       endDate: null,
       geometryVersions: [{
@@ -129,7 +129,7 @@ export function createCurrentCountryLibraryEntities(countriesData, { displayName
         certainty: 'high',
         sourceId: 'natural-earth-5.1.1',
       }],
-      metadata: { currentCountryId: id, geographicRegion: text(feature.properties?.CONTINENT) },
+      metadata: { currentCountryId: id },
       sourceInfo: { title: 'Natural Earth 5.1.1 Admin 0 Countries', license: 'Public domain' },
     });
   }).filter(Boolean);
@@ -137,7 +137,7 @@ export function createCurrentCountryLibraryEntities(countriesData, { displayName
 
 export function materializePilotEntities(definitions, countriesData, combineGeometries) {
   const countryGeometry = new Map((countriesData?.features || []).map(feature => [
-    text(feature?.properties?.editor_id || feature?.properties?.iso_a3 || feature?.id),
+    text(feature?.id),
     feature.geometry,
   ]));
   return (definitions || []).map(definition => {
@@ -219,8 +219,8 @@ export function instantiateLibraryEntity(entity, referenceDate = null) {
     sovereignLibraryId: entity.sovereignLibraryId,
     adminLevel: entity.adminLevel,
     geometry: clone(version.geometry),
-    validFrom: version.validFrom || entity.startDate,
-    validTo: version.validTo || entity.endDate,
+    validFrom: entity.startDate || version.validFrom,
+    validTo: entity.endDate || version.validTo,
     metadata: {
       ...clone(entity.metadata || {}),
       librarySourceInfo: clone(entity.sourceInfo || {}),

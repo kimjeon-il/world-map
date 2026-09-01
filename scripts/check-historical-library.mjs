@@ -22,15 +22,15 @@ const library = JSON.parse(fs.readFileSync(path.join(root, 'assets', 'data', 'hi
 const entity = library.entities.find(item => item.libraryId === 'historical-country:east-germany');
 if (!entity) throw new Error('East Germany historical library entity is missing');
 const geometry = entity.geometryVersions?.[0]?.geometry;
-const eastGermany = { type: 'Feature', id: 'HIST_GDR', properties: { editor_id: 'HIST_GDR' }, geometry };
-const germany = countries.features.find(feature => feature.properties?.editor_id === 'DEU');
+const eastGermany = { type: 'Feature', id: 'HIST_GDR', properties: { name: '동독' }, geometry };
+const germany = countries.features.find(feature => feature.id === 'DEU');
 if (!germany) throw new Error('Canonical DEU feature is missing');
 
 const eastIssues = validateGeometry(eastGermany);
 if (eastIssues.length) throw new Error(`East Germany fails app geometry validation: ${eastIssues[0].message}`);
 const remainderCoordinates = polygonClipping.difference(germany.geometry.coordinates, geometry.coordinates);
 const remainderGeometry = countryGeometry.normalizeCountryGeometry(remainderCoordinates);
-const remainder = { type: 'Feature', id: 'DEU', properties: { editor_id: 'DEU' }, geometry: remainderGeometry };
+const remainder = { type: 'Feature', id: 'DEU', properties: { name: '독일' }, geometry: remainderGeometry };
 const remainderIssues = validateGeometry(remainder);
 if (remainderIssues.length) throw new Error(`Subtracted Germany fails app geometry validation: ${remainderIssues[0].message}`);
 const overlap = polygonClipping.intersection(geometry.coordinates, remainderGeometry.coordinates);

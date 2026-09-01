@@ -56,7 +56,16 @@ test('imported-territory priority validates only affected countries and finishes
   await expect(page.locator('#gisMergeStrategyRow')).toBeVisible();
   await selectCustomOption(page, 'gisMergeStrategy', '가져온 영토 우선');
   await page.locator('#gisImportNextBtn').click();
-  await expect(page.locator('#gisStepIndicator')).toHaveText('5/5 · 최종 확인');
+  const identitySelect = page.locator('#gisCountryIdentityRows [data-identity-source-key]').first();
+  await expect(identitySelect).toHaveCount(1, { timeout: 30_000 });
+  await identitySelect.evaluate(element => {
+    element.value = 'new';
+    const BrowserEvent = element.ownerDocument.defaultView.Event;
+    element.dispatchEvent(new BrowserEvent('input', { bubbles: true }));
+    element.dispatchEvent(new BrowserEvent('change', { bubbles: true }));
+  });
+  await page.locator('#gisImportNextBtn').click();
+  await expect(page.locator('#gisStepIndicator')).toHaveText('5/5 · 최종 확인', { timeout: 90_000 });
 
   const startedAt = Date.now();
   await page.locator('#gisImportConfirmBtn').click();

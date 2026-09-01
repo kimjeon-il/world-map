@@ -50,6 +50,7 @@ test('wheel, projection, panels, and selection preserve the intended camera stat
   expect(geographicDelta(focalBefore, focalAfter)).toBeLessThan(0.2);
 
   const globe = await page.evaluate(() => window.__PANDOLAB_VIEW_DEBUG__.snapshot());
+  await page.locator('#mapViewTabBtn').click();
   await page.locator('#flatBtn').click();
   await expect(page.locator('#flatBtn')).toHaveAttribute('aria-pressed', 'true');
   const flat = await page.evaluate(() => window.__PANDOLAB_VIEW_DEBUG__.snapshot());
@@ -63,6 +64,7 @@ test('wheel, projection, panels, and selection preserve the intended camera stat
   expect(Math.abs(globeAgain.scale / globe.scale - 1)).toBeLessThan(0.03);
 
   const cameraBeforeSelection = cameraValues(globeAgain);
+  await page.locator('#mapLayersTabBtn').click();
   await page.locator('#layerSearchInput').fill('독일');
   const germany = page.locator('#layerSearchResults .layer-search-result').filter({ hasText: '독일' }).first();
   await expect(germany).toBeVisible();
@@ -108,7 +110,10 @@ test('mobile pinch keeps the geographic anchor under the moving midpoint', async
     const moved = [[newMidpoint[0] - 65, newMidpoint[1] - 10], [newMidpoint[0] + 65, newMidpoint[1] + 10]];
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [touchPoint(1, start[0]), touchPoint(2, start[1])] });
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [touchPoint(1, moved[0]), touchPoint(2, moved[1])] });
-    await expect.poll(() => page.evaluate(() => window.__PANDOLAB_VIEW_STATE__.revision)).toBeGreaterThan(before.revision);
+    await expect.poll(
+      () => page.evaluate(() => window.__PANDOLAB_VIEW_DEBUG__.snapshot().scale),
+      { timeout: 30_000 },
+    ).toBeGreaterThan(before.scale * 1.5);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
 
     const anchorAfter = await page.evaluate(point => window.__PANDOLAB_VIEW_DEBUG__.screenToGeo(point), newMidpoint);

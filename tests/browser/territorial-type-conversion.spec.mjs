@@ -14,7 +14,7 @@ async function openApp(page) {
   return errors;
 }
 
-async function importRegion(page, name) {
+async function importTerritory(page, name) {
   await page.locator('#gisFileInput').setInputFiles({
     name: `${name}.geojson`,
     mimeType: 'application/geo+json',
@@ -32,7 +32,7 @@ async function importRegion(page, name) {
   await expect(page.locator('#gisImportConfirmBtn')).toBeEnabled({ timeout: 30_000 });
   await page.locator('#gisImportNextBtn').click();
   await expect(page.locator('#gisStepIndicator')).toContainText('2/5');
-  await selectUiOption(page, '#gisTargetType', 'region');
+  await selectUiOption(page, '#gisTargetType', 'territory');
   await selectUiOption(page, '#gisTargetCountry', 'DEU');
   for (const step of ['3/5', '4/5', '5/5']) {
     await page.locator('#gisImportNextBtn').click();
@@ -43,11 +43,11 @@ async function importRegion(page, name) {
     .find(unit => unit.properties.name === expected)?.id || '', name), { timeout: 60_000 }).not.toBe('');
 }
 
-test('a region changes to an administrative area with one-step undo', async ({ page }) => {
+test('a territory changes to an administrative area with one-step undo', async ({ page }) => {
   test.setTimeout(180_000);
   const errors = await openApp(page);
   const name = '종류 변경 시험 지역';
-  await importRegion(page, name);
+  await importTerritory(page, name);
   const id = await page.evaluate(expected => window.PANDOLAB_TERRITORIAL.list({ type: 'territory' })
     .find(unit => unit.properties.name === expected).id, name);
 
@@ -56,7 +56,7 @@ test('a region changes to an administrative area with one-step undo', async ({ p
   await page.locator('#changeTerritoryTypeBtn').click();
   await expect(page.locator('#territorialTypeModal')).toBeVisible();
   await selectUiOption(page, '#territorialTypeInput', 'admin');
-  await expect(page.locator('#territorialTypeTitle')).toHaveText('지역을 행정구역으로 전환');
+  await expect(page.locator('#territorialTypeTitle')).toHaveText('권역을 행정구역으로 전환');
   await expect(page.locator('#territorialTypeImpactList')).toContainText('현재 형상과 객체 ID 유지');
   await expect(page.locator('#territorialTypeImpactList')).toContainText('한 번의 실행취소로 복구 가능');
   await page.locator('#territorialTypeConfirmBtn').click();
@@ -118,7 +118,7 @@ test('a country and an administrative area convert both ways with a stable canon
         sovereignId: unit.properties.sovereignId,
         parentId: unit.properties.parentId,
         adminLevel: unit.properties.adminLevel,
-        convertedFromId: unit.properties?.metadata?.convertedFromCountry?.properties?.editor_id,
+        convertedFromName: unit.properties?.metadata?.convertedFromCountry?.properties?.name,
       },
     };
   }, before.name);
@@ -128,7 +128,7 @@ test('a country and an administrative area convert both ways with a stable canon
   expect(converted.unit.sovereignId).toBe('GBR');
   expect(converted.unit.parentId).toBe('GBR');
   expect(converted.unit.adminLevel).toBe(1);
-  expect(converted.unit.convertedFromId).toBe('IRL');
+  expect(converted.unit.convertedFromName).toBe(before.name);
 
   await page.evaluate(unitId => window.PANDOLAB_TERRITORIAL.select('admin', unitId), converted.unit.id);
   await page.locator('#actionsTabBtn').click();

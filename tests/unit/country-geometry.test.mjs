@@ -64,7 +64,7 @@ test('country geometry normalizer removes consecutive duplicate vertices', () =>
 
 test('Borneo canonical country rings are clean before runtime normalization', () => {
   const countries = JSON.parse(fs.readFileSync(path.join(root, 'assets/data/countries-ne-5.1.1.geojson'), 'utf8'));
-  const borneoCountries = countries.features.filter(feature => ['IDN', 'MYS'].includes(feature.properties?.editor_id));
+  const borneoCountries = countries.features.filter(feature => ['IDN', 'MYS'].includes(feature.id));
 
   assert.equal(borneoCountries.length, 2);
   for (const feature of borneoCountries) {

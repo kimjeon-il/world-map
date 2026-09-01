@@ -31,11 +31,11 @@ def load_json(path: pathlib.Path) -> dict[str, Any]:
 
 
 def sha256(path: pathlib.Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest().upper()
+    # Git may materialize tracked JSON with CRLF on Windows. Source identity is
+    # defined by the repository's LF-normalized text so recipe checks remain
+    # deterministic across checkout platforms.
+    payload = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(payload).hexdigest().upper()
 
 
 def transform_geometry(geometry, source_crs: str, target_crs: CRS = WGS84):
@@ -155,12 +155,16 @@ class Source:
         if selector:
             field = str(selector.get("field", ""))
             values = {str(value) for value in selector.get("values", [])}
+            def selected_value(feature: dict[str, Any]) -> str:
+                if field == "__feature_id__":
+                    return str(feature.get("id", ""))
+                return str((feature.get("properties") or {}).get(field, ""))
             selected = [
                 feature for feature in selected
-                if str((feature.get("properties") or {}).get(field, "")) in values
+                if selected_value(feature) in values
             ]
             if len(selected) != len(values):
-                found = sorted(str((feature.get("properties") or {}).get(field, "")) for feature in selected)
+                found = sorted(selected_value(feature) for feature in selected)
                 raise RuntimeError(f"{self.id} selector mismatch: expected {sorted(values)}, found {found}")
         geometries = [shape(feature["geometry"]) for feature in selected if feature.get("geometry")]
         if not geometries:
@@ -275,7 +279,7 @@ class RecipeBuilder:
                 candidate = self.resolve(operation["input"])
                 source = self.sources[operation["canonicalSource"]]
                 canonical = source.geometry(
-                    selector={"field": "editor_id", "values": [operation["canonicalId"]]}
+                    selector={"field": "__feature_id__", "values": [operation["canonicalId"]]}
                 )
                 result = decompose_point_touching_rings(candidate.intersection(canonical))
                 self.results["canonical-country"] = normalize_polygonal(canonical)
@@ -447,7 +451,8 @@ def main() -> int:
         raise RuntimeError(f"historical library is {len(payload)} bytes, above the configured budget")
     output_path = ROOT / recipe["output"]
     if arguments.check:
-        if not output_path.is_file() or output_path.read_bytes() != payload:
+        current_payload = output_path.read_bytes().replace(b"\r\n", b"\n") if output_path.is_file() else b""
+        if current_payload != payload:
             print(f"historical library is stale: {output_path.relative_to(ROOT)}", file=sys.stderr)
             return 1
     else:

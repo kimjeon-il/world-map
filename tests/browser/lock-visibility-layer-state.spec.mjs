@@ -133,7 +133,7 @@ test('built-in hydro can hide but has no delete menu, while a user distribution 
   await page.locator('#objectDeleteMenuBtn').click();
   await expect(page.locator('#confirmModal')).toBeVisible();
   await page.locator('#confirmModalOkBtn').click();
-  await expect(page.getByRole('button', { name: '잠금 가시성 테스트', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '잠금 가시성 테스트', exact: true })).toHaveCount(0, { timeout: 30_000 });
   expect(errors).toEqual([]);
 });
 

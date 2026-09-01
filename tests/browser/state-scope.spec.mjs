@@ -45,11 +45,13 @@ test('presentation persists without document history while view and session stay
   await page.locator('[data-layer-folder-toggle="countries"]').first().click();
   await expect(page.locator('#countriesLayerChildren .layer-child').first()).toBeVisible();
   await page.locator('#countriesLayerChildren .layer-child-name').first().click();
+  await page.locator('#mapViewTabBtn').click();
   await page.locator('#flatBtn').click();
   await expect(page.locator('#flatBtn')).toHaveAttribute('aria-pressed', 'true');
   await expect(dirty).toBeHidden();
   await expect(undo).toBeDisabled();
 
+  await page.locator('#mapLayersTabBtn').click();
   await page.locator('#countriesVisible').uncheck();
   await expect(dirty).toBeVisible();
   await expect(undo).toBeDisabled();

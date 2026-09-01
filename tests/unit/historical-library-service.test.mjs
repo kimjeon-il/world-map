@@ -36,7 +36,7 @@ function countries() {
     features: [{
       type: 'Feature',
       id: 'AAA',
-      properties: { editor_id: 'AAA', editor_name: 'Current A' },
+      properties: { name: 'Current A' },
       geometry: square(0),
     }],
   };
@@ -49,7 +49,7 @@ test('historical library service shares concurrent loads and exposes current and
     dataUrl: '/library.json',
     fetchJson: () => new Promise(resolve => { loads += 1; resolveLoad = resolve; }),
     getCountriesData: countries,
-    displayName: feature => feature.properties.editor_name,
+    displayName: feature => feature.properties.name,
     combineGeometries: geometries => geometries[0],
     currentYear: () => 2026,
   });
@@ -67,7 +67,7 @@ test('historical library service expands descendants and materializes descriptor
     dataUrl: '/library.json',
     fetchJson: async () => fixture(),
     getCountriesData: countries,
-    displayName: feature => feature.properties.editor_name,
+    displayName: feature => feature.properties.name,
     combineGeometries: geometries => geometries[0],
   });
   await service.load();
@@ -90,7 +90,7 @@ test('historical library service allows retry after a failed load', async () => 
       return fixture();
     },
     getCountriesData: countries,
-    displayName: feature => feature.properties.editor_name,
+    displayName: feature => feature.properties.name,
     combineGeometries: geometries => geometries[0],
   });
   await assert.rejects(service.load(), /offline/);

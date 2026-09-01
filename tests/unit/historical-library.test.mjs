@@ -43,7 +43,7 @@ test('library search covers multilingual names aliases dates types and current/p
 });
 
 test('current countries are exposed through a library adapter without mutating source geometry', () => {
-  const countries = { type: 'FeatureCollection', features: [{ type: 'Feature', id: 'PL', properties: { editor_id: 'PL', editor_name: '폴란드', NAME: 'Poland' }, geometry: square() }] };
+  const countries = { type: 'FeatureCollection', features: [{ type: 'Feature', id: 'PL', properties: { name: '폴란드' }, geometry: square() }] };
   const before = JSON.stringify(countries);
   const entities = createCurrentCountryLibraryEntities(countries);
   assert.equal(entities[0].libraryId, 'current-country:PL');
@@ -53,8 +53,8 @@ test('current countries are exposed through a library adapter without mutating s
 
 test('pilot geometry is materialized from member countries and instances retain source tracking', () => {
   const countries = { type: 'FeatureCollection', features: [
-    { type: 'Feature', id: 'A', properties: { editor_id: 'A' }, geometry: square() },
-    { type: 'Feature', id: 'B', properties: { editor_id: 'B' }, geometry: square(1, 2) },
+    { type: 'Feature', id: 'A', properties: { name: 'A' }, geometry: square() },
+    { type: 'Feature', id: 'B', properties: { name: 'B' }, geometry: square(1, 2) },
   ] };
   const [entity] = materializePilotEntities([{
     libraryId: 'historical-country:ab', type: 'country', canonicalName: 'AB', startDate: '1900', endDate: '1950',
