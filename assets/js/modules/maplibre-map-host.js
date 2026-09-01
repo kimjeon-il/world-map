@@ -1,4 +1,9 @@
-import { MAP_HOST_KINDS, createMapHostEventHub, normalizeMapProjectionKind } from './map-host.js';
+import {
+  MAP_HOST_KINDS,
+  createMapHostEventHub,
+  mapSurfaceDragDeltaToCameraOffset,
+  normalizeMapProjectionKind,
+} from './map-host.js';
 import { loadMapLibreRuntime } from './maplibre-runtime.js';
 import { createPandoMapLibreCustomLayers } from './pando-maplibre-custom-layers.js';
 
@@ -431,9 +436,14 @@ export function createMapLibreMapHost({
       const bounds = map?.getBounds?.();
       return bounds ? [[bounds.getWest(), bounds.getSouth()], [bounds.getEast(), bounds.getNorth()]] : null;
     },
-    panBy(dx, dy, options = {}) {
+    // dx/dy describe how far the map surface follows the pointer. MapLibre's
+    // panBy() accepts the opposite camera offset, so the host owns the sign
+    // conversion and input callers never branch by projection or pointer type.
+    dragBy(dx, dy, options = {}) {
       if (!map) return false;
-      map.panBy([Number(dx) || 0, Number(dy) || 0], { duration: Number(options.duration || 0), animate: options.animate === true });
+      const offset = mapSurfaceDragDeltaToCameraOffset(dx, dy);
+      if (offset[0] === 0 && offset[1] === 0) return false;
+      map.panBy(offset, { duration: Number(options.duration || 0), animate: options.animate === true });
       return true;
     },
     zoomAround({ zoom, point, animate = false } = {}) {
