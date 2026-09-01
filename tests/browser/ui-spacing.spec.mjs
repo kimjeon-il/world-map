@@ -39,6 +39,7 @@ async function openLayers(page, layout) {
 async function openLibrary(page, layout) {
   if (layout === 'wide') await page.locator('#createMenuBtn').click();
   else await page.locator('#mobileCreateBtn').click();
+  await page.locator('#createLibraryTabBtn').click();
   await page.locator('#addFromLibraryBtn').click();
   await expect(page.locator('#historicalLibraryModal')).toBeVisible();
 }

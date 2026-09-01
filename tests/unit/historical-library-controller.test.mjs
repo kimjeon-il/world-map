@@ -11,6 +11,7 @@ function fakeElement(ownerDocument) {
     ownerDocument,
     children: [],
     attributes,
+    dataset: {},
     value: '',
     disabled: false,
     textContent: '',
@@ -96,5 +97,61 @@ test('historical library controller owns modal loading and close focus', async (
   await controller.open();
   assert.equal(elements.results.getAttribute('aria-busy'), 'false');
   assert.equal(elements.search.disabled, true);
+  assert.equal(reportedErrors, 1);
+});
+
+test('historical library controller locks controls while async instantiation runs and keeps modal open on failure', async () => {
+  const document = {
+    defaultView: { Event: class { constructor(type) { this.type = type; } } },
+    createElement() { return fakeElement(document); },
+    createDocumentFragment() { return fakeElement(document); },
+  };
+  const names = [
+    'open', 'modal', 'card', 'close', 'backdrop', 'search', 'clearSearch', 'type', 'status', 'year', 'geographicRegion',
+    'results', 'preview', 'snapshot', 'snapshotButton', 'childDepth', 'add', 'addOptions', 'optionsBack',
+  ];
+  const elements = Object.fromEntries(names.map(name => [name, fakeElement(document)]));
+  const entity = {
+    libraryId: 'historical-country:test', type: 'country', canonicalName: 'Test', displayNames: { ko: '테스트' },
+    alternateNames: [], metadata: { pilot: true, approximateGeometry: true, referenceDate: '1989-04-25' },
+    sourceInfo: { title: 'Source' },
+  };
+  const version = { id: 'test-v1', certainty: 'medium', datePrecision: 'reference-date', geometry: { type: 'Polygon', coordinates: [] } };
+  let rejectInstantiation;
+  const gate = new Promise((resolve, reject) => { rejectInstantiation = reject; });
+  let reportedErrors = 0;
+  const controller = createHistoricalLibraryController({
+    document,
+    elements,
+    service: {
+      load: async () => {}, list: () => [entity], snapshots: () => [], search: () => [entity],
+      get: id => (id === entity.libraryId ? entity : null), getSnapshot: () => null,
+    },
+    typeLabels: { country: '국가' },
+    selectGeometryVersion: () => version,
+    renderMapPreview: () => fakeElement(document),
+    createEmptyState: () => fakeElement(document),
+    replaceSelectOptions() {},
+    collator: new Intl.Collator('ko'),
+    isMobile: () => false,
+    closeCreateMenu() {},
+    instantiate: () => gate,
+    confirm() {},
+    setStatus() {},
+    reportError() { reportedErrors += 1; },
+    requestFrame: callback => callback(),
+  });
+  controller.connect();
+  await controller.open();
+  controller.select(entity.libraryId);
+  elements.add.click();
+  elements.add.click();
+  assert.equal(elements.search.disabled, true);
+  assert.equal(elements.results.getAttribute('aria-busy'), 'true');
+  rejectInstantiation(new Error('merge failed'));
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.equal(elements.modal.classList.contains('hidden'), false);
+  assert.equal(elements.search.disabled, false);
   assert.equal(reportedErrors, 1);
 });

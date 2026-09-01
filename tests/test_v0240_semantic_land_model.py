@@ -13,26 +13,27 @@ GIS = (ROOT / "assets" / "js" / "gis-io.js").read_text(encoding="utf-8")
 GPKG = (ROOT / "assets" / "js" / "workers" / "gis-gpkg-worker.js").read_text(encoding="utf-8")
 GIS_ADAPTERS = (ROOT / "assets" / "js" / "gis-adapters.js").read_text(encoding="utf-8")
 PROJECT_STATE = (ROOT / "assets" / "js" / "modules" / "project-state.js").read_text(encoding="utf-8")
-DRAWING_SERVICE = (ROOT / "assets" / "js" / "modules" / "drawing-service.js").read_text(encoding="utf-8")
+GENERIC_FEATURE_SERVICE = (ROOT / "assets" / "js" / "modules" / "generic-feature-service.js").read_text(encoding="utf-8")
 
 
 class V0240TerritorialUnitModelTests(unittest.TestCase):
-    def test_region_state_is_separate_from_generic_drawings(self):
+    def test_region_state_is_separate_from_generic_genericFeatures(self):
         self.assertIn("name: 'territorialUnits', scope: 'document', fallback: () => []", PROJECT_STATE)
         self.assertIn("name: 'territorialRelations', scope: 'document', fallback: () => []", PROJECT_STATE)
         self.assertIn("territorialUnits: []", APP)
         self.assertIn("TERRITORIAL_UNIT_TYPES", APP)
-        rules = DRAWING_SERVICE[DRAWING_SERVICE.index("export const DRAWING_CATEGORY_RULES"):DRAWING_SERVICE.index("export const DRAWING_ROLE_LABELS")]
-        self.assertNotIn("territory:", rules)
-        self.assertNotIn("administrative:", rules)
+        rules = GENERIC_FEATURE_SERVICE[GENERIC_FEATURE_SERVICE.index("export const GENERIC_FEATURE_ROLE_RULES"):GENERIC_FEATURE_SERVICE.index("export const GENERIC_FEATURE_ROLE_LABELS")]
+        self.assertIn("generic:", rules)
+        self.assertIn("territory:", rules)
+        self.assertIn("administrative:", rules)
         self.assertNotIn("river:", rules)
         self.assertNotIn("lake:", rules)
-        self.assertNotIn('id="drawingCategoryInput"', INDEX)
+        self.assertNotIn('id="genericFeatureCategoryInput"', INDEX)
 
     def test_hydro_edits_are_a_separate_project_domain(self):
         self.assertIn("name: 'hydroEdits', scope: 'document', fallback: () => []", PROJECT_STATE)
         self.assertIn("hydroEdits: []", APP)
-        self.assertIn('id="drawingsLayerChildren"', INDEX)
+        self.assertIn('id="genericFeaturesLayerChildren"', INDEX)
         self.assertIn("layerGroup: 'hydro'", APP)
         self.assertIn('id="hydroEditFields"', INDEX)
         self.assertIn("function renderHydroEdits()", APP)

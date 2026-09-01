@@ -159,7 +159,7 @@ test('user-created hydro keeps its domain inside map elements and round-trips th
   await openFolder(page, 'rivers');
   const editRow = page.locator('#riversLayerChildren .layer-child[data-layer-group="hydro"]', { hasText: '분리 수계 테스트' });
   await expect(editRow).toBeVisible();
-  await expect(page.locator('#drawingsLayerChildren .layer-child[data-layer-group="drawings"]', { hasText: '분리 수계 테스트' })).toHaveCount(0);
+  await expect(page.locator('#genericFeaturesLayerChildren .layer-child[data-layer-group="genericFeatures"]', { hasText: '분리 수계 테스트' })).toHaveCount(0);
 
   await expect.poll(() => autosavedHydroEdit(page, '분리 수계 테스트'), { timeout: 10_000 }).not.toBeNull();
   const saved = await autosavedHydroEdit(page, '분리 수계 테스트');

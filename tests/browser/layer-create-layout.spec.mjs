@@ -42,8 +42,8 @@ test('create menu preserves all existing actions and unique icons', async ({ pag
   const errors = await openApp(page, viewports[0], 'light');
   await openCreateMenu(page, 'wide');
   const expectedIds = [
-    'addCountryBtn', 'addTerritoryBtn', 'addAdministrativeBtn', 'addRegionBtn', 'addFromLibraryBtn',
-    'addDistributionBtn', 'addLabelBtn', 'addRiverBtn', 'addLakeBtn',
+    'addCountryBtn', 'addTerritoryBtn', 'addAdministrativeBtn', 'addRegionBtn',
+    'addDistributionBtn', 'addLabelBtn', 'addRiverBtn', 'addLakeBtn', 'addFromLibraryBtn',
   ];
   const items = page.locator('#createMenu .create-menu-item');
   await expect(items).toHaveCount(expectedIds.length);
@@ -52,6 +52,22 @@ test('create menu preserves all existing actions and unique icons', async ({ pag
   const iconHrefs = await items.locator('use').evaluateAll(elements => elements.map(element => element.getAttribute('href')));
   expect(new Set(iconHrefs).size).toBe(expectedIds.length);
   expect((await items.locator('strong').allTextContents()).slice(0, 4)).toEqual(['국가', '권역', '행정구역', '지방']);
+  expect(errors).toEqual([]);
+});
+
+test('create menu keeps build and library routes separate', async ({ page }) => {
+  const errors = await openApp(page, viewports[0], 'light');
+  await openCreateMenu(page, 'wide');
+  await expect(page.locator('#createBuildTabBtn')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#createBuildPanel')).toBeVisible();
+  await expect(page.locator('#createLibraryPanel')).toBeHidden();
+  await page.locator('#createLibraryTabBtn').click();
+  await expect(page.locator('#createLibraryTabBtn')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#createLibraryPanel')).toBeVisible();
+  await expect(page.locator('#createBuildPanel')).toBeHidden();
+  await page.locator('#createMenuBtn').click();
+  await page.locator('#createMenuBtn').click();
+  await expect(page.locator('#createLibraryPanel')).toBeVisible();
   expect(errors).toEqual([]);
 });
 
