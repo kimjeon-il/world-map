@@ -1,6 +1,7 @@
 import {
   MAP_HOST_KINDS,
   createMapHostEventHub,
+  mapSurfaceDragDeltaToCameraOffset,
   normalizeMapSurfaceDragDelta,
   normalizeMapProjectionKind,
 } from './map-host.js';
@@ -20,6 +21,17 @@ function normalizedCenter(value) {
 function finitePositive(value, fallback = 0) {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? number : fallback;
+}
+
+// MapLibre's globe projection can return coincident/invalid projected probes
+// near the edge of a small globe.  Keep a deterministic world-size fallback
+// so a vertical drag never silently becomes a no-op at a particular zoom.
+function mapWorldSize(map) {
+  const transformSize = Number(map?.transform?.worldSize);
+  if (Number.isFinite(transformSize) && transformSize > 0) return transformSize;
+  const zoom = Number(map?.getZoom?.());
+  const normalizedZoom = Number.isFinite(zoom) ? Math.max(-8, Math.min(24, zoom)) : 0;
+  return 512 * (2 ** normalizedZoom);
 }
 
 function wrappedLongitude(value) {
@@ -85,6 +97,27 @@ export function createMapLibreMapHost({
   let contextRecoveryGeneration = 0;
   const contextRecoveryFrames = new Set();
   const contextRecoveryTimers = new Set();
+
+  // When a small globe fully fits in the viewport, MapLibre's default
+  // constraint recenters latitude to keep the world centered. The Pando
+  // globe is a trackball, so its host must allow explicit vertical rotation
+  // while retaining the normal zoom limits.
+  function setGlobeCenterConstraint(enabled) {
+    const transform = map?._camera?.transform;
+    if (!transform?.setConstrainOverride) return false;
+    if (!enabled) {
+      transform.setConstrainOverride(null);
+      return true;
+    }
+    transform.setConstrainOverride((center, zoom) => ({
+      center,
+      zoom: Math.max(
+        Number(transform.minZoom) || 0,
+        Math.min(Number(transform.maxZoom) || 22, Number(zoom) || 0),
+      ),
+    }));
+    return true;
+  }
 
   function cancelContextRecoveryRepaint() {
     contextRecoveryGeneration += 1;
@@ -333,6 +366,7 @@ export function createMapLibreMapHost({
       });
       addPandoLayers();
       installContextEvents();
+      setGlobeCenterConstraint(projectionKind === 'globe');
       if (requestedPixelRatio != null) map.setPixelRatio?.(requestedPixelRatio);
       ready = true;
       emitView('ready');
@@ -352,6 +386,7 @@ export function createMapLibreMapHost({
     projectionKind = next;
     if (map) {
       map.setProjection({ type: next === 'globe' ? 'globe' : 'mercator' });
+      setGlobeCenterConstraint(next === 'globe');
       map.triggerRepaint();
     }
     viewRevision += 1;
@@ -394,13 +429,15 @@ export function createMapLibreMapHost({
     const east = map.project?.([center.lng + probe, center.lat]);
     const south = map.project?.([center.lng, clampLatitude(center.lat - probe)]);
     const north = map.project?.([center.lng, clampLatitude(center.lat + probe)]);
+    const fallbackPixelsPerDegree = mapWorldSize(map) / 360;
     const pixelsPerLongitude = finitePositive(
       Math.hypot(Number(east?.x) - Number(west?.x), Number(east?.y) - Number(west?.y)) / (probe * 2),
+      fallbackPixelsPerDegree,
     );
     const pixelsPerLatitude = finitePositive(
       Math.hypot(Number(north?.x) - Number(south?.x), Number(north?.y) - Number(south?.y)) / (probe * 2),
+      fallbackPixelsPerDegree,
     );
-    if (!pixelsPerLongitude && !pixelsPerLatitude) return false;
     const nextCenter = [
       wrappedLongitude(center.lng - (pixelsPerLongitude ? dragX / pixelsPerLongitude : 0)),
       clampLatitude(center.lat + (pixelsPerLatitude ? dragY / pixelsPerLatitude : 0)),
@@ -493,16 +530,16 @@ export function createMapLibreMapHost({
       return bounds ? [[bounds.getWest(), bounds.getSouth()], [bounds.getEast(), bounds.getNorth()]] : null;
     },
     // dx/dy describe how far the map surface follows the pointer. MapLibre's
-    // public panBy() already performs its camera-offset conversion internally;
-    // pass the surface delta through unchanged for flat maps. Globe maps use
-    // a local trackball/Jacobian path because panBy() can no-op when the drag
-    // endpoint falls outside a small visible sphere.
+    // panBy() argument is a camera offset, so the surface-relative input must
+    // be converted to the opposite camera offset for flat maps. Globe maps
+    // use a local trackball/Jacobian path because panBy() can no-op when the
+    // drag endpoint falls outside a small visible sphere.
     dragBy(dx, dy, options = {}) {
       if (!map) return false;
       const [dragX, dragY] = normalizeMapSurfaceDragDelta(dx, dy);
       if (dragX === 0 && dragY === 0) return false;
       if (projectionKind === 'globe') return dragGlobeBy(dragX, dragY, options);
-      map.panBy([dragX, dragY], {
+      map.panBy(mapSurfaceDragDeltaToCameraOffset(dragX, dragY), {
         duration: Number(options.duration || 0),
         animate: options.animate === true,
       });
