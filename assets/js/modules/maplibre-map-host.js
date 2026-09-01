@@ -1,7 +1,7 @@
 import {
   MAP_HOST_KINDS,
   createMapHostEventHub,
-  mapSurfaceDragDeltaToCameraOffset,
+  normalizeMapSurfaceDragDelta,
   normalizeMapProjectionKind,
 } from './map-host.js';
 import { loadMapLibreRuntime } from './maplibre-runtime.js';
@@ -15,6 +15,19 @@ function normalizedPoint(value) {
 function normalizedCenter(value) {
   if (Array.isArray(value)) return [Number(value[0]) || 0, Number(value[1]) || 0];
   return [Number(value?.lng) || 0, Number(value?.lat) || 0];
+}
+
+function finitePositive(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : fallback;
+}
+
+function wrappedLongitude(value) {
+  return ((Number(value || 0) + 540) % 360) - 180;
+}
+
+function clampLatitude(value) {
+  return Math.max(-89, Math.min(89, Number(value) || 0));
 }
 
 function blankStyle() {
@@ -362,6 +375,49 @@ export function createMapLibreMapHost({
     return true;
   }
 
+  // MapLibre's globe pan implementation derives the next camera center from
+  // a screen-to-globe ray.  When a small globe is being dragged, the target
+  // point can fall outside the visible sphere and MapLibre intentionally
+  // returns without changing the center.  Use a local screen Jacobian for
+  // globe drags instead: it keeps the surface-following contract continuous
+  // even when the drag endpoint is outside the sphere.
+  function dragGlobeBy(dx, dy, options = {}) {
+    if (!map) return false;
+    const [dragX, dragY] = normalizeMapSurfaceDragDelta(dx, dy);
+    if (dragX === 0 && dragY === 0) return false;
+    const center = map.getCenter?.();
+    if (!center) return false;
+    const centerPoint = map.project?.(center);
+    if (!centerPoint) return false;
+    const probe = 0.25;
+    const west = map.project?.([center.lng - probe, center.lat]);
+    const east = map.project?.([center.lng + probe, center.lat]);
+    const south = map.project?.([center.lng, clampLatitude(center.lat - probe)]);
+    const north = map.project?.([center.lng, clampLatitude(center.lat + probe)]);
+    const pixelsPerLongitude = finitePositive(
+      Math.hypot(Number(east?.x) - Number(west?.x), Number(east?.y) - Number(west?.y)) / (probe * 2),
+    );
+    const pixelsPerLatitude = finitePositive(
+      Math.hypot(Number(north?.x) - Number(south?.x), Number(north?.y) - Number(south?.y)) / (probe * 2),
+    );
+    if (!pixelsPerLongitude && !pixelsPerLatitude) return false;
+    const nextCenter = [
+      wrappedLongitude(center.lng - (pixelsPerLongitude ? dragX / pixelsPerLongitude : 0)),
+      clampLatitude(center.lat + (pixelsPerLatitude ? dragY / pixelsPerLatitude : 0)),
+    ];
+    const camera = {
+      center: nextCenter,
+      zoom: map.getZoom?.(),
+      bearing: 0,
+      pitch: 0,
+      padding: map.getPadding?.(),
+      duration: options.animate === true ? Number(options.duration || 0) : 0,
+    };
+    if (options.animate === true) map.easeTo(camera);
+    else map.jumpTo(camera);
+    return true;
+  }
+
   function setNavigationEnabled(value) {
     navigationEnabled = value !== false;
     for (const handler of ['dragPan', 'scrollZoom', 'boxZoom', 'doubleClickZoom', 'touchZoomRotate', 'keyboard']) {
@@ -437,13 +493,19 @@ export function createMapLibreMapHost({
       return bounds ? [[bounds.getWest(), bounds.getSouth()], [bounds.getEast(), bounds.getNorth()]] : null;
     },
     // dx/dy describe how far the map surface follows the pointer. MapLibre's
-    // panBy() accepts the opposite camera offset, so the host owns the sign
-    // conversion and input callers never branch by projection or pointer type.
+    // public panBy() already performs its camera-offset conversion internally;
+    // pass the surface delta through unchanged for flat maps. Globe maps use
+    // a local trackball/Jacobian path because panBy() can no-op when the drag
+    // endpoint falls outside a small visible sphere.
     dragBy(dx, dy, options = {}) {
       if (!map) return false;
-      const offset = mapSurfaceDragDeltaToCameraOffset(dx, dy);
-      if (offset[0] === 0 && offset[1] === 0) return false;
-      map.panBy(offset, { duration: Number(options.duration || 0), animate: options.animate === true });
+      const [dragX, dragY] = normalizeMapSurfaceDragDelta(dx, dy);
+      if (dragX === 0 && dragY === 0) return false;
+      if (projectionKind === 'globe') return dragGlobeBy(dragX, dragY, options);
+      map.panBy([dragX, dragY], {
+        duration: Number(options.duration || 0),
+        animate: options.animate === true,
+      });
       return true;
     },
     zoomAround({ zoom, point, animate = false } = {}) {

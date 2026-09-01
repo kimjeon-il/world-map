@@ -25,6 +25,7 @@ export function createPandoMapLibreCustomLayers({
   // separate callbacks. Keep one immutable view snapshot across that cycle
   // so the cache signature cannot change between passes.
   let frameViewState = null;
+  let frameId = 0;
 
   function ensureDevice(nextMap, gl) {
     map = nextMap || map;
@@ -38,10 +39,11 @@ export function createPandoMapLibreCustomLayers({
       contextRevision,
     });
     onDevice?.(device, { map, contextRevision });
+    frameId = 0;
     return device;
   }
 
-  function scoped(stage, gl, options, callback, viewStateOverride = null) {
+  function scoped(stage, gl, options, callback, viewStateOverride = null, frameIdOverride = 0) {
     try {
       return withGpuStateScope(gl, state => callback({
         gl,
@@ -49,6 +51,7 @@ export function createPandoMapLibreCustomLayers({
         map,
         options,
         viewState: viewStateOverride || getViewState?.() || null,
+        frameId: frameIdOverride,
         targetFramebuffer: state?.framebuffer || null,
       })).value;
     } catch (error) {
@@ -69,21 +72,23 @@ export function createPandoMapLibreCustomLayers({
       ensureDevice(map, gl);
       const options = renderOptions(gl, maybeOptions);
       const nextViewState = getViewState?.() || null;
+      frameId += 1;
       frameViewState = nextViewState && typeof nextViewState === 'object'
         ? Object.freeze({ ...nextViewState })
         : nextViewState;
-      return scoped('maplibre-scene-prerender', gl, options, prerenderScene, frameViewState);
+      return scoped('maplibre-scene-prerender', gl, options, prerenderScene, frameViewState, frameId);
     },
     render(gl, maybeOptions) {
       ensureDevice(map, gl);
       const options = renderOptions(gl, maybeOptions);
       if (!frameViewState) {
+        frameId += 1;
         const nextViewState = getViewState?.() || null;
         frameViewState = nextViewState && typeof nextViewState === 'object'
           ? Object.freeze({ ...nextViewState })
           : nextViewState;
       }
-      const result = scoped('maplibre-scene-render', gl, options, renderScene, frameViewState);
+      const result = scoped('maplibre-scene-render', gl, options, renderScene, frameViewState, frameId);
       if (result != null && result?.succeeded !== false) onFrameRendered?.('scene', result);
       return result;
     },
@@ -108,7 +113,8 @@ export function createPandoMapLibreCustomLayers({
     render(gl, maybeOptions) {
       ensureDevice(map, gl);
       const options = renderOptions(gl, maybeOptions);
-      const result = scoped('maplibre-interaction-render', gl, options, renderInteraction, frameViewState);
+      if (!frameViewState) frameId += 1;
+      const result = scoped('maplibre-interaction-render', gl, options, renderInteraction, frameViewState, frameId);
       if (result != null && result?.succeeded !== false) onFrameRendered?.('interaction', result);
       frameViewState = null;
       return result;
@@ -140,6 +146,7 @@ export function createPandoMapLibreCustomLayers({
       }
       map = null;
       frameViewState = null;
+      frameId = 0;
       attachedLayerCount = 0;
     },
   });
