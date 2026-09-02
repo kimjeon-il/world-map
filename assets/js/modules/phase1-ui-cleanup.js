@@ -54,6 +54,18 @@ function flattenHistoricalPreview() {
   document.getElementById('historicalLibraryPreview')?.classList.remove('ui-card');
 }
 
+function constrainGenericFallbackUi() {
+  const form = document.getElementById('genericFeatureProperties');
+  if (form) form.dataset.genericFeatureMode = 'fallback';
+  for (const id of ['genericFeatureLandRelationSection', 'genericFeatureLandActionsSection']) {
+    const section = document.getElementById(id);
+    if (!section) continue;
+    section.hidden = true;
+    section.setAttribute('aria-hidden', 'true');
+    section.dataset.legacyGenericSemantics = 'hidden';
+  }
+}
+
 function normalizeEmptyConditionalSurfaces() {
   const selectors = [
     '.gis-import-status',
@@ -86,6 +98,7 @@ export function applyPhase1UiCleanup() {
   removeRedundantEditorEdge();
   removeDecorativeOnlyNodes();
   flattenHistoricalPreview();
+  constrainGenericFallbackUi();
   normalizeEmptyConditionalSurfaces();
   markPhaseApplied();
 }
