@@ -39,7 +39,8 @@ test('presentation persists without document history while view and session stay
   const dirty = page.locator('#projectSaveStatus');
   const undo = page.locator('#undoBtn');
 
-  await expect(dirty).toBeHidden();
+  await expect(dirty).toBeVisible();
+  await expect(page.locator('#projectSaveStatusText')).toHaveText('미저장');
   await expect(undo).toBeDisabled();
 
   await page.locator('[data-layer-folder-toggle="countries"]').first().click();
@@ -48,7 +49,7 @@ test('presentation persists without document history while view and session stay
   await page.locator('#mapViewTabBtn').click();
   await page.locator('#flatBtn').click();
   await expect(page.locator('#flatBtn')).toHaveAttribute('aria-pressed', 'true');
-  await expect(dirty).toBeHidden();
+  await expect(dirty).toBeVisible();
   await expect(undo).toBeDisabled();
 
   await page.locator('#mapLayersTabBtn').click();

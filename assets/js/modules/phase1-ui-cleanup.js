@@ -5,6 +5,7 @@ installBoundaryGhostingGuard();
 
 const UI_V2_STYLES = Object.freeze([
   '../../css/tokens/ui-v2.css',
+  '../../css/primitives/controls.css',
   '../../css/components/surface.css',
   '../../css/components/content.css',
   '../../css/layout/surfaces.css',
@@ -23,23 +24,6 @@ function installUiV2Styles() {
     style.dataset.pandolabUiV2 = key;
     document.head.appendChild(style);
   }
-}
-
-function detachMapStatusSurface() {
-  const surface = document.querySelector('.map-bottom-status');
-  if (!surface) return;
-
-  const stateHost = document.createElement('div');
-  stateHost.className = 'map-status-state';
-  stateHost.hidden = true;
-  stateHost.setAttribute('aria-hidden', 'true');
-
-  for (const id of ['statusView', 'statusPrimary', 'statusSelection']) {
-    const node = document.getElementById(id);
-    if (node) stateHost.appendChild(node);
-  }
-
-  surface.replaceWith(stateHost);
 }
 
 function removeRedundantEditorEdge() {
@@ -94,7 +78,6 @@ export function applyPhase1UiCleanup() {
 
   installUiV2Styles();
   installObjectRegistryPresenter();
-  detachMapStatusSurface();
   removeRedundantEditorEdge();
   removeDecorativeOnlyNodes();
   flattenHistoricalPreview();
