@@ -1,6 +1,6 @@
-/* PandoLab phase 1: residual UI 05–08 + useless surface cleanup.
- * Loaded after app.css by bootstrap.js. This file intentionally contains only
- * presentation cleanup; data/render reliability work is out of scope.
+/* PandoLab phase 1: residual UI 05–08 + compatibility cleanup.
+ * Loaded after app.css by bootstrap.js. New shared component/layout rules belong
+ * under assets/css/{tokens,components,layout}; do not add new component skin here.
  */
 
 :root {
@@ -56,74 +56,6 @@ body.file-menu-open .mobile-backdrop {
   margin-bottom: var(--ui-space-1);
 }
 
-/* Work actions: compact rows instead of large action cards. */
-.editor-action-grid,
-.editor-action-grid-two {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: var(--ui-space-2) !important;
-}
-
-.editor-action-button {
-  width: 100% !important;
-  min-height: var(--ui-touch-height) !important;
-  display: grid !important;
-  grid-template-columns: var(--ui-icon-size) minmax(0, 1fr) !important;
-  grid-template-rows: 1fr !important;
-  align-items: center !important;
-  gap: var(--ui-space-3) !important;
-  padding: 0 var(--ui-control-padding-x) !important;
-  border-radius: var(--ui-radius-control) !important;
-  box-shadow: none !important;
-}
-
-.editor-action-button > span {
-  grid-row: auto !important;
-  display: grid !important;
-  place-items: center !important;
-}
-
-.editor-action-button > strong {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.editor-action-button > small {
-  display: none !important;
-}
-
-/* Info lists should not create a second card hierarchy. */
-.ui-info-list.editor-info-list {
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-/* Layer category boxes are semantic grouping only. */
-.layer-category,
-.layer-category-items {
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-/* Empty-state chrome should not occupy large boxed regions. */
-.ui-empty-state,
-.layer-empty {
-  min-height: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.editor-help {
-  margin-block: var(--ui-space-1);
-}
-
 /* Historical Library: wide two-pane workspace. */
 .historical-library-card {
   width: min(1040px, calc(100vw - (var(--ui-dialog-edge) * 2))) !important;
@@ -167,8 +99,7 @@ body.file-menu-open .mobile-backdrop {
 }
 
 /* Library disclosures use the same rounded disclosure grammar as editor
- * sections; the library-specific layout must not turn them into square cards.
- */
+ * sections; the library-specific layout must not turn them into square cards. */
 .historical-library-card .ui-disclosure {
   border: 1px solid var(--ui-card-border) !important;
   border-radius: var(--ui-radius-panel) !important;

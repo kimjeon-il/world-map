@@ -1,0 +1,15 @@
+:root {
+  --ui-border-width: 1px;
+  --ui-surface-create-wide-width: 280px;
+  --ui-surface-compact-drawer-width: min(352px, calc(100vw - var(--ui-space-6)));
+  --ui-surface-motion-duration: 170ms;
+  --ui-surface-offscreen-gap: var(--ui-space-5);
+  --ui-surface-mobile-hidden-offset: 2px;
+  --ui-surface-tab-indicator-width: 30px;
+  --ui-surface-tab-indicator-height: 3px;
+  --ui-surface-tab-indicator-bottom: var(--ui-space-0-5);
+  --ui-content-action-min-height: var(--ui-touch-height);
+  --ui-content-property-row-min-height: 36px;
+  --ui-object-context-name-lines: 2;
+  --ui-radius-pill: 999px;
+}
