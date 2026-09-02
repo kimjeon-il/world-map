@@ -148,7 +148,7 @@ body.file-menu-open .mobile-backdrop {
   min-height: 0 !important;
   overflow: auto !important;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
+  scrollbar-gutter: stable both-edges;
 }
 
 .historical-library-preview {

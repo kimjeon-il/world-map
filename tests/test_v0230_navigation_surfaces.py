@@ -106,8 +106,7 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
     def test_sheet_chrome_uses_one_visual_content_rail(self):
         for token in (
             '--ui-surface-content-padding-x: var(--ui-panel-padding);',
-            '--ui-surface-scrollbar-compensation: var(--ui-scrollbar-size);',
-            '--ui-surface-visual-rail-x: calc(var(--ui-surface-content-padding-x) + var(--ui-surface-scrollbar-compensation));',
+            '--ui-surface-content-rail-x: var(--ui-surface-content-padding-x);',
         ):
             self.assertIn(token, CSS)
         self.assertIn('class="ui-tabs surface-tabs map-panel-tabs"', INDEX)
