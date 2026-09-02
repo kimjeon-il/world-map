@@ -9,6 +9,7 @@ const UI_V2_STYLES = Object.freeze([
   '../../css/components/surface.css',
   '../../css/components/content.css',
   '../../css/layout/surfaces.css',
+  '../../css/features/layer-panel.css',
 ]);
 
 function installUiV2Styles() {
