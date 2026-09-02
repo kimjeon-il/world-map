@@ -81,6 +81,10 @@
   --ui-v2-control-sm: 28px;
   --ui-v2-control-md: 30px;
   --ui-v2-control-lg: 36px;
+  --ui-v2-command-row-min-height: 42px;
+  --ui-v2-workflow-action-min-width: 9rem;
+  --ui-v2-confirm-modal-width: 430px;
+  --ui-v2-coast-modal-width: 560px;
   --ui-v2-control-padding-x: 10px;
   --ui-v2-toggle-width: 30px;
   --ui-v2-toggle-height: 17px;
@@ -131,6 +135,10 @@
   --ui-surface-tab-indicator-height: 3px;
   --ui-surface-tab-indicator-bottom: var(--ui-v2-space-0-5);
   --ui-content-action-min-height: var(--ui-v2-touch-height);
+  --ui-content-command-row-min-height: var(--ui-v2-command-row-min-height);
+  --ui-workflow-action-min-width: var(--ui-v2-workflow-action-min-width);
+  --ui-confirm-modal-width: var(--ui-v2-confirm-modal-width);
+  --ui-coast-modal-width: var(--ui-v2-coast-modal-width);
   --ui-content-property-row-min-height: 36px;
   --ui-object-context-name-lines: 2;
   --ui-radius-pill: var(--ui-v2-radius-pill);

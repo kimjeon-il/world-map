@@ -1,7 +1,4 @@
-/* PandoLab phase 1: residual UI 05–08 + compatibility cleanup.
- * Loaded after app.css by bootstrap.js. New shared component/layout rules belong
- * under assets/css/{tokens,components,layout}; do not add new component skin here.
- */
+/* Phase 1 residual compatibility cleanup. */
 
 /* Structural hosts are layout containers, not visual surfaces. */
 .workspace,

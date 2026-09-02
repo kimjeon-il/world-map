@@ -8,6 +8,8 @@ const UI_V2_STYLES = Object.freeze([
   '../../css/primitives/controls.css',
   '../../css/components/surface.css',
   '../../css/components/content.css',
+  '../../css/components/command-row.css',
+  '../../css/components/workflow.css',
   '../../css/layout/surfaces.css',
   '../../css/features/layer-panel.css',
 ]);
