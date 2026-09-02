@@ -118,7 +118,7 @@ export function createHistoricalLibraryController({
       ? sourceEntries.map(item => item?.title).filter(Boolean).join(' · ')
       : (entity.sourceInfo?.title || version.sourceId || '미지정')}`;
     const advanced = document.createElement('details');
-    advanced.className = 'ui-disclosure';
+    advanced.className = 'ui-disclosure editor-disclosure';
     const summary = document.createElement('summary');
     summary.textContent = '고급 정보';
     const body = document.createElement('dl');
