@@ -1,4 +1,5 @@
 import { installBoundaryGhostingGuard } from './boundary-ghosting-guard.js';
+import { installObjectRegistryPresenter } from './object-registry-presenter.js';
 
 installBoundaryGhostingGuard();
 
@@ -80,6 +81,7 @@ export function applyPhase1UiCleanup() {
   document.documentElement.dataset.pandolabUiCleanupPhase1 = 'done';
 
   installUiV2Styles();
+  installObjectRegistryPresenter();
   detachMapStatusSurface();
   removeRedundantEditorEdge();
   removeDecorativeOnlyNodes();
