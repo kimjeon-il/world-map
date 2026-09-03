@@ -1,3 +1,5 @@
+import { installAccessibilityQaV2 } from './accessibility-qa-v2.js';
+
 const READINESS_PATTERN = /(편집 데이터|고화질 지도|무손실 데이터|지도 엔진|자동 재시도|다시 준비|미리보기 오류)/u;
 const SAVE_WORKING_PATTERN = /저장\s*(중|하는 중|준비)/u;
 
@@ -196,6 +198,7 @@ function observeEngineStatus(documentRef) {
 export function installStateFeedbackV2(documentRef = document) {
   if (installed) return;
   installed = true;
+  installAccessibilityQaV2(documentRef);
   installStyle(documentRef);
   normalizeInlineFeedback(documentRef);
   installProgressSemantics(documentRef);
