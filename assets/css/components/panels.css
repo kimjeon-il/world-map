@@ -1,3 +1,203 @@
+/* Shared map, create, historical-library, and GIS panel presentation. */
+
+/* Map and create panel rules. */
+
+/* Map settings and create surface presentation. */
+
+.map-view-settings {
+  min-width: 0;
+  display: grid;
+  gap: 0;
+}
+
+.map-view-settings > .layer-style-editor {
+  min-width: 0;
+  display: grid;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-4) 0;
+  border-top: 1px solid var(--border);
+  background: transparent;
+}
+
+.map-view-settings > .layer-style-editor:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.map-view-settings > .layer-style-editor > strong,
+.create-menu-group-title {
+  color: var(--muted);
+  font-size: var(--ui-font-caption);
+  font-weight: var(--ui-weight-semibold);
+  line-height: var(--ui-line-tight);
+}
+
+.map-view-projection-slot .projection-control {
+  width: 100%;
+  height: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ui-space-1);
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+}
+
+.map-view-projection-slot .projection-btn {
+  min-width: 0;
+  min-height: var(--ui-v2-command-row-min-height);
+  height: var(--ui-v2-command-row-min-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-2);
+  padding-inline: var(--ui-space-3);
+  border: 1px solid var(--ui-control-border);
+  border-radius: var(--ui-radius-control);
+  background: var(--ui-control-bg);
+  color: var(--muted);
+}
+
+.map-view-projection-slot .projection-btn > span {
+  display: inline;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--ui-font-sm);
+  font-weight: var(--ui-weight-semibold);
+}
+
+.map-view-projection-slot .projection-btn .ui-icon {
+  width: var(--ui-v2-projection-icon-size);
+  height: var(--ui-v2-projection-icon-size);
+  flex: 0 0 auto;
+}
+
+.map-view-projection-slot .projection-btn:is(.active, [aria-pressed="true"]) {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--ui-control-bg));
+  color: var(--text-strong);
+}
+
+.map-view-projection-slot .projection-btn:is(.active, [aria-pressed="true"]) .ui-icon { color: var(--accent); }
+
+.map-view-projection-slot .projection-btn:is(.active, [aria-pressed="true"]):hover {
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--border));
+  background: color-mix(in srgb, var(--accent) 13%, var(--ui-control-bg));
+  color: var(--text-strong);
+}
+
+.map-view-settings .ui-choice-row,
+.map-view-settings .ui-toggle {
+  min-height: var(--ui-v2-control-mobile-height);
+}
+
+.map-view-settings .ui-choice-row,
+.map-view-settings .field-group { margin: 0; }
+
+.map-view-settings .layer-setting-hint:empty { display: none; }
+
+.terrain-display-options,
+.terrain-mode-options,
+.terrain-strength-control {
+  min-width: 0;
+  display: grid;
+}
+
+.terrain-display-options { gap: var(--ui-space-2); }
+.terrain-mode-options,
+.terrain-strength-control { gap: var(--ui-space-1); }
+
+.terrain-strength-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
+  color: var(--text-soft);
+  font-size: var(--ui-font-sm);
+}
+
+.terrain-strength-heading > strong {
+  color: var(--muted);
+  font-size: var(--ui-font-xs);
+  font-weight: var(--ui-weight-medium);
+}
+
+.surface-content-create {
+  min-width: 0;
+  display: grid;
+  gap: 0;
+}
+
+.create-menu-route-panel { min-width: 0; }
+
+.create-menu-category {
+  min-width: 0;
+  display: grid;
+  gap: var(--ui-space-0-5);
+  padding: var(--ui-space-4) 0;
+  border-top: 1px solid var(--border);
+}
+
+.create-menu-category:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.create-menu-group {
+  min-height: 1.5rem;
+  display: flex;
+  align-items: center;
+  padding-inline: var(--ui-space-2);
+}
+
+.create-menu-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+.create-menu-item:hover,
+.create-menu-item:focus-visible {
+  background: var(--surface-hover);
+  color: var(--text-strong);
+}
+
+.create-menu-item .create-menu-icon,
+.create-menu-item .create-menu-chevron { color: var(--muted); }
+
+.create-menu-item:hover .create-menu-icon,
+.create-menu-item:focus-visible .create-menu-icon,
+.create-menu-item:hover .create-menu-chevron,
+.create-menu-item:focus-visible .create-menu-chevron { color: var(--text-soft); }
+
+.create-menu-item > span:nth-child(2) { gap: var(--ui-space-0-5); }
+.create-menu-item small { line-height: var(--ui-line-tight); }
+
+@media (max-width: 799px) {
+  .map-view-settings > .layer-style-editor { padding-block: var(--ui-space-4); }
+
+  .map-view-projection-slot .projection-btn {
+    min-height: var(--ui-touch-height);
+    height: var(--ui-touch-height);
+  }
+
+  .map-view-settings .ui-choice-row,
+  .map-view-settings .ui-toggle { min-height: 2.5rem; }
+
+  .create-menu-item { min-height: var(--ui-touch-height); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-view-projection-slot .projection-btn,
+  .create-menu-item { transition: none; }
+}
+
+/* Library, GIS, and file panel rules. */
+
 /* Historical library, GIS workflows, and file/project actions. */
 
 .historical-library-modal .historical-library-card {
@@ -319,4 +519,91 @@
   .gis-mobile-step-indicator { display: block; }
   .gis-export-layers { grid-template-columns: 1fr; }
   .gis-export-format-option { min-height: 3.5rem; }
+}
+
+/* Historical library refinements. */
+
+.historical-library-card {
+  width: min(65rem, calc(100vw - (var(--ui-dialog-edge) * 2)));
+  max-width: 65rem;
+  height: min(47.5rem, calc(100dvh - (var(--ui-dialog-edge) * 2)));
+  max-height: min(47.5rem, calc(100dvh - (var(--ui-dialog-edge) * 2)));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.historical-library-layout {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(17.5rem, 40fr) minmax(22.5rem, 60fr);
+  gap: var(--ui-space-4);
+  overflow: hidden;
+}
+
+.historical-library-results,
+.historical-library-preview {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+}
+
+.historical-library-preview {
+  padding: 0;
+  border: var(--ui-border-width) solid var(--ui-card-border);
+  border-radius: var(--ui-radius-panel);
+  background: var(--ui-card-bg);
+  box-shadow: var(--control-shadow);
+}
+
+.historical-library-preview-map {
+  border-color: var(--ui-card-border);
+  border-radius: var(--ui-radius-control);
+  background: var(--ui-card-bg);
+  box-shadow: none;
+}
+
+.historical-library-card .ui-disclosure {
+  border: var(--ui-border-width) solid var(--ui-card-border);
+  border-radius: var(--ui-radius-panel);
+  background: var(--ui-card-bg);
+}
+
+.editor-flag-preview,
+.historical-library-preview-map {
+  box-shadow: none;
+}
+
+[data-layout="mobile"] .historical-library-card {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  border-radius: var(--ui-radius-panel);
+}
+
+[data-layout="mobile"] .historical-library-layout {
+  grid-template-columns: 1fr;
+}
+
+[data-layout="mobile"] :is(.historical-library-results, .historical-library-preview) {
+  max-height: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .historical-library-card {
+    transition-duration: .01ms;
+  }
+}
+
+/* Panel-owned visibility refinements. */
+.ui-dialog-kicker,
+.create-toolbar-divider {
+  display: none;
+}
+
+body.file-menu-open .mobile-backdrop {
+  display: none;
+  pointer-events: none;
 }

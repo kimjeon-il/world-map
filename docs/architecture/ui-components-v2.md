@@ -9,6 +9,8 @@
 - `assets/css/tokens/ui-v2.css`: Surface와 콘텐츠 component가 공유하는 의미 토큰
 - `assets/css/components/surface.css`: Surface/Header/Tabs/Body/Content
 - `assets/css/components/content.css`: Section/Field/ActionList/PropertyList/ObjectContext 호환 계약
+- `assets/css/components/workflows.css`: 편집 작업창·dialog·wizard 공통 표현
+- `assets/css/components/panels.css`: 지도·추가·Library/GIS 패널 표현
 - `assets/css/layout/surfaces.css`: wide/compact/mobile의 Surface 배치와 표시 상태
 
 `app.css`는 기존 화면을 유지하기 위한 legacy compatibility source다. 새 공통 component 규칙을 `app.css`나 `phase1-ui-cleanup.css`에 추가하지 않는다.
