@@ -58,25 +58,19 @@ index = index.replace(
   (_, before, classes, after) => `${before}${classes.includes('ghost') ? classes : `${classes} ghost`.trim()}${after}`,
 );
 
-app = replaceRequired(
-  app,
-  /\(min-width: 800px\) and \(max-width: 1359px\)/g,
-  '(min-width: 800px) and (max-width: 1199px)',
-  'legacy compact breakpoint',
-);
+const legacyCompact = /\(min-width: 800px\) and \(max-width: 1359px\)/g;
+if (legacyCompact.test(app)) {
+  app = app.replace(legacyCompact, '(min-width: 800px) and (max-width: 1199px)');
+} else if (!/\(min-width: 800px\) and \(max-width: 1199px\)/.test(app)) {
+  throw new Error('canonical compact breakpoint is missing');
+}
 
-bootstrap = replaceRequired(
-  bootstrap,
-  /  const LEGACY_COMPACT_QUERY = '[^']+';\n  const CANONICAL_COMPACT_QUERY = '[^']+';\n/,
-  '',
-  'bootstrap legacy breakpoint constants',
-);
-bootstrap = replaceRequired(
-  bootstrap,
-  /  function normalizeViewportAccessibility\(\) \{[\s\S]*?\n  \}\n\n  function installLayoutContract\(\) \{[\s\S]*?\n  \}\n\n  normalizeViewportAccessibility\(\);\n  installLayoutContract\(\);\n\n/,
-  '',
-  'bootstrap compatibility functions',
-);
+const bootstrapLegacyConstants = /  const LEGACY_COMPACT_QUERY = '[^']+';\n  const CANONICAL_COMPACT_QUERY = '[^']+';\n/;
+if (bootstrapLegacyConstants.test(bootstrap)) bootstrap = bootstrap.replace(bootstrapLegacyConstants, '');
+
+const bootstrapCompatibilityFunctions = /  function normalizeViewportAccessibility\(\) \{[\s\S]*?\n  \}\n\n  function installLayoutContract\(\) \{[\s\S]*?\n  \}\n\n  normalizeViewportAccessibility\(\);\n  installLayoutContract\(\);\n\n/;
+if (bootstrapCompatibilityFunctions.test(bootstrap)) bootstrap = bootstrap.replace(bootstrapCompatibilityFunctions, '');
+
 bootstrap = bootstrap
   .replace('../css/features/state-feedback.css', '../css/components/feedback.css')
   .replace('../css/features/responsive-accessibility.css', '../css/utilities/accessibility.css');
@@ -90,6 +84,8 @@ if (/max-width:\s*1359px/.test(app)) throw new Error('legacy compact breakpoint 
 if (/LEGACY_COMPACT_QUERY|installLayoutContract|normalizeViewportAccessibility/.test(bootstrap)) {
   throw new Error('bootstrap compatibility shim remains after migration');
 }
+if (!bootstrap.includes('../css/components/feedback.css')) throw new Error('canonical feedback stylesheet is not loaded');
+if (!bootstrap.includes('../css/utilities/accessibility.css')) throw new Error('canonical accessibility stylesheet is not loaded');
 
 fs.writeFileSync(indexPath, index, 'utf8');
 fs.writeFileSync(appPath, app, 'utf8');
