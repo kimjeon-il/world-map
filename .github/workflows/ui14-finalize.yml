@@ -7,6 +7,11 @@ on:
       - .github/workflows/ui14-finalize.yml
       - scripts/finalize-ui-v2-static.mjs
       - scripts/finalize-ui14-runtime-semantics.mjs
+      - assets/js/modules/ui-runtime.js
+      - assets/js/modules/feedback-controller.js
+      - assets/js/modules/mobile-sheet-controller.js
+      - assets/js/modules/dialog-accessibility-controller.js
+      - assets/js/modules/tool-controller.js
   workflow_dispatch:
 
 permissions:
