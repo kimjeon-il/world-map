@@ -5,6 +5,15 @@ on:
     branches: [main]
     paths:
       - .github/workflows/ui14-audit.yml
+      - assets/css/tokens/**
+      - assets/css/primitives/**
+      - assets/css/components/**
+      - assets/css/layout/**
+      - assets/css/features/**
+      - assets/css/utilities/**
+      - assets/js/modules/surface-controller.js
+      - assets/js/modules/historical-library-controller.js
+      - scripts/check-ui-architecture.mjs
   workflow_dispatch:
 
 permissions:
