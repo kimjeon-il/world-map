@@ -76,9 +76,11 @@
   opacity: 1;
 }
 
+/* One disclosure glyph, one state rule. Text chevrons are not used. */
 .layer-folder-row .disclosure-icon,
 .layer-subfolder-row .disclosure-icon {
   transform: rotate(0deg);
+  transition: transform 140ms ease;
 }
 .layer-folder-row[aria-expanded="false"] .disclosure-icon,
 .layer-subfolder-row[aria-expanded="false"] .disclosure-icon {
@@ -96,13 +98,13 @@
   }
 
   .layer-visibility-control {
-    width: var(--ui-tree-action-size-touch);
-    min-width: var(--ui-tree-action-size-touch);
-    height: var(--ui-tree-action-size-touch);
+    width: var(--ui-v2-layer-visibility-size-mobile);
+    min-width: var(--ui-v2-layer-visibility-size-mobile);
+    height: var(--ui-v2-layer-visibility-size-mobile);
   }
 
   .layer-folder-row {
-    grid-template-columns: var(--ui-tree-action-size-touch) minmax(0, 1fr);
+    grid-template-columns: var(--ui-v2-layer-visibility-size-mobile) minmax(0, 1fr);
   }
   .layer-folder-row > .layer-folder-toggle,
   .layer-folder-row > .layer-style-toggle {
@@ -110,14 +112,15 @@
     pointer-events: auto;
   }
   .layer-folder-row > .layer-folder-toggle {
-    inset-inline-end: calc(var(--ui-tree-action-size-touch) + var(--ui-space-1));
+    inset-inline-end: calc(var(--ui-v2-layer-visibility-size-mobile) + var(--ui-space-1));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .layer-folder-row .layer-folder-toggle,
   .layer-folder-row .layer-style-toggle,
-  .layer-child-menu {
+  .layer-child-menu,
+  .disclosure-icon {
     transition: none;
   }
 }
