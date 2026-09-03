@@ -63,8 +63,8 @@ function bakeMapWorkflowShell(source) {
 
 function bakeGisSteppers(source) {
   let next = source;
-  if (!next.includes('gis-stepper--5')) next = next.replace(/(<form id="gisImportForm"\b)/, '<ol class="gis-stepper gis-stepper--5" aria-label="진행 단계"><li data-step-number="1" class="is-current" aria-current="step">파일</li><li data-step-number="2">종류</li><li data-step-number="3">속성</li><li data-step-number="4">적용</li><li data-step-number="5">확인</li></ol>\n      $1');
-  if (!next.includes('gis-stepper--2')) next = next.replace(/(<form id="gisExportForm"\b)/, '<ol class="gis-stepper gis-stepper--2" aria-label="진행 단계"><li data-step-number="1" class="is-current" aria-current="step">데이터</li><li data-step-number="2">형식</li></ol>\n      $1');
+  if (!next.includes('gis-stepper--5')) next = next.replace(/(<form id="gisImportForm")/, '<ol class="gis-stepper gis-stepper--5" aria-label="진행 단계"><li data-step-number="1" class="is-current" aria-current="step">파일</li><li data-step-number="2">종류</li><li data-step-number="3">속성</li><li data-step-number="4">적용</li><li data-step-number="5">확인</li></ol>\n      $1');
+  if (!next.includes('gis-stepper--2')) next = next.replace(/(<form id="gisExportForm")/, '<ol class="gis-stepper gis-stepper--2" aria-label="진행 단계"><li data-step-number="1" class="is-current" aria-current="step">데이터</li><li data-step-number="2">형식</li></ol>\n      $1');
   return next;
 }
 
