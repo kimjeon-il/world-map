@@ -19,7 +19,7 @@
 .map-view-toolbar,
 .mobile-zoom-dock {
   width: max-content;
-  max-width: calc(100% - var(--map-safe-left, 0px) - var(--map-safe-right, 0px) - (var(--ui-map-edge) * 2));
+  max-width: calc(100% - var(--map-safe-left, 0) - var(--map-safe-right, 0) - (var(--ui-map-edge) * 2));
   align-self: start;
   justify-self: start;
 }
