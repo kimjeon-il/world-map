@@ -14,6 +14,7 @@ on:
       - assets/js/modules/surface-controller.js
       - assets/js/modules/historical-library-controller.js
       - scripts/check-ui-architecture.mjs
+      - scripts/check-ui-layering.mjs
   workflow_dispatch:
 
 permissions:
