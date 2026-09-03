@@ -9,7 +9,6 @@ const FOCUSABLE_SELECTOR = [
 
 const MODAL_SELECTOR = '.ui-dialog[aria-modal="true"]:not(#confirmModal)';
 const SHEET_IDS = Object.freeze(['leftPanel', 'createMenu', 'rightPanel']);
-const MENU_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Home', 'End']);
 const LISTBOX_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Home', 'End']);
 
 let installed = false;
@@ -20,7 +19,8 @@ function isHidden(element) {
   return !element
     || element.hidden
     || element.classList?.contains('hidden')
-    || element.closest?.('[hidden], .hidden, [aria-hidden="true"]');
+    || element.closest?.('[hidden], .hidden, [aria-hidden="true"]')
+    || (element instanceof HTMLElement && element.getClientRects().length === 0);
 }
 
 function focusables(container) {
@@ -120,57 +120,6 @@ function syncHiddenSurfaceInert(documentRef) {
   }
 }
 
-function menuItems(menu) {
-  return [...(menu?.querySelectorAll?.('[role="menuitem"]') || [])]
-    .filter(item => !item.disabled && item.getAttribute('aria-disabled') !== 'true' && !isHidden(item));
-}
-
-function setMenuFocus(items, target) {
-  items.forEach(item => { item.tabIndex = item === target ? 0 : -1; });
-  target?.focus({ preventScroll: true });
-}
-
-function installFileMenuKeyboard(documentRef) {
-  const trigger = documentRef.getElementById('mobileFileBtn');
-  const menu = documentRef.getElementById('fileMenu');
-  if (!(trigger instanceof HTMLElement) || !(menu instanceof HTMLElement)) return;
-
-  const sync = () => {
-    const open = trigger.getAttribute('aria-expanded') === 'true';
-    menu.inert = !open;
-    const items = menuItems(menu);
-    if (!items.length) return;
-    items.forEach((item, index) => { item.tabIndex = index === 0 ? 0 : -1; });
-    if (open) {
-      requestAnimationFrame(() => {
-        if (trigger.getAttribute('aria-expanded') !== 'true') return;
-        if (documentRef.activeElement === trigger) items[0]?.focus({ preventScroll: true });
-      });
-    } else if (menu.contains(documentRef.activeElement)) {
-      requestAnimationFrame(() => trigger.focus({ preventScroll: true }));
-    }
-  };
-
-  sync();
-  new MutationObserver(sync).observe(trigger, {
-    attributes: true,
-    attributeFilter: ['aria-expanded'],
-  });
-
-  menu.addEventListener('keydown', event => {
-    if (!MENU_KEYS.has(event.key)) return;
-    const items = menuItems(menu);
-    const current = event.target.closest?.('[role="menuitem"]');
-    const index = Math.max(0, items.indexOf(current));
-    const nextIndex = event.key === 'Home' ? 0
-      : event.key === 'End' ? items.length - 1
-        : event.key === 'ArrowDown' ? (index + 1) % items.length
-          : (index - 1 + items.length) % items.length;
-    event.preventDefault();
-    setMenuFocus(items, items[nextIndex]);
-  });
-}
-
 function libraryOptions(results) {
   return [...(results?.querySelectorAll?.('[role="option"][data-library-entity-id]') || [])]
     .filter(option => !isHidden(option));
@@ -266,7 +215,6 @@ export function installAccessibilityQaV2(documentRef = document) {
   installStyle(documentRef);
   installDialogGuards(documentRef);
   syncHiddenSurfaceInert(documentRef);
-  installFileMenuKeyboard(documentRef);
   installLibraryKeyboard(documentRef);
   installDirectEditFocusGuard(documentRef);
 }
