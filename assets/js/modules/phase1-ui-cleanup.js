@@ -47,9 +47,9 @@ function constrainGenericFallbackUi() {
   for (const id of ['genericFeatureLandRelationSection', 'genericFeatureLandActionsSection']) {
     const section = document.getElementById(id);
     if (!section) continue;
-    section.hidden = true;
-    section.setAttribute('aria-hidden', 'true');
-    section.dataset.legacyGenericSemantics = 'hidden';
+    section.hidden = false;
+    section.removeAttribute('aria-hidden');
+    delete section.dataset.legacyGenericSemantics;
   }
 }
 
