@@ -26,7 +26,6 @@ const COMMAND_ROW_ICON_BY_ID = Object.freeze({
   editBorderBtn: 'boundary',
   editCoastBtn: 'coastline',
   changeCountryTypeBtn: 'transform',
-
   reassignTerritoryShapeBtn: 'boundary',
   mergeTerritoryBtn: 'merge',
   splitTerritoryBtn: 'split',
@@ -34,7 +33,6 @@ const COMMAND_ROW_ICON_BY_ID = Object.freeze({
   changeTerritoryTypeBtn: 'transform',
   promoteTerritoryBtn: 'country',
   removeTerritoryDivisionBtn: 'merge',
-
   reassignAdministrativeShapeBtn: 'boundary',
   reconcileAdministrativeCoastBtn: 'coastline',
   mergeAdministrativeBtn: 'merge',
@@ -43,11 +41,9 @@ const COMMAND_ROW_ICON_BY_ID = Object.freeze({
   changeAdministrativeTypeBtn: 'transform',
   promoteAdministrativeBtn: 'country',
   removeAdministrativeDivisionBtn: 'merge',
-
   reassignRegionShapeBtn: 'boundary',
   mergeRegionBtn: 'merge',
   transferRegionBtn: 'transfer',
-
   addTerritorialDistributionBtn: 'add',
   addGeometryDistributionBtn: 'boundary',
   editGenericFeatureBoundaryBtn: 'boundary',
@@ -95,14 +91,11 @@ function normalizeCommandRows() {
   for (const [id, semanticIcon] of Object.entries(COMMAND_ROW_ICON_BY_ID)) {
     const row = document.getElementById(id);
     if (!(row instanceof HTMLElement)) continue;
-
     row.classList.add('has-command-row-icon');
-
     const nextIcon = createSemanticIcon(document, semanticIcon, 'ui-icon command-row-icon');
     const currentIcon = row.querySelector(':scope > .command-row-icon');
     if (currentIcon) currentIcon.replaceWith(nextIcon);
     else row.prepend(nextIcon);
-
     const directIcons = Array.from(row.children).filter(node => node instanceof SVGElement && node !== nextIcon);
     const trailing = directIcons.at(-1);
     if (trailing) trailing.replaceWith(commandRowChevron());
@@ -113,13 +106,10 @@ function normalizeCommandRows() {
 function normalizeMapCreateSurfaceLabels() {
   const mapSheetTitle = document.getElementById('mapSheetTitle');
   if (mapSheetTitle) mapSheetTitle.textContent = '지도';
-
   const mapViewTab = document.getElementById('mapViewTabBtn');
   if (mapViewTab) mapViewTab.textContent = '지도';
-
   const terrainTitle = document.getElementById('terrainLayerSettingsTitle');
   if (terrainTitle) terrainTitle.textContent = '지형';
-
   const projectionControl = document.getElementById('projectionControl');
   if (projectionControl) projectionControl.setAttribute('aria-label', '투영법');
 }
@@ -152,17 +142,12 @@ function normalizeMapEditingWorkflow() {
   const heading = hud?.querySelector('.mode-task-heading');
   const title = document.getElementById('modeTaskName');
   if (!(hud instanceof HTMLElement) || !(heading instanceof HTMLElement) || !(title instanceof HTMLElement)) return;
-
   hud.classList.add('workflow-map-session');
   hud.setAttribute('aria-labelledby', 'modeTaskName');
   hud.removeAttribute('aria-label');
-
-  const syncIcon = () => {
-    replaceWorkflowIcon(heading, workflowSemanticFromLabel(title.textContent), 'ui-icon mode-task-icon');
-  };
+  const syncIcon = () => replaceWorkflowIcon(heading, workflowSemanticFromLabel(title.textContent), 'ui-icon mode-task-icon');
   syncIcon();
   new MutationObserver(syncIcon).observe(title, { childList: true, characterData: true, subtree: true });
-
   document.getElementById('modeActionBar')?.classList.add('workflow-actions');
   document.getElementById('geometryPreviewSummary')?.classList.add('workflow-impact');
 }
@@ -172,53 +157,25 @@ function normalizeWorkflowDialog({ modalId, cardSelector, variant, semantic, tit
   const card = modal?.querySelector(cardSelector);
   const title = titleId ? document.getElementById(titleId) : card?.querySelector(':scope > h2');
   if (!(modal instanceof HTMLElement) || !(card instanceof HTMLElement)) return null;
-
   card.classList.add('workflow-dialog-card', `workflow-dialog--${variant}`);
   if (title instanceof HTMLElement) title.classList.add('workflow-dialog-title');
   if (descriptionId && document.getElementById(descriptionId)) modal.setAttribute('aria-describedby', descriptionId);
   if (semantic) replaceWorkflowIcon(card, semantic, 'ui-icon workflow-dialog-icon');
-
   card.querySelector(':scope > .ui-dialog-actions, :scope > .confirm-modal-actions')?.classList.add('workflow-dialog-actions');
   return { modal, card, title };
 }
 
 function normalizeEditingDialogs() {
-  normalizeWorkflowDialog({
-    modalId: 'territorialTypeModal',
-    cardSelector: '.territorial-type-card',
-    variant: 'standard',
-    semantic: 'transform',
-    titleId: 'territorialTypeTitle',
-    descriptionId: 'territorialTypeContext',
-  });
-
-  const confirm = normalizeWorkflowDialog({
-    modalId: 'confirmModal',
-    cardSelector: '.confirm-modal-card',
-    variant: 'compact',
-    semantic: 'check',
-    titleId: 'confirmModalTitle',
-    descriptionId: 'confirmModalMessage',
-  });
+  normalizeWorkflowDialog({ modalId: 'territorialTypeModal', cardSelector: '.territorial-type-card', variant: 'standard', semantic: 'transform', titleId: 'territorialTypeTitle', descriptionId: 'territorialTypeContext' });
+  const confirm = normalizeWorkflowDialog({ modalId: 'confirmModal', cardSelector: '.confirm-modal-card', variant: 'compact', semantic: 'check', titleId: 'confirmModalTitle', descriptionId: 'confirmModalMessage' });
   if (confirm?.title) {
-    const syncConfirmIcon = () => {
-      replaceWorkflowIcon(confirm.card, workflowSemanticFromLabel(confirm.title.textContent, 'check'), 'ui-icon workflow-dialog-icon');
-    };
+    const syncConfirmIcon = () => replaceWorkflowIcon(confirm.card, workflowSemanticFromLabel(confirm.title.textContent, 'check'), 'ui-icon workflow-dialog-icon');
     syncConfirmIcon();
     new MutationObserver(syncConfirmIcon).observe(confirm.title, { childList: true, characterData: true, subtree: true });
   }
   document.getElementById('confirmModalChoiceRow')?.classList.add('workflow-choice-row');
-
-  const coast = normalizeWorkflowDialog({
-    modalId: 'coastReconciliationModal',
-    cardSelector: '.coast-reconciliation-card',
-    variant: 'wide',
-    semantic: 'coastline',
-    titleId: 'coastReconciliationTitle',
-    descriptionId: 'coastReconciliationMessage',
-  });
+  const coast = normalizeWorkflowDialog({ modalId: 'coastReconciliationModal', cardSelector: '.coast-reconciliation-card', variant: 'wide', semantic: 'coastline', titleId: 'coastReconciliationTitle', descriptionId: 'coastReconciliationMessage' });
   coast?.card.classList.add('workflow-dialog--decision');
-
   for (const [id, detail] of Object.entries(COAST_DECISION_DETAIL_BY_ID)) {
     const button = document.getElementById(id);
     if (!(button instanceof HTMLButtonElement)) continue;
@@ -250,7 +207,6 @@ function installVisualStepper({ modalId, indicatorId, steps }) {
   const header = card?.querySelector(':scope > .ui-dialog-header');
   const indicator = document.getElementById(indicatorId);
   if (!(card instanceof HTMLElement) || !(header instanceof HTMLElement) || !(indicator instanceof HTMLElement)) return;
-
   let stepper = card.querySelector(':scope > .gis-stepper');
   if (!(stepper instanceof HTMLOListElement)) {
     stepper = document.createElement('ol');
@@ -264,7 +220,6 @@ function installVisualStepper({ modalId, indicatorId, steps }) {
     });
     header.insertAdjacentElement('afterend', stepper);
   }
-
   const sync = () => {
     const match = String(indicator.textContent || '').match(/(\d+)\s*\/\s*(\d+)/);
     const current = Math.max(0, (Number(match?.[1]) || 1) - 1);
@@ -290,26 +245,21 @@ function normalizeGisExportFormat() {
   if (!(select instanceof HTMLSelectElement) || select.dataset.v2RadioPresentation === 'true') return;
   select.dataset.v2RadioPresentation = 'true';
   select.classList.add('gis-export-format-native');
-
   const host = select.closest('.field-group');
   if (!(host instanceof HTMLElement)) return;
   host.classList.add('gis-export-format-field');
-
   const list = document.createElement('div');
   list.className = 'gis-export-format-list';
   list.setAttribute('role', 'radiogroup');
   list.setAttribute('aria-label', '파일 형식');
-
   for (const option of Array.from(select.options)) {
     const label = document.createElement('label');
     label.className = 'gis-export-format-option';
-
     const radio = document.createElement('input');
     radio.type = 'radio';
     radio.name = 'gisExportFormatPresentation';
     radio.value = option.value;
     radio.checked = option.value === select.value;
-
     const copy = document.createElement('span');
     copy.className = 'gis-export-format-copy';
     const strong = document.createElement('strong');
@@ -319,15 +269,13 @@ function normalizeGisExportFormat() {
     copy.append(strong, small);
     label.append(radio, copy);
     list.appendChild(label);
-
     radio.addEventListener('change', () => {
       if (!radio.checked) return;
       select.value = radio.value;
       select.dispatchEvent(new Event('change', { bubbles: true }));
     });
   }
-
-  select.insertAdjacentElement('afterend', list);
+  host.insertAdjacentElement('afterend', list);
   select.addEventListener('change', () => {
     list.querySelectorAll('input[type="radio"]').forEach(radio => {
       radio.checked = radio.value === select.value;
@@ -336,17 +284,12 @@ function normalizeGisExportFormat() {
 }
 
 function normalizeFileMenuPresentation() {
-  const labels = {
-    openGisBtn: 'GIS 가져오기',
-    saveProjectBtn: '저장',
-    dataExportBtn: 'GIS 데이터 내보내기',
-  };
+  const labels = { openGisBtn: 'GIS 가져오기', saveProjectBtn: '저장', dataExportBtn: 'GIS 데이터 내보내기' };
   for (const [id, text] of Object.entries(labels)) {
     const button = document.getElementById(id);
     const label = button?.querySelector('span');
     if (label) label.textContent = text;
   }
-
   document.getElementById('saveProjectBtn')?.classList.add('ghost');
   document.getElementById('dataExportBtn')?.classList.add('file-menu-export-boundary');
 }
@@ -384,12 +327,7 @@ function constrainGenericFallbackUi() {
 }
 
 function normalizeEmptyConditionalSurfaces() {
-  const selectors = [
-    '.gis-import-status',
-    '.territorial-type-impact',
-    '.ui-callout',
-    '.ui-alert',
-  ];
+  const selectors = ['.gis-import-status', '.territorial-type-impact', '.ui-callout', '.ui-alert'];
   for (const selector of selectors) {
     document.querySelectorAll(selector).forEach(node => {
       if (!node.textContent?.trim() && !node.children.length) node.hidden = true;
@@ -408,7 +346,6 @@ function markPhaseApplied() {
 export function applyPhase1UiCleanup() {
   if (document.documentElement.dataset.pandolabUiCleanupPhase1 === 'done') return;
   document.documentElement.dataset.pandolabUiCleanupPhase1 = 'done';
-
   installUiV2Styles();
   installObjectRegistryPresenter();
   normalizeCommandRows();
