@@ -1,3 +1,5 @@
+import { installStateFeedbackV2 } from './state-feedback-v2.js';
+
 const TWO_SNAP_PANEL_IDS = new Set(['leftPanel', 'createMenu']);
 const EDIT_PANEL_ID = 'rightPanel';
 const SNAP_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End']);
@@ -226,6 +228,7 @@ function observeLayout(documentRef) {
 export function installMobileSheetV2(documentRef = document) {
   if (installed) return;
   installed = true;
+  installStateFeedbackV2(documentRef);
   normalizeMobileLabels(documentRef);
   installHandleGuards(documentRef);
   observePanels(documentRef);
