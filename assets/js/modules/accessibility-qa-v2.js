@@ -53,7 +53,6 @@ function syncDialog(dialog, documentRef) {
     state.order = ++openSequence;
     const active = documentRef.activeElement;
     state.trigger = active instanceof HTMLElement && !dialog.contains(active) ? active : null;
-    dialog.inert = false;
     requestAnimationFrame(() => {
       if (!dialogOpen(dialog) || dialog.contains(documentRef.activeElement)) return;
       focusables(dialog)[0]?.focus({ preventScroll: true });
@@ -63,7 +62,6 @@ function syncDialog(dialog, documentRef) {
 
   if (!open && state.open) {
     state.open = false;
-    dialog.inert = true;
     const trigger = state.trigger;
     state.trigger = null;
     requestAnimationFrame(() => {
@@ -71,10 +69,7 @@ function syncDialog(dialog, documentRef) {
       if (topOpenDialog(documentRef)) return;
       trigger.focus({ preventScroll: true });
     });
-    return;
   }
-
-  if (!open) dialog.inert = true;
 }
 
 function installDialogGuards(documentRef) {
