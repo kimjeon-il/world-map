@@ -1,5 +1,6 @@
 import { installBoundaryGhostingGuard } from './boundary-ghosting-guard.js';
 import { installObjectRegistryPresenter } from './object-registry-presenter.js';
+import { createSemanticIcon } from './icon-utils.js';
 
 installBoundaryGhostingGuard();
 
@@ -12,7 +13,48 @@ const UI_V2_STYLES = Object.freeze([
   '../../css/components/workflow.css',
   '../../css/layout/surfaces.css',
   '../../css/features/layer-panel.css',
+  '../../css/features/editor-shell.css',
 ]);
+
+const COMMAND_ROW_ICON_BY_ID = Object.freeze({
+  multiBorderEditBtn: 'boundary',
+  annexTerritoryBtn: 'transfer',
+  mergeCountryBtn: 'merge',
+  editBorderBtn: 'boundary',
+  editCoastBtn: 'coastline',
+  changeCountryTypeBtn: 'transform',
+
+  reassignTerritoryShapeBtn: 'boundary',
+  mergeTerritoryBtn: 'merge',
+  splitTerritoryBtn: 'split',
+  transferTerritoryBtn: 'transfer',
+  changeTerritoryTypeBtn: 'transform',
+  promoteTerritoryBtn: 'country',
+  removeTerritoryDivisionBtn: 'merge',
+
+  reassignAdministrativeShapeBtn: 'boundary',
+  reconcileAdministrativeCoastBtn: 'coastline',
+  mergeAdministrativeBtn: 'merge',
+  splitAdministrativeBtn: 'split',
+  transferAdministrativeBtn: 'transfer',
+  changeAdministrativeTypeBtn: 'transform',
+  promoteAdministrativeBtn: 'country',
+  removeAdministrativeDivisionBtn: 'merge',
+
+  reassignRegionShapeBtn: 'boundary',
+  mergeRegionBtn: 'merge',
+  transferRegionBtn: 'transfer',
+
+  addTerritorialDistributionBtn: 'add',
+  addGeometryDistributionBtn: 'boundary',
+  editGenericFeatureBoundaryBtn: 'boundary',
+  mergeGenericFeatureBtn: 'merge',
+  splitGenericFeatureBtn: 'split',
+  syncGenericFeatureCoastBtn: 'coastline',
+  editGenericFeatureCoastBtn: 'coastline',
+  applyGenericFeatureToCountryBtn: 'transfer',
+  promoteGenericFeatureToCountryBtn: 'country',
+});
 
 function installUiV2Styles() {
   const revision = String(globalThis.PANDOLAB_ASSET_REVISION || '').trim();
@@ -26,6 +68,29 @@ function installUiV2Styles() {
     style.href = href.href;
     style.dataset.pandolabUiV2 = key;
     document.head.appendChild(style);
+  }
+}
+
+function commandRowChevron() {
+  return createSemanticIcon(document, 'chevronRight', 'ui-icon command-row-chevron');
+}
+
+function normalizeCommandRows() {
+  for (const [id, semanticIcon] of Object.entries(COMMAND_ROW_ICON_BY_ID)) {
+    const row = document.getElementById(id);
+    if (!(row instanceof HTMLElement)) continue;
+
+    row.classList.add('has-command-row-icon');
+
+    const nextIcon = createSemanticIcon(document, semanticIcon, 'ui-icon command-row-icon');
+    const currentIcon = row.querySelector(':scope > .command-row-icon');
+    if (currentIcon) currentIcon.replaceWith(nextIcon);
+    else row.prepend(nextIcon);
+
+    const directIcons = Array.from(row.children).filter(node => node instanceof SVGElement && node !== nextIcon);
+    const trailing = directIcons.at(-1);
+    if (trailing) trailing.replaceWith(commandRowChevron());
+    else row.appendChild(commandRowChevron());
   }
 }
 
@@ -81,6 +146,7 @@ export function applyPhase1UiCleanup() {
 
   installUiV2Styles();
   installObjectRegistryPresenter();
+  normalizeCommandRows();
   removeRedundantEditorEdge();
   removeDecorativeOnlyNodes();
   flattenHistoricalPreview();
