@@ -16,6 +16,7 @@ const UI_V2_STYLES = Object.freeze([
   '../../css/features/editor-shell.css',
   '../../css/features/map-create-panel.css',
   '../../css/features/edit-workflow.css',
+  '../../css/features/library-gis-file.css',
 ]);
 
 const COMMAND_ROW_ICON_BY_ID = Object.freeze({
@@ -62,6 +63,13 @@ const COAST_DECISION_DETAIL_BY_ID = Object.freeze({
   coastReconciliationCountryBtn: '국가 해안선을 기준으로 가져온 영역을 맞춥니다.',
   coastReconciliationAdminBtn: '가져온 영역의 해안선을 기준으로 국가 쪽을 맞춥니다.',
   coastReconciliationIndependentBtn: '두 형상을 변경하지 않고 독립적으로 유지합니다.',
+});
+
+const GIS_IMPORT_STEPS = Object.freeze(['파일', '종류', '속성', '적용', '확인']);
+const GIS_EXPORT_STEPS = Object.freeze(['데이터', '형식']);
+const GIS_EXPORT_FORMAT_HELP = Object.freeze({
+  gpkg: '하나의 GIS 패키지 파일로 저장합니다.',
+  'geojson-zip': '레이어별 GeoJSON을 ZIP 파일로 저장합니다.',
 });
 
 function installUiV2Styles() {
@@ -230,6 +238,127 @@ function normalizeEditingWorkflows() {
   normalizeEditingDialogs();
 }
 
+function addDialogHeaderIcon(modalId, semantic, className) {
+  const header = document.querySelector(`#${modalId} .ui-dialog-header`);
+  if (!(header instanceof HTMLElement) || header.querySelector(`:scope > .${className}`)) return;
+  header.prepend(createSemanticIcon(document, semantic, `ui-icon ${className}`));
+}
+
+function installVisualStepper({ modalId, indicatorId, steps }) {
+  const modal = document.getElementById(modalId);
+  const card = modal?.querySelector('.ui-dialog-card');
+  const header = card?.querySelector(':scope > .ui-dialog-header');
+  const indicator = document.getElementById(indicatorId);
+  if (!(card instanceof HTMLElement) || !(header instanceof HTMLElement) || !(indicator instanceof HTMLElement)) return;
+
+  let stepper = card.querySelector(':scope > .gis-stepper');
+  if (!(stepper instanceof HTMLOListElement)) {
+    stepper = document.createElement('ol');
+    stepper.className = `gis-stepper gis-stepper--${steps.length}`;
+    stepper.setAttribute('aria-label', '진행 단계');
+    steps.forEach((label, index) => {
+      const item = document.createElement('li');
+      item.dataset.stepNumber = String(index + 1);
+      item.textContent = label;
+      stepper.appendChild(item);
+    });
+    header.insertAdjacentElement('afterend', stepper);
+  }
+
+  const sync = () => {
+    const match = String(indicator.textContent || '').match(/(\d+)\s*\/\s*(\d+)/);
+    const current = Math.max(0, (Number(match?.[1]) || 1) - 1);
+    Array.from(stepper.children).forEach((item, index) => {
+      item.classList.toggle('is-current', index === current);
+      item.classList.toggle('is-complete', index < current);
+      if (index === current) item.setAttribute('aria-current', 'step');
+      else item.removeAttribute('aria-current');
+    });
+  };
+  sync();
+  new MutationObserver(sync).observe(indicator, { childList: true, characterData: true, subtree: true });
+}
+
+function normalizeLibraryPresentation() {
+  const card = document.querySelector('#historicalLibraryModal .historical-library-card');
+  if (card instanceof HTMLElement) card.classList.add('library-workflow-card');
+  addDialogHeaderIcon('historicalLibraryModal', 'library', 'library-dialog-icon');
+}
+
+function normalizeGisExportFormat() {
+  const select = document.getElementById('gisExportFormat');
+  if (!(select instanceof HTMLSelectElement) || select.dataset.v2RadioPresentation === 'true') return;
+  select.dataset.v2RadioPresentation = 'true';
+  select.classList.add('gis-export-format-native');
+
+  const host = select.closest('.field-group');
+  if (!(host instanceof HTMLElement)) return;
+  host.classList.add('gis-export-format-field');
+
+  const list = document.createElement('div');
+  list.className = 'gis-export-format-list';
+  list.setAttribute('role', 'radiogroup');
+  list.setAttribute('aria-label', '파일 형식');
+
+  for (const option of Array.from(select.options)) {
+    const label = document.createElement('label');
+    label.className = 'gis-export-format-option';
+
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = 'gisExportFormatPresentation';
+    radio.value = option.value;
+    radio.checked = option.value === select.value;
+
+    const copy = document.createElement('span');
+    copy.className = 'gis-export-format-copy';
+    const strong = document.createElement('strong');
+    strong.textContent = option.textContent;
+    const small = document.createElement('small');
+    small.textContent = GIS_EXPORT_FORMAT_HELP[option.value] || '';
+    copy.append(strong, small);
+    label.append(radio, copy);
+    list.appendChild(label);
+
+    radio.addEventListener('change', () => {
+      if (!radio.checked) return;
+      select.value = radio.value;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+
+  select.insertAdjacentElement('afterend', list);
+  select.addEventListener('change', () => {
+    list.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.checked = radio.value === select.value;
+    });
+  });
+}
+
+function normalizeFileMenuPresentation() {
+  const labels = {
+    openGisBtn: 'GIS 가져오기',
+    saveProjectBtn: '저장',
+    dataExportBtn: 'GIS 데이터 내보내기',
+  };
+  for (const [id, text] of Object.entries(labels)) {
+    const button = document.getElementById(id);
+    const label = button?.querySelector('span');
+    if (label) label.textContent = text;
+  }
+
+  document.getElementById('saveProjectBtn')?.classList.add('ghost');
+  document.getElementById('dataExportBtn')?.classList.add('file-menu-export-boundary');
+}
+
+function normalizeLibraryGisFilePresentation() {
+  normalizeLibraryPresentation();
+  installVisualStepper({ modalId: 'gisImportModal', indicatorId: 'gisStepIndicator', steps: GIS_IMPORT_STEPS });
+  installVisualStepper({ modalId: 'gisExportModal', indicatorId: 'gisExportStepIndicator', steps: GIS_EXPORT_STEPS });
+  normalizeGisExportFormat();
+  normalizeFileMenuPresentation();
+}
+
 function removeRedundantEditorEdge() {
   document.querySelector('.editor-edge-slot')?.remove();
 }
@@ -285,6 +414,7 @@ export function applyPhase1UiCleanup() {
   normalizeCommandRows();
   normalizeMapCreateSurfaceLabels();
   normalizeEditingWorkflows();
+  normalizeLibraryGisFilePresentation();
   removeRedundantEditorEdge();
   removeDecorativeOnlyNodes();
   flattenHistoricalPreview();
