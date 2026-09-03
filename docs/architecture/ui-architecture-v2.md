@@ -1,6 +1,6 @@
 # UI Architecture v2
 
-이 문서는 판도연구소 UI가 기능 추가 과정에서 다시 개별 CSS 패치의 집합으로 변하는 것을 막기 위한 강제 규칙이다. 1단계의 목적은 화면을 다시 그리는 것이 아니라 **새 부채가 생기지 않는 경계**를 먼저 세우는 것이다.
+이 문서는 판도연구소 UI가 기능 추가 과정에서 다시 개별 CSS 패치의 집합으로 변하는 것을 막기 위한 강제 규칙이다. UI v2의 목적은 화면을 다시 그리는 것이 아니라 **새 부채가 생기지 않는 경계와 canonical owner를 유지하는 것**이다.
 
 ## 1. 계층과 책임
 
@@ -69,7 +69,7 @@
 
 ## 4. Surface DOM contract
 
-지도 / 추가 / 편집은 외형과 위치가 달라도 내부 shell 계약은 동일하다.
+지도 / 만들기 / 편집은 외형과 위치가 달라도 내부 shell 계약은 동일하다.
 
 ```text
 workspace-surface
@@ -91,26 +91,41 @@ workspace-surface
 
 ## 5. Legacy CSS ratchet
 
-현재 `app.css`와 `phase1-ui-cleanup.css`는 UI v2 계층 분리 이전의 legacy 파일이다. 1단계에서는 대규모 이동을 하지 않고 **Legacy CSS ratchet**으로 동결한다.
+`phase1-ui-cleanup.css`와 해당 runtime loader는 UI v2 convergence 단계에서 제거되었다. 현재 root-level legacy stylesheet로 허용되는 것은 `app.css` 하나뿐이다.
 
 - 새 root-level CSS 파일을 추가하지 않는다.
-- legacy 파일의 byte budget은 늘리지 않는다.
-- 후속 UI 간소화 단계에서는 규칙을 새 계층으로 이동하면서 budget을 낮춘다.
-- `phase1-ui-cleanup.css`는 추가 보정 패치를 쌓는 장소로 사용하지 않는다.
+- `app.css`의 byte budget은 늘리지 않는다.
+- generic UI 규칙은 layered CSS로 이동하면서 `app.css` budget을 계속 낮춘다.
+- layered UI에 legacy 파일과 같은 selector/override 부채를 다시 만들지 않는다.
 - 기존 부채가 존재한다는 이유로 새 코드에 동일한 예외를 허용하지 않는다.
 
-이 방식은 현재 화면을 한 번에 깨뜨리지 않으면서도 새 누더기 CSS가 들어오는 것을 막기 위한 과도기 정책이다.
+이 ratchet은 남은 `app.css`를 점진적으로 축소하면서도 현재 renderer/domain 표현을 한 번에 깨뜨리지 않기 위한 경계다.
 
-## 6. CI 계약
+## 6. Runtime ownership
+
+정적 presentation은 HTML/CSS가 소유하고, 동적 UI state는 해당 controller가 소유한다.
+
+- Surface open/close, `aria-hidden`, `inert`: `surface-controller.js`
+- Mobile sheet snap과 직접 편집 전환: `mobile-sheet-controller.js`
+- Toast/feedback routing: `feedback-controller.js`
+- Dialog focus containment/restore: dialog controller 및 `dialog-accessibility-controller.js`
+- Library listbox selection/keyboard: `historical-library-controller.js`
+- 공통 UI initialization: `ui-runtime.js`
+
+문자열이나 렌더된 DOM을 관찰해서 domain state를 역추론하는 방식보다 명시적 controller state와 event를 우선한다.
+
+## 7. CI 계약
 
 다음 검사는 모두 `pnpm test`의 일부여야 한다.
 
-- `check:ui-spacing`: 기존 spacing/token 충돌 검사
+- `check:ui-spacing`: spacing/token 충돌 검사
 - `check:ui-components`: primitive/component 조합 검사
-- `check:ui-architecture`: 계층, Surface DOM contract, legacy ratchet 및 새 layered CSS 소유권 검사
+- `check:ui-architecture`: 계층, Surface DOM contract, legacy ratchet 및 retired artifact 검사
 
 UI 예외를 추가해서 검사를 우회하는 것보다 기존 primitive/component를 확장하는 것을 우선한다. 예외가 필요한 경우 이유가 코드에 남아야 하며 범위는 최소여야 한다.
 
-## 7. 후속 단계와의 경계
+## 8. 후속 정리 경계
 
-이 단계에서는 UI를 대규모로 재배치하거나 기능 동작을 바꾸지 않는다. 다음 단계에서 Surface/Section/Field/ActionList 등의 공통 component로 실제 CSS와 DOM을 이동하면서 legacy budget을 지속적으로 낮춘다.
+UI v2의 전용 phase cleanup layer는 더 이상 production runtime에 존재하지 않는다. 이후 UI 정리는 `app.css`의 남은 generic rule을 canonical layered CSS로 이동하고, static markup으로 옮길 수 있는 presentation mutation을 줄이는 방식으로 진행한다.
+
+기능/domain state와 renderer를 UI 정리와 동시에 재작성하지 않는다.
