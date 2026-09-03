@@ -1,5 +1,6 @@
 import { installBoundaryGhostingGuard } from './boundary-ghosting-guard.js';
 import { installObjectRegistryPresenter } from './object-registry-presenter.js';
+import { installReferenceImageController } from './reference-image-controller.js';
 
 installBoundaryGhostingGuard();
 
@@ -12,6 +13,7 @@ const UI_V2_STYLES = Object.freeze([
   '../../css/components/workflow.css',
   '../../css/layout/surfaces.css',
   '../../css/features/layer-panel.css',
+  '../../css/features/reference-images.css',
 ]);
 
 function installUiV2Styles() {
@@ -81,6 +83,7 @@ export function applyPhase1UiCleanup() {
 
   installUiV2Styles();
   installObjectRegistryPresenter();
+  installReferenceImageController();
   removeRedundantEditorEdge();
   removeDecorativeOnlyNodes();
   flattenHistoricalPreview();
