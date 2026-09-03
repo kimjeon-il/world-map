@@ -1,0 +1,58 @@
+name: UI14 static convergence
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/ui14-finalize.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Bake static UI v2 markup and breakpoint contract
+        run: node scripts/finalize-ui-v2-static.mjs
+
+      - name: Validate changed JavaScript syntax
+        run: |
+          node --check assets/js/bootstrap.js
+          node --check assets/js/app.js
+          node --check assets/js/modules/ui-runtime.js
+          node --check assets/js/modules/mobile-sheet-controller.js
+          node --check assets/js/modules/feedback-controller.js
+          node --check assets/js/modules/dialog-accessibility-controller.js
+          node --check assets/js/modules/surface-controller.js
+          node --check assets/js/modules/historical-library-controller.js
+
+      - name: Regenerate build metadata and asset revision
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:12}"
+          PANDOLAB_BUILD_ID="ui14-${SHORT_SHA}" node scripts/generate-build-metadata.mjs
+
+      - name: Verify generated diff
+        run: git diff --check
+
+      - name: Commit generated UI convergence
+        run: |
+          if git diff --quiet; then
+            echo "No generated changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/js/app.js assets/js/build-meta.js README.md
+          git commit -m "chore: finalize ui v2 static metadata"
+          git push
