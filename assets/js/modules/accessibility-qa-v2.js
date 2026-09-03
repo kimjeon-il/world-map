@@ -10,6 +10,7 @@ const FOCUSABLE_SELECTOR = [
 const MODAL_SELECTOR = '.ui-dialog[aria-modal="true"]:not(#confirmModal)';
 const SHEET_IDS = Object.freeze(['leftPanel', 'createMenu', 'rightPanel']);
 const LISTBOX_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Home', 'End']);
+const LEGACY_COMPACT_QUERY = '(min-width: 800px) and (max-width: 1359px)';
 
 let installed = false;
 let openSequence = 0;
@@ -196,6 +197,26 @@ function normalizeViewportAccessibility(documentRef) {
   viewport.setAttribute('content', 'width=device-width, initial-scale=1, viewport-fit=cover');
 }
 
+function normalizeLayoutBreakpointContract(windowRef) {
+  if (!windowRef || windowRef.__PANDOLAB_UI13_LAYOUT_PATCHED__) return;
+  const prototype = windowRef.MediaQueryList?.prototype;
+  const descriptor = prototype ? Object.getOwnPropertyDescriptor(prototype, 'matches') : null;
+  if (!descriptor?.get || descriptor.configurable === false) return;
+
+  Object.defineProperty(prototype, 'matches', {
+    configurable: true,
+    enumerable: descriptor.enumerable,
+    get() {
+      if (String(this.media || '').replace(/\s+/g, ' ').trim() === LEGACY_COMPACT_QUERY) {
+        return windowRef.innerWidth >= 800 && windowRef.innerWidth <= 1199;
+      }
+      return descriptor.get.call(this);
+    },
+  });
+  windowRef.__PANDOLAB_UI13_LAYOUT_PATCHED__ = true;
+  requestAnimationFrame(() => windowRef.dispatchEvent(new Event('resize')));
+}
+
 function installStyle(documentRef) {
   if (documentRef.querySelector('link[data-pandolab-ui-v2="features-responsive-accessibility"]')) return;
   const href = new URL('../../css/features/responsive-accessibility.css', import.meta.url);
@@ -212,6 +233,7 @@ export function installAccessibilityQaV2(documentRef = document) {
   if (installed) return;
   installed = true;
   normalizeViewportAccessibility(documentRef);
+  normalizeLayoutBreakpointContract(documentRef.defaultView || globalThis.window);
   installStyle(documentRef);
   installDialogGuards(documentRef);
   syncHiddenSurfaceInert(documentRef);
