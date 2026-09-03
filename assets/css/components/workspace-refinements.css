@@ -1,0 +1,113 @@
+/* Canonical refinements migrated from the former root-level cleanup sheet. */
+
+.workspace,
+.overlay-root {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.overlay-root {
+  pointer-events: none;
+}
+
+.overlay-root > * {
+  pointer-events: auto;
+}
+
+.map-command-toolbar,
+.map-view-toolbar,
+.mobile-zoom-dock {
+  width: max-content;
+  max-width: calc(100% - var(--map-safe-left, 0px) - var(--map-safe-right, 0px) - (var(--ui-map-edge) * 2));
+  align-self: start;
+  justify-self: start;
+}
+
+.map-view-toolbar {
+  justify-self: end;
+}
+
+.editor-section-title {
+  margin-bottom: var(--ui-space-1);
+}
+
+.historical-library-card {
+  width: min(65rem, calc(100vw - (var(--ui-dialog-edge) * 2)));
+  max-width: 65rem;
+  height: min(47.5rem, calc(100dvh - (var(--ui-dialog-edge) * 2)));
+  max-height: min(47.5rem, calc(100dvh - (var(--ui-dialog-edge) * 2)));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.historical-library-layout {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(17.5rem, 40fr) minmax(22.5rem, 60fr);
+  gap: var(--ui-space-4);
+  overflow: hidden;
+}
+
+.historical-library-results,
+.historical-library-preview {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+}
+
+.historical-library-preview {
+  padding: 0;
+  border: var(--ui-border-width) solid var(--ui-card-border);
+  border-radius: var(--ui-radius-panel);
+  background: var(--ui-card-bg);
+  box-shadow: var(--control-shadow);
+}
+
+.historical-library-preview-map {
+  border-color: var(--ui-card-border);
+  border-radius: var(--ui-radius-control);
+  background: var(--ui-card-bg);
+  box-shadow: none;
+}
+
+.historical-library-card .ui-disclosure {
+  border: var(--ui-border-width) solid var(--ui-card-border);
+  border-radius: var(--ui-radius-panel);
+  background: var(--ui-card-bg);
+}
+
+:is(.gis-import-status, .territorial-type-impact, .ui-callout, .ui-alert, .editor-help):empty {
+  display: none;
+  min-height: 0;
+}
+
+.editor-flag-preview,
+.historical-library-preview-map,
+.ui-info-list {
+  box-shadow: none;
+}
+
+[data-layout="mobile"] .historical-library-card {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  border-radius: var(--ui-radius-panel);
+}
+
+[data-layout="mobile"] .historical-library-layout {
+  grid-template-columns: 1fr;
+}
+
+[data-layout="mobile"] :is(.historical-library-results, .historical-library-preview) {
+  max-height: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .historical-library-card {
+    transition-duration: .01ms;
+  }
+}
