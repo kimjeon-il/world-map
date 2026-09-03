@@ -244,6 +244,14 @@ function installDirectEditFocusGuard(documentRef) {
   });
 }
 
+function normalizeViewportAccessibility(documentRef) {
+  const viewport = documentRef.querySelector('meta[name="viewport"]');
+  if (!viewport) return;
+  const content = String(viewport.getAttribute('content') || '');
+  if (!/maximum-scale\s*=\s*1|user-scalable\s*=\s*no/i.test(content)) return;
+  viewport.setAttribute('content', 'width=device-width, initial-scale=1, viewport-fit=cover');
+}
+
 function installStyle(documentRef) {
   if (documentRef.querySelector('link[data-pandolab-ui-v2="features-responsive-accessibility"]')) return;
   const href = new URL('../../css/features/responsive-accessibility.css', import.meta.url);
@@ -259,6 +267,7 @@ function installStyle(documentRef) {
 export function installAccessibilityQaV2(documentRef = document) {
   if (installed) return;
   installed = true;
+  normalizeViewportAccessibility(documentRef);
   installStyle(documentRef);
   installDialogGuards(documentRef);
   syncHiddenSurfaceInert(documentRef);
