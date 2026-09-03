@@ -76,9 +76,11 @@
   opacity: 1;
 }
 
+/* One disclosure glyph, one state rule. Text chevrons are not used. */
 .layer-folder-row .disclosure-icon,
 .layer-subfolder-row .disclosure-icon {
   transform: rotate(0deg);
+  transition: transform 140ms ease;
 }
 .layer-folder-row[aria-expanded="false"] .disclosure-icon,
 .layer-subfolder-row[aria-expanded="false"] .disclosure-icon {
@@ -117,7 +119,8 @@
 @media (prefers-reduced-motion: reduce) {
   .layer-folder-row .layer-folder-toggle,
   .layer-folder-row .layer-style-toggle,
-  .layer-child-menu {
+  .layer-child-menu,
+  .disclosure-icon {
     transition: none;
   }
 }
