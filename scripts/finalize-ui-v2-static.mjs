@@ -71,9 +71,16 @@ if (bootstrapLegacyConstants.test(bootstrap)) bootstrap = bootstrap.replace(boot
 const bootstrapCompatibilityFunctions = /  function normalizeViewportAccessibility\(\) \{[\s\S]*?\n  \}\n\n  function installLayoutContract\(\) \{[\s\S]*?\n  \}\n\n  normalizeViewportAccessibility\(\);\n  installLayoutContract\(\);\n\n/;
 if (bootstrapCompatibilityFunctions.test(bootstrap)) bootstrap = bootstrap.replace(bootstrapCompatibilityFunctions, '');
 
-bootstrap = bootstrap
-  .replace('../css/features/state-feedback.css', '../css/components/feedback.css')
-  .replace('../css/features/responsive-accessibility.css', '../css/utilities/accessibility.css');
+const styleMoves = Object.freeze([
+  ['../css/features/editor-shell.css', '../css/components/editor-shell.css'],
+  ['../css/features/edit-workflow.css', '../css/components/edit-workflow.css'],
+  ['../css/features/map-create-panel.css', '../css/components/map-create-panel.css'],
+  ['../css/features/library-gis-file.css', '../css/components/library-gis-file.css'],
+  ['../css/features/mobile-sheets.css', '../css/components/mobile-sheets.css'],
+  ['../css/features/state-feedback.css', '../css/components/feedback.css'],
+  ['../css/features/responsive-accessibility.css', '../css/utilities/accessibility.css'],
+]);
+for (const [legacyPath, canonicalPath] of styleMoves) bootstrap = bootstrap.replace(legacyPath, canonicalPath);
 
 if (/maximum-scale\s*=\s*1|user-scalable\s*=\s*no/i.test(index)) {
   throw new Error('viewport zoom restriction remains after migration');
@@ -84,10 +91,11 @@ if (/max-width:\s*1359px/.test(app)) throw new Error('legacy compact breakpoint 
 if (/LEGACY_COMPACT_QUERY|installLayoutContract|normalizeViewportAccessibility/.test(bootstrap)) {
   throw new Error('bootstrap compatibility shim remains after migration');
 }
-if (!bootstrap.includes('../css/components/feedback.css')) throw new Error('canonical feedback stylesheet is not loaded');
-if (!bootstrap.includes('../css/utilities/accessibility.css')) throw new Error('canonical accessibility stylesheet is not loaded');
+for (const [, canonicalPath] of styleMoves) {
+  if (!bootstrap.includes(canonicalPath)) throw new Error(`canonical stylesheet is not loaded: ${canonicalPath}`);
+}
 
 fs.writeFileSync(indexPath, index, 'utf8');
 fs.writeFileSync(appPath, app, 'utf8');
 fs.writeFileSync(bootstrapPath, bootstrap, 'utf8');
-console.log('Finalized UI v2 static markup, bootstrap, and breakpoint contract.');
+console.log('Finalized UI v2 static markup, bootstrap, breakpoint, and stylesheet ownership.');
