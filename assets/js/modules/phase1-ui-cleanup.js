@@ -6,12 +6,15 @@ installBoundaryGhostingGuard();
 
 const UI_V2_STYLES = Object.freeze([
   '../../css/tokens/ui-v2.css',
+  '../../css/tokens/reference-images.css',
   '../../css/primitives/controls.css',
   '../../css/components/surface.css',
   '../../css/components/content.css',
   '../../css/components/command-row.css',
   '../../css/components/workflow.css',
+  '../../css/components/reference-images.css',
   '../../css/layout/surfaces.css',
+  '../../css/layout/reference-images.css',
   '../../css/features/layer-panel.css',
   '../../css/features/reference-images.css',
 ]);
