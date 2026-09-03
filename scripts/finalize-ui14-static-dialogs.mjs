@@ -11,12 +11,11 @@ function addClassById(source, id, className) {
   return source.replace(pattern, (_, before, classes, after) => `${before}${classes.split(/\\s+/).includes(className) ? classes : `${classes} ${className}`.trim()}${after}`);
 }
 
-function addClassesToExact(source, exactClasses, additions) {
-  const pattern = new RegExp(`class=["']${exactClasses.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`);
-  return source.replace(pattern, match => {
-    const quote = match.includes('"') ? '"' : "'";
-    const classes = [...new Set([...exactClasses.split(/\s+/), ...additions])].join(' ');
-    return `class=${quote}${classes}${quote}`;
+function addClassesToModalCard(source, modalId, additions) {
+  const pattern = new RegExp(`(<div\\b[^>]*\\bid=["']${modalId}["'][^>]*>[\\s\\S]*?<section\\b[^>]*\\bclass=["'])([^"']*)(["'][^>]*>)`, 'i');
+  return source.replace(pattern, (_, before, classes, after) => {
+    const next = [...new Set([...classes.split(/\s+/).filter(Boolean), ...additions])].join(' ');
+    return `${before}${next}${after}`;
   });
 }
 
@@ -44,10 +43,10 @@ html = addDescribedBy(html, 'territorialTypeModal', 'territorialTypeContext');
 html = addDescribedBy(html, 'confirmModal', 'confirmModalMessage');
 html = addDescribedBy(html, 'coastReconciliationModal', 'coastReconciliationMessage');
 
-html = addClassesToExact(html, 'ui-dialog-card ui-workflow-shell confirm-modal-card territorial-type-card', ['workflow-dialog-card', 'workflow-dialog--standard']);
-html = addClassesToExact(html, 'confirm-modal-card', ['workflow-dialog-card', 'workflow-dialog--compact']);
-html = addClassesToExact(html, 'confirm-modal-card coast-reconciliation-card', ['workflow-dialog-card', 'workflow-dialog--wide', 'workflow-dialog--decision']);
-html = addClassesToExact(html, 'ui-dialog-card ui-workflow-shell historical-library-card ui-scroll-surface', ['library-workflow-card']);
+html = addClassesToModalCard(html, 'territorialTypeModal', ['workflow-dialog-card', 'workflow-dialog--standard']);
+html = addClassesToModalCard(html, 'confirmModal', ['workflow-dialog-card', 'workflow-dialog--compact']);
+html = addClassesToModalCard(html, 'coastReconciliationModal', ['workflow-dialog-card', 'workflow-dialog--wide', 'workflow-dialog--decision']);
+html = addClassesToModalCard(html, 'historicalLibraryModal', ['library-workflow-card']);
 
 html = addClassById(html, 'territorialTypeTitle', 'workflow-dialog-title');
 html = addClassById(html, 'confirmModalTitle', 'workflow-dialog-title');
@@ -64,8 +63,8 @@ html = prependIconBeforeHeading(html, 'coastReconciliationTitle', 'coastline');
 
 if (!html.includes('library-dialog-icon')) {
   html = html.replace(
-    /(<header class="ui-dialog-header">\s*)(<div><h2 id="historicalLibraryTitle">)/,
-    '$1<svg class="ui-icon library-dialog-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-library"/></svg>$2',
+    /(<div id="historicalLibraryModal"[\s\S]*?<header class="ui-dialog-header">\s*)/,
+    '$1<svg class="ui-icon library-dialog-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-library"/></svg>',
   );
 }
 
@@ -73,32 +72,15 @@ html = appendButtonHelp(html, 'coastReconciliationCountryBtn', '국가 해안선
 html = appendButtonHelp(html, 'coastReconciliationAdminBtn', '가져온 영역의 해안선을 기준으로 국가 쪽을 맞춥니다.');
 html = appendButtonHelp(html, 'coastReconciliationIndependentBtn', '두 형상을 변경하지 않고 독립적으로 유지합니다.');
 
-html = html.replace(
-  /class="confirm-modal-actions ui-dialog-actions"/g,
-  'class="confirm-modal-actions ui-dialog-actions workflow-dialog-actions"',
-);
-html = html.replace(
-  /class="confirm-modal-actions coast-reconciliation-actions"/g,
-  'class="confirm-modal-actions coast-reconciliation-actions workflow-dialog-actions"',
-);
-html = html.replace(
-  /class="confirm-modal-actions"/g,
-  'class="confirm-modal-actions workflow-dialog-actions"',
-);
+html = html.replace(/class="confirm-modal-actions ui-dialog-actions"/g, 'class="confirm-modal-actions ui-dialog-actions workflow-dialog-actions"');
+html = html.replace(/class="confirm-modal-actions coast-reconciliation-actions"/g, 'class="confirm-modal-actions coast-reconciliation-actions workflow-dialog-actions"');
+html = html.replace(/class="confirm-modal-actions"/g, 'class="confirm-modal-actions workflow-dialog-actions"');
 html = html.replace(
   /(<[^>]+\bid="historicalLibraryPreview"[^>]+\bclass=")([^"]*)(")/,
   (_, before, classes, after) => `${before}${classes.split(/\s+/).filter(name => name !== 'ui-card').join(' ')}${after}`,
 );
 
-for (const required of [
-  'workflow-dialog--standard',
-  'workflow-dialog--compact',
-  'workflow-dialog--wide',
-  'workflow-dialog--decision',
-  'library-workflow-card',
-  'library-dialog-icon',
-  'workflow-option-detail',
-]) {
+for (const required of ['workflow-dialog--standard', 'workflow-dialog--compact', 'workflow-dialog--wide', 'workflow-dialog--decision', 'library-workflow-card', 'library-dialog-icon', 'workflow-option-detail']) {
   if (!html.includes(required)) throw new Error(`static dialog convergence missing: ${required}`);
 }
 
