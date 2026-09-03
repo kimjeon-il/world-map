@@ -14,6 +14,7 @@ const UI_V2_STYLES = Object.freeze([
   '../../css/layout/surfaces.css',
   '../../css/features/layer-panel.css',
   '../../css/features/editor-shell.css',
+  '../../css/features/map-create-panel.css',
 ]);
 
 const COMMAND_ROW_ICON_BY_ID = Object.freeze({
@@ -94,6 +95,20 @@ function normalizeCommandRows() {
   }
 }
 
+function normalizeMapCreateSurfaceLabels() {
+  const mapSheetTitle = document.getElementById('mapSheetTitle');
+  if (mapSheetTitle) mapSheetTitle.textContent = '지도';
+
+  const mapViewTab = document.getElementById('mapViewTabBtn');
+  if (mapViewTab) mapViewTab.textContent = '지도';
+
+  const terrainTitle = document.getElementById('terrainLayerSettingsTitle');
+  if (terrainTitle) terrainTitle.textContent = '지형';
+
+  const projectionControl = document.getElementById('projectionControl');
+  if (projectionControl) projectionControl.setAttribute('aria-label', '투영법');
+}
+
 function removeRedundantEditorEdge() {
   document.querySelector('.editor-edge-slot')?.remove();
 }
@@ -147,6 +162,7 @@ export function applyPhase1UiCleanup() {
   installUiV2Styles();
   installObjectRegistryPresenter();
   normalizeCommandRows();
+  normalizeMapCreateSurfaceLabels();
   removeRedundantEditorEdge();
   removeDecorativeOnlyNodes();
   flattenHistoricalPreview();
