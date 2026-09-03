@@ -30,10 +30,10 @@
   "meshAlgorithmRevision": 3,
   "meshVertices": 127852,
   "countriesCompressedBytes": 819972,
-  "meshCompressedBytes": 1759193,
-  "combinedCompressedBytes": 2579165,
+  "meshCompressedBytes": 1766579,
+  "combinedCompressedBytes": 2586551,
   "countriesSha256": "4fcc36ac0a4931c67115cdd722068e85d590313faf75520e136185232753e3b4",
-  "meshSha256": "1ae18fa4a0337cfe9064b067c6b8a064f23b50b27417f42e87c958b0556b620c",
+  "meshSha256": "df4f8601c7edea76b0c19c80354e1356eb9be6711f31abe2d210881bcb9f924c",
   "assets": {
     "previewCountries": {
       "url": "countries-preview-v0.32.0.geojson.gz",
@@ -45,18 +45,22 @@
     "previewMesh": {
       "url": "world-mesh-preview-v0.32.0.bin.gz",
       "encoding": "gzip",
-      "compressedBytes": 1759193,
-      "decodedBytes": 3912492,
-      "sha256": "1ae18fa4a0337cfe9064b067c6b8a064f23b50b27417f42e87c958b0556b620c",
+      "compressedBytes": 1766579,
+      "decodedBytes": 3921796,
+      "sha256": "df4f8601c7edea76b0c19c80354e1356eb9be6711f31abe2d210881bcb9f924c",
       "header": [
         1129137969,
-        1,
+        2,
         258,
         127852,
         461871,
         196614,
         100013,
-        3
+        3,
+        516,
+        516,
+        1032,
+        258
       ]
     },
     "labelAnchors": {
@@ -76,18 +80,22 @@
     "canonicalMesh": {
       "url": "world-mesh-v0.12.6.bin.gz",
       "encoding": "gzip",
-      "compressedBytes": 14626436,
-      "decodedBytes": 32691712,
-      "sha256": "aa3065349bdb4ca0023449173104a64a8965a7fbfcfa5044c10af5890c0f9f18",
+      "compressedBytes": 14633703,
+      "decodedBytes": 32701016,
+      "sha256": "c29d1f577cd2d9853f8fb13117076554c889730962d25974b24b3b52d1fede73",
       "header": [
         1129137969,
-        1,
+        2,
         258,
         1028628,
         4514562,
         1086788,
         548464,
-        3
+        3,
+        516,
+        516,
+        1032,
+        258
       ]
     }
   }
