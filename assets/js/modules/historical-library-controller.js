@@ -1,3 +1,5 @@
+const LISTBOX_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Home', 'End']);
+
 export function createHistoricalLibraryController({
   document,
   elements,
@@ -156,6 +158,7 @@ export function createHistoricalLibraryController({
       button.dataset.libraryEntityId = entity.libraryId;
       button.setAttribute('role', 'option');
       button.setAttribute('aria-selected', String(selected));
+      button.tabIndex = selected ? 0 : -1;
       const strong = document.createElement('strong');
       strong.textContent = entity.displayNames?.ko || entity.canonicalName;
       const small = document.createElement('small');
@@ -163,8 +166,10 @@ export function createHistoricalLibraryController({
       button.append(strong, small);
       fragment.appendChild(button);
     }
-    if (!results.length) fragment.appendChild(createEmptyState('조건에 맞는 항목이 없습니다.', '검색어, 종류, 상태 또는 기준 연도를 바꾸 보세요.', { compact: true }));
+    if (!results.length) fragment.appendChild(createEmptyState('조건에 맞는 항목이 없습니다.', '검색어, 종류, 상태 또는 기준 연도를 바꿔 보세요.', { compact: true }));
     elements.results.replaceChildren(fragment);
+    const options = [...elements.results.querySelectorAll('[role="option"]')];
+    if (options.length && !options.some(option => option.tabIndex === 0)) options[0].tabIndex = 0;
     if (selectedId && !results.some(entity => entity.libraryId === selectedId)) {
       selectedId = '';
       renderPreview();
@@ -292,6 +297,27 @@ export function createHistoricalLibraryController({
     elements.results?.addEventListener('click', event => {
       const button = event.target.closest('[data-library-entity-id]');
       if (button) select(button.dataset.libraryEntityId);
+    });
+    elements.results?.addEventListener('keydown', event => {
+      if (!LISTBOX_KEYS.has(event.key)) return;
+      const options = [...elements.results.querySelectorAll('[role="option"][data-library-entity-id]')];
+      if (!options.length) return;
+      const current = event.target.closest('[role="option"]');
+      const currentIndex = Math.max(0, options.indexOf(current));
+      const nextIndex = event.key === 'Home' ? 0
+        : event.key === 'End' ? options.length - 1
+          : event.key === 'ArrowDown' ? Math.min(options.length - 1, currentIndex + 1)
+            : Math.max(0, currentIndex - 1);
+      const next = options[nextIndex];
+      if (!(next instanceof HTMLElement)) return;
+      event.preventDefault();
+      options.forEach(option => { option.tabIndex = option === next ? 0 : -1; });
+      if (isMobile()) {
+        next.focus({ preventScroll: true });
+        return;
+      }
+      select(next.dataset.libraryEntityId);
+      requestFrame(() => elements.results.querySelector('[aria-selected="true"]')?.focus({ preventScroll: true }));
     });
     elements.add?.addEventListener('click', advanceAdd);
     elements.optionsBack?.addEventListener('click', returnToDetail);
