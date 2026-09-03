@@ -23,7 +23,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Bake static UI v2 markup and breakpoint contract
         run: node scripts/finalize-ui-v2-static.mjs
@@ -57,4 +57,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html assets/js/app.js assets/js/bootstrap.js assets/js/build-meta.js README.md
           git commit -m "chore: finalize ui v2 static metadata"
-          git push
+          git pull --rebase origin main
+          git push origin HEAD:main
