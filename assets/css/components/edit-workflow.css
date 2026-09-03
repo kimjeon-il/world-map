@@ -1,9 +1,7 @@
-/* UI-09: shared grammar for direct map-edit sessions and editing dialogs.
- * Existing controllers, ids, tool state, transactions, and preview state remain canonical. */
+/* Shared grammar for direct map-edit sessions and editing dialogs. */
 
-/* ---------- Map editing session ---------- */
 .workflow-map-session.mode-task-window {
-  width: min(420px, calc(100vw - (var(--ui-space-6) * 2)));
+  width: min(26.25rem, calc(100vw - (var(--ui-space-6) * 2)));
   overflow: hidden;
 }
 
@@ -25,9 +23,7 @@
   gap: var(--ui-space-1-5);
 }
 
-.workflow-map-session .mode-task-icon {
-  color: var(--muted);
-}
+.workflow-map-session .mode-task-icon { color: var(--muted); }
 
 .workflow-map-session .mode-task-heading > strong {
   min-width: 0;
@@ -60,9 +56,7 @@
   gap: var(--ui-space-1);
 }
 
-.workflow-map-session .mode-task-window-content {
-  min-width: 0;
-}
+.workflow-map-session .mode-task-window-content { min-width: 0; }
 
 .workflow-map-session .mode-task-window-body {
   display: grid;
@@ -71,9 +65,7 @@
 }
 
 .workflow-map-session .mode-task-context,
-.workflow-map-session .mode-task-detail {
-  min-width: 0;
-}
+.workflow-map-session .mode-task-detail { min-width: 0; }
 
 .workflow-map-session .mode-task-instruction {
   margin: 0;
@@ -119,9 +111,7 @@
   color: var(--text-strong);
 }
 
-.workflow-map-session .mode-river-boundary-option {
-  min-height: var(--ui-v2-control-md);
-}
+.workflow-map-session .mode-river-boundary-option { min-height: var(--ui-v2-control-md); }
 
 .workflow-map-session .mode-action-bar {
   position: static;
@@ -142,9 +132,7 @@
   gap: var(--ui-space-2);
 }
 
-.workflow-map-session :is(.mode-cancel-btn, .mode-primary-btn) {
-  min-height: var(--ui-v2-control-md);
-}
+.workflow-map-session :is(.mode-cancel-btn, .mode-primary-btn) { min-height: var(--ui-v2-control-md); }
 
 .workflow-map-session .mode-cancel-btn {
   border-color: var(--ui-control-border);
@@ -158,7 +146,6 @@
   color: var(--accent-text);
 }
 
-/* ---------- Shared editing dialog ---------- */
 .workflow-dialog-card {
   display: grid;
   grid-template-columns: var(--ui-icon-size) minmax(0, 1fr);
@@ -167,22 +154,14 @@
   padding: var(--ui-dialog-padding);
 }
 
-.workflow-dialog--compact {
-  width: min(var(--ui-confirm-modal-width), calc(100vw - (var(--ui-dialog-edge) * 2)));
-}
-
-.workflow-dialog--standard {
-  width: min(600px, calc(100vw - (var(--ui-dialog-edge) * 2)));
-}
-
-.workflow-dialog--wide {
-  width: min(max(var(--ui-coast-modal-width), 620px), calc(100vw - (var(--ui-dialog-edge) * 2)));
-}
+.workflow-dialog--compact { width: min(var(--ui-confirm-modal-width), calc(100vw - (var(--ui-dialog-edge) * 2))); }
+.workflow-dialog--standard { width: min(37.5rem, calc(100vw - (var(--ui-dialog-edge) * 2))); }
+.workflow-dialog--wide { width: min(max(var(--ui-coast-modal-width), 38.75rem), calc(100vw - (var(--ui-dialog-edge) * 2))); }
 
 .workflow-dialog-card > .workflow-dialog-icon {
   grid-column: 1;
   grid-row: 1 / span 2;
-  margin-top: 2px;
+  margin-top: var(--ui-space-0-5);
   color: var(--muted);
 }
 
@@ -203,14 +182,7 @@
   line-height: var(--ui-line-normal);
 }
 
-.workflow-dialog-card > :is(
-  .territorial-type-fields,
-  .territorial-create-fields,
-  .confirm-impact,
-  .confirm-modal-choice-row,
-  .ui-dialog-actions,
-  .confirm-modal-actions
-) {
+.workflow-dialog-card > :is(.territorial-type-fields, .territorial-create-fields, .confirm-impact, .confirm-modal-choice-row, .ui-dialog-actions, .confirm-modal-actions) {
   grid-column: 1 / -1;
 }
 
@@ -258,12 +230,8 @@
   border-top: 1px solid var(--border);
 }
 
-.workflow-dialog-card > :is(.ui-dialog-actions, .confirm-modal-actions) > .btn {
-  min-width: var(--ui-workflow-action-min-width);
-}
+.workflow-dialog-card > :is(.ui-dialog-actions, .confirm-modal-actions) > .btn { min-width: var(--ui-workflow-action-min-width); }
 
-/* Coast reconciliation remains controller-compatible, but reads as a single
- * decision group rather than four competing primary actions. */
 .workflow-dialog--decision .coast-reconciliation-actions {
   display: grid;
   grid-template-columns: 1fr;
@@ -272,7 +240,7 @@
 
 .workflow-dialog--decision .workflow-decision-option {
   width: 100%;
-  min-height: 48px;
+  min-height: var(--ui-touch-height);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   justify-items: start;
@@ -304,23 +272,17 @@
 }
 
 @media (max-width: 799px) {
-  .workflow-map-session.mode-task-window {
-    width: min(100%, calc(100vw - var(--ui-space-4)));
-  }
+  .workflow-map-session.mode-task-window { width: min(100%, calc(100vw - var(--ui-space-4))); }
 
   .workflow-map-session .mode-task-window-header {
-    min-height: 40px;
+    min-height: 2.5rem;
     padding-inline: var(--ui-space-2);
   }
 
-  .workflow-map-session .mode-task-window-body {
-    padding: var(--ui-space-2);
-  }
+  .workflow-map-session .mode-task-window-body { padding: var(--ui-space-2); }
 
   .workflow-map-session .mode-method-btn,
-  .workflow-map-session :is(.mode-cancel-btn, .mode-primary-btn) {
-    min-height: 40px;
-  }
+  .workflow-map-session :is(.mode-cancel-btn, .mode-primary-btn) { min-height: 2.5rem; }
 
   .workflow-dialog-card {
     width: calc(100vw - var(--ui-space-4));
@@ -340,19 +302,15 @@
   }
 
   .workflow-dialog-card > :is(.ui-dialog-actions, .confirm-modal-actions) > .btn {
-    min-height: 40px;
+    min-height: 2.5rem;
     min-width: 0;
     flex: 1 1 0;
   }
 
-  .workflow-dialog--decision .workflow-decision-option {
-    min-height: 48px;
-  }
+  .workflow-dialog--decision .workflow-decision-option { min-height: var(--ui-touch-height); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .workflow-map-session .mode-method-btn,
-  .workflow-dialog-card .btn {
-    transition: none;
-  }
+  .workflow-dialog-card .btn { transition: none; }
 }

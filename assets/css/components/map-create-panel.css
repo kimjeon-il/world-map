@@ -1,5 +1,4 @@
-/* UI-08: map settings and create surfaces. Existing controllers remain the
- * source of truth; this file only standardizes presentation across layouts. */
+/* Map settings and create surface presentation. */
 
 .map-view-settings {
   min-width: 0;
@@ -29,8 +28,6 @@
   line-height: var(--ui-line-tight);
 }
 
-/* Projection remains the familiar gridded flat-map / globe choice, but both
- * labels stay visible and both glyphs use the canonical 18px projection size. */
 .map-view-projection-slot .projection-control {
   width: 100%;
   height: auto;
@@ -45,15 +42,15 @@
 
 .map-view-projection-slot .projection-btn {
   min-width: 0;
-  min-height: 42px;
-  height: 42px;
+  min-height: var(--ui-v2-command-row-min-height);
+  height: var(--ui-v2-command-row-min-height);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--ui-space-2);
   padding-inline: var(--ui-space-3);
   border: 1px solid var(--ui-control-border);
-  border-radius: calc(var(--ui-radius-control) + 1px);
+  border-radius: var(--ui-radius-control);
   background: var(--ui-control-bg);
   color: var(--muted);
 }
@@ -80,9 +77,7 @@
   color: var(--text-strong);
 }
 
-.map-view-projection-slot .projection-btn:is(.active, [aria-pressed="true"]) .ui-icon {
-  color: var(--accent);
-}
+.map-view-projection-slot .projection-btn:is(.active, [aria-pressed="true"]) .ui-icon { color: var(--accent); }
 
 .map-view-projection-slot .projection-btn:is(.active, [aria-pressed="true"]):hover {
   border-color: color-mix(in srgb, var(--accent) 36%, var(--border));
@@ -90,42 +85,26 @@
   color: var(--text-strong);
 }
 
-/* Map settings remain compact on desktop; mobile receives a larger row hit
- * area without duplicating any setting state or controller logic. */
-.map-view-settings .ui-choice-row {
-  min-height: 32px;
-  margin: 0;
-}
-
+.map-view-settings .ui-choice-row,
 .map-view-settings .ui-toggle {
-  min-height: 32px;
+  min-height: var(--ui-v2-control-mobile-height);
 }
 
-.map-view-settings .field-group {
-  margin: 0;
-}
+.map-view-settings .ui-choice-row,
+.map-view-settings .field-group { margin: 0; }
 
-.map-view-settings .layer-setting-hint:empty {
-  display: none;
-}
+.map-view-settings .layer-setting-hint:empty { display: none; }
 
-.terrain-display-options {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-2);
-}
-
-.terrain-mode-options {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
+.terrain-display-options,
+.terrain-mode-options,
 .terrain-strength-control {
   min-width: 0;
   display: grid;
-  gap: var(--ui-space-1);
 }
+
+.terrain-display-options { gap: var(--ui-space-2); }
+.terrain-mode-options,
+.terrain-strength-control { gap: var(--ui-space-1); }
 
 .terrain-strength-heading {
   display: flex;
@@ -142,16 +121,13 @@
   font-weight: var(--ui-weight-medium);
 }
 
-/* Create is a command list rather than a gallery of cards. */
 .surface-content-create {
   min-width: 0;
   display: grid;
   gap: 0;
 }
 
-.create-menu-route-panel {
-  min-width: 0;
-}
+.create-menu-route-panel { min-width: 0; }
 
 .create-menu-category {
   min-width: 0;
@@ -167,7 +143,7 @@
 }
 
 .create-menu-group {
-  min-height: 24px;
+  min-height: 1.5rem;
   display: flex;
   align-items: center;
   padding-inline: var(--ui-space-2);
@@ -187,29 +163,18 @@
 }
 
 .create-menu-item .create-menu-icon,
-.create-menu-item .create-menu-chevron {
-  color: var(--muted);
-}
+.create-menu-item .create-menu-chevron { color: var(--muted); }
 
 .create-menu-item:hover .create-menu-icon,
 .create-menu-item:focus-visible .create-menu-icon,
 .create-menu-item:hover .create-menu-chevron,
-.create-menu-item:focus-visible .create-menu-chevron {
-  color: var(--text-soft);
-}
+.create-menu-item:focus-visible .create-menu-chevron { color: var(--text-soft); }
 
-.create-menu-item > span:nth-child(2) {
-  gap: var(--ui-space-0-5);
-}
-
-.create-menu-item small {
-  line-height: var(--ui-line-tight);
-}
+.create-menu-item > span:nth-child(2) { gap: var(--ui-space-0-5); }
+.create-menu-item small { line-height: var(--ui-line-tight); }
 
 @media (max-width: 799px) {
-  .map-view-settings > .layer-style-editor {
-    padding-block: var(--ui-space-4);
-  }
+  .map-view-settings > .layer-style-editor { padding-block: var(--ui-space-4); }
 
   .map-view-projection-slot .projection-btn {
     min-height: var(--ui-touch-height);
@@ -217,18 +182,12 @@
   }
 
   .map-view-settings .ui-choice-row,
-  .map-view-settings .ui-toggle {
-    min-height: 40px;
-  }
+  .map-view-settings .ui-toggle { min-height: 2.5rem; }
 
-  .create-menu-item {
-    min-height: var(--ui-touch-height);
-  }
+  .create-menu-item { min-height: var(--ui-touch-height); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .map-view-projection-slot .projection-btn,
-  .create-menu-item {
-    transition: none;
-  }
+  .create-menu-item { transition: none; }
 }

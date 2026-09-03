@@ -1,23 +1,7 @@
 import { installBoundaryGhostingGuard } from './boundary-ghosting-guard.js';
 import { installObjectRegistryPresenter } from './object-registry-presenter.js';
 import { createSemanticIcon } from './icon-utils.js';
-
-installBoundaryGhostingGuard();
-
-const UI_V2_STYLES = Object.freeze([
-  '../../css/tokens/ui-v2.css',
-  '../../css/primitives/controls.css',
-  '../../css/components/surface.css',
-  '../../css/components/content.css',
-  '../../css/components/command-row.css',
-  '../../css/components/workflow.css',
-  '../../css/layout/surfaces.css',
-  '../../css/features/layer-panel.css',
-  '../../css/features/editor-shell.css',
-  '../../css/features/map-create-panel.css',
-  '../../css/features/edit-workflow.css',
-  '../../css/features/library-gis-file.css',
-]);
+import { installMobileSheetController } from './mobile-sheet-controller.js';
 
 const COMMAND_ROW_ICON_BY_ID = Object.freeze({
   multiBorderEditBtn: 'boundary',
@@ -68,20 +52,7 @@ const GIS_EXPORT_FORMAT_HELP = Object.freeze({
   'geojson-zip': '레이어별 GeoJSON을 ZIP 파일로 저장합니다.',
 });
 
-function installUiV2Styles() {
-  const revision = String(globalThis.PANDOLAB_ASSET_REVISION || '').trim();
-  for (const relativePath of UI_V2_STYLES) {
-    const key = relativePath.replace('../../css/', '').replace(/\.css$/, '').replaceAll('/', '-');
-    if (document.querySelector(`link[data-pandolab-ui-v2="${key}"]`)) continue;
-    const href = new URL(relativePath, import.meta.url);
-    if (revision) href.searchParams.set('v', revision);
-    const style = document.createElement('link');
-    style.rel = 'stylesheet';
-    style.href = href.href;
-    style.dataset.pandolabUiV2 = key;
-    document.head.appendChild(style);
-  }
-}
+let initialized = false;
 
 function commandRowChevron() {
   return createSemanticIcon(document, 'chevronRight', 'ui-icon command-row-chevron');
@@ -101,17 +72,6 @@ function normalizeCommandRows() {
     if (trailing) trailing.replaceWith(commandRowChevron());
     else row.appendChild(commandRowChevron());
   }
-}
-
-function normalizeMapCreateSurfaceLabels() {
-  const mapSheetTitle = document.getElementById('mapSheetTitle');
-  if (mapSheetTitle) mapSheetTitle.textContent = '지도';
-  const mapViewTab = document.getElementById('mapViewTabBtn');
-  if (mapViewTab) mapViewTab.textContent = '지도';
-  const terrainTitle = document.getElementById('terrainLayerSettingsTitle');
-  if (terrainTitle) terrainTitle.textContent = '지형';
-  const projectionControl = document.getElementById('projectionControl');
-  if (projectionControl) projectionControl.setAttribute('aria-label', '투영법');
 }
 
 function workflowSemanticFromLabel(label, fallback = 'boundary') {
@@ -166,15 +126,42 @@ function normalizeWorkflowDialog({ modalId, cardSelector, variant, semantic, tit
 }
 
 function normalizeEditingDialogs() {
-  normalizeWorkflowDialog({ modalId: 'territorialTypeModal', cardSelector: '.territorial-type-card', variant: 'standard', semantic: 'transform', titleId: 'territorialTypeTitle', descriptionId: 'territorialTypeContext' });
-  const confirm = normalizeWorkflowDialog({ modalId: 'confirmModal', cardSelector: '.confirm-modal-card', variant: 'compact', semantic: 'check', titleId: 'confirmModalTitle', descriptionId: 'confirmModalMessage' });
+  normalizeWorkflowDialog({
+    modalId: 'territorialTypeModal',
+    cardSelector: '.territorial-type-card',
+    variant: 'standard',
+    semantic: 'transform',
+    titleId: 'territorialTypeTitle',
+    descriptionId: 'territorialTypeContext',
+  });
+
+  const confirm = normalizeWorkflowDialog({
+    modalId: 'confirmModal',
+    cardSelector: '.confirm-modal-card',
+    variant: 'compact',
+    semantic: 'check',
+    titleId: 'confirmModalTitle',
+    descriptionId: 'confirmModalMessage',
+  });
   if (confirm?.title) {
-    const syncConfirmIcon = () => replaceWorkflowIcon(confirm.card, workflowSemanticFromLabel(confirm.title.textContent, 'check'), 'ui-icon workflow-dialog-icon');
+    const syncConfirmIcon = () => replaceWorkflowIcon(
+      confirm.card,
+      workflowSemanticFromLabel(confirm.title.textContent, 'check'),
+      'ui-icon workflow-dialog-icon',
+    );
     syncConfirmIcon();
     new MutationObserver(syncConfirmIcon).observe(confirm.title, { childList: true, characterData: true, subtree: true });
   }
   document.getElementById('confirmModalChoiceRow')?.classList.add('workflow-choice-row');
-  const coast = normalizeWorkflowDialog({ modalId: 'coastReconciliationModal', cardSelector: '.coast-reconciliation-card', variant: 'wide', semantic: 'coastline', titleId: 'coastReconciliationTitle', descriptionId: 'coastReconciliationMessage' });
+
+  const coast = normalizeWorkflowDialog({
+    modalId: 'coastReconciliationModal',
+    cardSelector: '.coast-reconciliation-card',
+    variant: 'wide',
+    semantic: 'coastline',
+    titleId: 'coastReconciliationTitle',
+    descriptionId: 'coastReconciliationMessage',
+  });
   coast?.card.classList.add('workflow-dialog--decision');
   for (const [id, detail] of Object.entries(COAST_DECISION_DETAIL_BY_ID)) {
     const button = document.getElementById(id);
@@ -188,11 +175,6 @@ function normalizeEditingDialogs() {
     }
   }
   document.getElementById('coastReconciliationCancelBtn')?.classList.add('workflow-decision-cancel');
-}
-
-function normalizeEditingWorkflows() {
-  normalizeMapEditingWorkflow();
-  normalizeEditingDialogs();
 }
 
 function addDialogHeaderIcon(modalId, semantic, className) {
@@ -283,34 +265,8 @@ function normalizeGisExportFormat() {
   });
 }
 
-function normalizeFileMenuPresentation() {
-  const labels = { openGisBtn: 'GIS 가져오기', saveProjectBtn: '저장', dataExportBtn: 'GIS 데이터 내보내기' };
-  for (const [id, text] of Object.entries(labels)) {
-    const button = document.getElementById(id);
-    const label = button?.querySelector('span');
-    if (label) label.textContent = text;
-  }
-  document.getElementById('saveProjectBtn')?.classList.add('ghost');
-  document.getElementById('dataExportBtn')?.classList.add('file-menu-export-boundary');
-}
-
-function normalizeLibraryGisFilePresentation() {
-  normalizeLibraryPresentation();
-  installVisualStepper({ modalId: 'gisImportModal', indicatorId: 'gisStepIndicator', steps: GIS_IMPORT_STEPS });
-  installVisualStepper({ modalId: 'gisExportModal', indicatorId: 'gisExportStepIndicator', steps: GIS_EXPORT_STEPS });
-  normalizeGisExportFormat();
-  normalizeFileMenuPresentation();
-}
-
-function removeRedundantEditorEdge() {
+function removeObsoletePresentationNodes() {
   document.querySelector('.editor-edge-slot')?.remove();
-}
-
-function removeDecorativeOnlyNodes() {
-  document.querySelectorAll('.ui-dialog-kicker, .create-toolbar-divider').forEach(node => node.remove());
-}
-
-function flattenHistoricalPreview() {
   document.getElementById('historicalLibraryPreview')?.classList.remove('ui-card');
 }
 
@@ -327,35 +283,29 @@ function constrainGenericFallbackUi() {
 }
 
 function normalizeEmptyConditionalSurfaces() {
-  const selectors = ['.gis-import-status', '.territorial-type-impact', '.ui-callout', '.ui-alert'];
-  for (const selector of selectors) {
+  for (const selector of ['.gis-import-status', '.territorial-type-impact', '.ui-callout', '.ui-alert']) {
     document.querySelectorAll(selector).forEach(node => {
       if (!node.textContent?.trim() && !node.children.length) node.hidden = true;
     });
   }
 }
 
-function markPhaseApplied() {
-  const app = document.getElementById('app');
-  if (app) {
-    app.dataset.uiCleanupPhase = '1';
-    app.dataset.uiArchitecture = '2';
-  }
-}
-
-export function applyPhase1UiCleanup() {
-  if (document.documentElement.dataset.pandolabUiCleanupPhase1 === 'done') return;
-  document.documentElement.dataset.pandolabUiCleanupPhase1 = 'done';
-  installUiV2Styles();
+export function initializeUiRuntime(documentRef = document) {
+  if (initialized) return;
+  initialized = true;
+  installBoundaryGhostingGuard();
   installObjectRegistryPresenter();
   normalizeCommandRows();
-  normalizeMapCreateSurfaceLabels();
-  normalizeEditingWorkflows();
-  normalizeLibraryGisFilePresentation();
-  removeRedundantEditorEdge();
-  removeDecorativeOnlyNodes();
-  flattenHistoricalPreview();
+  normalizeMapEditingWorkflow();
+  normalizeEditingDialogs();
+  normalizeLibraryPresentation();
+  installVisualStepper({ modalId: 'gisImportModal', indicatorId: 'gisStepIndicator', steps: GIS_IMPORT_STEPS });
+  installVisualStepper({ modalId: 'gisExportModal', indicatorId: 'gisExportStepIndicator', steps: GIS_EXPORT_STEPS });
+  normalizeGisExportFormat();
+  installMobileSheetController(documentRef);
+  removeObsoletePresentationNodes();
   constrainGenericFallbackUi();
   normalizeEmptyConditionalSurfaces();
-  markPhaseApplied();
+  const app = documentRef.getElementById('app');
+  if (app) app.dataset.uiArchitecture = '2';
 }

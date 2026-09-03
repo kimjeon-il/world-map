@@ -1,14 +1,7 @@
-/* UI-07: editor shell, map toolbar, edit-session HUD, and persistent status. */
+/* Editor shell, map toolbar, edit-session HUD, and persistent status. */
 
-/* Wide layout keeps the canonical v2 panel contract without changing the
- * existing surface-controller behaviour used by compact/mobile layouts. */
-[data-layout="wide"] .surface-map {
-  width: var(--ui-shell-left-panel-width);
-}
-
-[data-layout="wide"] .surface-editor {
-  width: var(--ui-shell-right-panel-width);
-}
+[data-layout="wide"] .surface-map { width: var(--ui-shell-left-panel-width); }
+[data-layout="wide"] .surface-editor { width: var(--ui-shell-right-panel-width); }
 
 .topbar {
   min-height: var(--ui-shell-topbar-height);
@@ -24,16 +17,14 @@
   line-height: var(--ui-v2-line-tight);
 }
 
-.topbar :is(button, .ui-button) {
-  min-height: var(--ui-v2-control-sm);
-}
+.topbar :is(button, .ui-button) { min-height: var(--ui-v2-control-sm); }
 
 .map-tool-toolbar {
   top: var(--ui-map-edge);
   left: 50%;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--ui-space-0-5);
   padding: var(--ui-toolbar-padding);
   border: 1px solid var(--toolbar-border);
   border-radius: var(--ui-v2-radius-lg);
@@ -69,12 +60,8 @@
   color: var(--text-strong);
 }
 
-.map-tool-toolbar .map-tool-btn:is(.active, [aria-pressed="true"]) .ui-icon {
-  color: var(--accent);
-}
+.map-tool-toolbar .map-tool-btn:is(.active, [aria-pressed="true"]) .ui-icon { color: var(--accent); }
 
-/* Edit sessions are a distinct mode. The existing HUD remains the source of
- * truth; presentation is compact and command-like instead of modal-heavy. */
 .mode-editing-context:not(.hidden) ~ .map-tool-toolbar,
 body.mode-editing-active .map-tool-toolbar {
   opacity: .22;
@@ -104,7 +91,6 @@ body.mode-editing-active .map-tool-toolbar {
   font-size: var(--ui-v2-font-sm);
 }
 
-/* Persistent map status is a status bar, not a toast. */
 .map-bottom-status {
   min-height: var(--ui-shell-statusbar-height);
   height: var(--ui-shell-statusbar-height);
@@ -139,39 +125,23 @@ body.mode-editing-active .map-tool-toolbar {
 }
 
 .project-save-status-dot {
-  width: 6px;
-  height: 6px;
-  flex: 0 0 6px;
+  width: var(--ui-space-1-5);
+  height: var(--ui-space-1-5);
+  flex: 0 0 var(--ui-space-1-5);
   border-radius: 50%;
 }
 
-/* Keep semantic save state quiet. Error is the only state that should read
- * as destructive. Existing state classes/data attributes remain untouched. */
-.project-save-status:is(.saved, [data-save-state="saved"]) .project-save-status-dot {
-  background: var(--ui-v2-status-success-dot);
-}
-.project-save-status:is(.saving, [data-save-state="saving"]) .project-save-status-dot {
-  background: var(--ui-v2-status-working-dot);
-}
-.project-save-status:is(.dirty, .unsaved, [data-save-state="dirty"], [data-save-state="unsaved"]) .project-save-status-dot {
-  background: var(--ui-v2-status-neutral-dot);
-}
-.project-save-status:is(.error, [data-save-state="error"]) .project-save-status-dot {
-  background: var(--ui-v2-status-error-dot);
-}
+.project-save-status:is(.saved, [data-save-state="saved"]) .project-save-status-dot { background: var(--ui-v2-status-success-dot); }
+.project-save-status:is(.saving, [data-save-state="saving"]) .project-save-status-dot { background: var(--ui-v2-status-working-dot); }
+.project-save-status:is(.dirty, .unsaved, [data-save-state="dirty"], [data-save-state="unsaved"]) .project-save-status-dot { background: var(--ui-v2-status-neutral-dot); }
+.project-save-status:is(.error, [data-save-state="error"]) .project-save-status-dot { background: var(--ui-v2-status-error-dot); }
 
 @media (max-width: 1199px) {
-  /* Compact layout prioritizes map area; existing surface controller handles
-   * drawers, so no desktop-width compression is introduced here. */
-  .map-tool-toolbar {
-    max-width: calc(100vw - (var(--ui-space-6) * 2));
-  }
+  .map-tool-toolbar { max-width: calc(100vw - (var(--ui-space-6) * 2)); }
 }
 
 @media (max-width: 799px) {
-  .map-tool-toolbar {
-    top: var(--ui-space-2);
-  }
+  .map-tool-toolbar { top: var(--ui-space-2); }
 
   .map-tool-toolbar .map-tool-btn {
     min-width: var(--ui-touch-height);
@@ -189,7 +159,5 @@ body.mode-editing-active .map-tool-toolbar {
 
 @media (prefers-reduced-motion: reduce) {
   .map-tool-toolbar .map-tool-btn,
-  .mode-task-window {
-    transition: none;
-  }
+  .mode-task-window { transition: none; }
 }
