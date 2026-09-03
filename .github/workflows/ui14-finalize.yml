@@ -7,6 +7,7 @@ on:
       - .github/workflows/ui14-finalize.yml
       - scripts/finalize-ui-v2-static.mjs
       - scripts/finalize-ui14-runtime-semantics.mjs
+      - scripts/finalize-ui14-static-dialogs.mjs
       - assets/js/modules/ui-runtime.js
       - assets/js/modules/feedback-controller.js
       - assets/js/modules/mobile-sheet-controller.js
@@ -36,6 +37,9 @@ jobs:
 
       - name: Bake final runtime semantics
         run: node scripts/finalize-ui14-runtime-semantics.mjs
+
+      - name: Bake workflow dialogs and library presentation
+        run: node scripts/finalize-ui14-static-dialogs.mjs
 
       - name: Validate changed JavaScript syntax
         run: |
