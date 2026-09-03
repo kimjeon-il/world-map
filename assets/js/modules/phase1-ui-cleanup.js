@@ -1,6 +1,7 @@
 import { installBoundaryGhostingGuard } from './boundary-ghosting-guard.js';
 import { installObjectRegistryPresenter } from './object-registry-presenter.js';
 import { createSemanticIcon } from './icon-utils.js';
+import { installMobileSheetV2 } from './mobile-sheet-v2.js';
 
 installBoundaryGhostingGuard();
 
@@ -17,6 +18,7 @@ const UI_V2_STYLES = Object.freeze([
   '../../css/features/map-create-panel.css',
   '../../css/features/edit-workflow.css',
   '../../css/features/library-gis-file.css',
+  '../../css/features/mobile-sheets.css',
 ]);
 
 const COMMAND_ROW_ICON_BY_ID = Object.freeze({
@@ -352,6 +354,7 @@ export function applyPhase1UiCleanup() {
   normalizeMapCreateSurfaceLabels();
   normalizeEditingWorkflows();
   normalizeLibraryGisFilePresentation();
+  installMobileSheetV2(document);
   removeRedundantEditorEdge();
   removeDecorativeOnlyNodes();
   flattenHistoricalPreview();
