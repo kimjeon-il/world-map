@@ -18,8 +18,8 @@ function addClassById(source, id, className) {
 
 if (!index.includes('id="modeTaskIcon"')) {
   index = index.replace(
-    '<div class="mode-task-heading">\n                    <strong id="modeTaskName">',
-    '<div class="mode-task-heading">\n                    <svg id="modeTaskIcon" class="ui-icon mode-task-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-boundary-edit"/></svg>\n                    <strong id="modeTaskName">',
+    /(<div class="mode-task-heading">)(<strong id="modeTaskName">)/,
+    '$1<svg id="modeTaskIcon" class="ui-icon mode-task-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-boundary-edit"/></svg>$2',
   );
 }
 index = addClassById(index, 'modeActionBar', 'workflow-actions');
