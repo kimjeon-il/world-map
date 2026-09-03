@@ -1,0 +1,30 @@
+name: UI14 architecture audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/ui14-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check UI architecture
+        run: node scripts/check-ui-architecture.mjs
+      - name: Check UI components
+        run: node scripts/check-ui-components.mjs
+      - name: Check UI layering
+        run: node scripts/check-ui-layering.mjs
+      - name: Check UI information architecture
+        run: node scripts/check-ui-information-architecture.mjs
+      - name: Check surface controller
+        run: node --test tests/unit/surface-controller.test.mjs
