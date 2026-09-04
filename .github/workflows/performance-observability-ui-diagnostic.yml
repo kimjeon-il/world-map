@@ -37,31 +37,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check UI spacing
-        run: pnpm check:ui-spacing
+      - name: Rebuild canonical UI bundle
+        run: pnpm build:ui-bundle
 
-      - name: Check UI components
-        run: pnpm check:ui-components
+      - name: Check all UI contracts
+        run: pnpm check:ui
 
-      - name: Check UI architecture
-        run: pnpm check:ui-architecture
+      - name: Refresh build metadata
+        run: pnpm generate:build-meta
 
-      - name: Check UI layering
-        run: pnpm check:ui-layering
-
-      - name: Check UI information architecture
-        run: pnpm check:ui-ia
-
-      - name: Check object registry
-        run: pnpm check:object-registry
-
-      - name: Check surface state
-        run: pnpm check:surface-state
-
-      - name: Remove diagnostic workflow
+      - name: Commit generated repairs and remove diagnostic workflow
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git rm .github/workflows/performance-observability-ui-diagnostic.yml
-          git commit -m "chore: remove observability UI diagnostic workflow"
+          git add assets/css/ui-v2.bundle.css assets/js/build-meta.js index.html README.md
+          git commit -m "chore: refresh UI bundle and observability build metadata"
           git push origin HEAD:perf/phase1-observability
