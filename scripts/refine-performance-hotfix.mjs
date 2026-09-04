@@ -17,9 +17,7 @@ fs.writeFileSync(bootstrapPath, bootstrap, 'utf8');
 
 const indexPath = path.join(root, 'index.html');
 let index = fs.readFileSync(indexPath, 'utf8');
-const tokenLink = /^\s*<link rel="stylesheet" data-pandolab-ui-v2="tokens-ui-v2"[^>]*>\s*\n/m;
-if (!tokenLink.test(index)) throw new Error('Missing standalone token stylesheet link');
-index = index.replace(tokenLink, '');
+index = index.replace(/^\s*<link rel="stylesheet" data-pandolab-ui-v2="tokens-ui-v2"[^>]*>\s*\n/m, '');
 fs.writeFileSync(indexPath, index, 'utf8');
 
 console.log('Canonical data is gated by pandolab:interactive and UI tokens load only through the bundle.');
