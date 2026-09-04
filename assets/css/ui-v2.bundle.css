@@ -925,7 +925,6 @@ body.modal-open { overflow: hidden; }
 .ui-workflow-shell {
   min-width: 0;
 }
-
 .ui-workflow-shell > :is(.ui-dialog-header, .mode-task-window-header) {
   min-width: 0;
 }
