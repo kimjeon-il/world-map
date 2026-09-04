@@ -1,6 +1,7 @@
 import { installBoundaryGhostingGuard } from './boundary-ghosting-guard.js';
 import { installObjectRegistryPresenter } from './object-registry-presenter.js';
 import { installMobileSheetController } from './mobile-sheet-controller.js';
+import { installRuntimePerformanceMetrics } from './runtime-performance-metrics.js';
 
 let initialized = false;
 
@@ -61,6 +62,7 @@ function constrainGenericFallbackUi() {
 export function initializeUiRuntime(documentRef = document) {
   if (initialized) return;
   initialized = true;
+  installRuntimePerformanceMetrics({ globalObject: window, documentRef });
   installBoundaryGhostingGuard();
   installObjectRegistryPresenter();
   bindVisualStepper({ modalId: 'gisImportModal', indicatorId: 'gisStepIndicator' });
