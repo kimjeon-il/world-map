@@ -1,0 +1,77 @@
+name: Performance observability phase 1
+
+on:
+  push:
+    branches:
+      - perf/phase1-observability
+
+permissions:
+  contents: write
+
+concurrency:
+  group: performance-observability-phase1
+  cancel-in-progress: false
+
+jobs:
+  validate-and-finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: perf/phase1-observability
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate instrumentation
+        run: |
+          pnpm exec eslint \
+            assets/js/modules/runtime-performance-metrics.js \
+            assets/js/modules/ui-runtime.js \
+            assets/js/modules/project-command-pipeline.js \
+            assets/js/modules/project-transaction.js \
+            assets/js/modules/persistence-service.js \
+            tests/unit/runtime-performance-metrics.test.mjs \
+            tests/unit/runtime-performance-contract.test.mjs \
+            tests/browser/performance-observability.spec.mjs
+          node --test \
+            tests/unit/runtime-performance-metrics.test.mjs \
+            tests/unit/runtime-performance-contract.test.mjs \
+            tests/unit/project-command-pipeline.test.mjs \
+            tests/unit/country-edit-transaction.test.mjs \
+            tests/unit/country-edit-transaction-reliability.test.mjs \
+            tests/unit/persistence-service.test.mjs \
+            tests/unit/startup-performance-contract.test.mjs
+          pnpm check:js
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run browser observability smoke
+        run: pnpm exec playwright test tests/browser/performance-observability.spec.mjs
+
+      - name: Refresh build metadata
+        run: pnpm generate:build-meta
+
+      - name: Remove one-shot workflow and commit generated files
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/performance-observability-phase1.yml
+          git add assets/js/build-meta.js index.html README.md
+          git commit -m "chore: finalize performance observability build"
+          git push origin HEAD:perf/phase1-observability
