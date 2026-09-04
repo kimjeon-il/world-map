@@ -9,7 +9,7 @@ function bindVisualStepper({ modalId, indicatorId }) {
   const modal = document.getElementById(modalId);
   const stepper = modal?.querySelector('.gis-stepper');
   const indicator = document.getElementById(indicatorId);
-  if (!(stepper instanceof HTMLOListElement) || !(indicator instanceof HTMLElement)) return;
+  if (stepper?.tagName !== 'OL' || !(indicator instanceof HTMLElement)) return;
   const sync = () => {
     const match = String(indicator.textContent || '').match(/(\d+)\s*\/\s*(\d+)/);
     const current = Math.max(0, (Number(match?.[1]) || 1) - 1);
@@ -27,15 +27,17 @@ function bindVisualStepper({ modalId, indicatorId }) {
 function bindGisExportFormat() {
   const select = document.getElementById('gisExportFormat');
   const list = document.querySelector('.gis-export-format-list');
-  if (!(select instanceof HTMLSelectElement) || !(list instanceof HTMLElement)) return;
+  if (select?.tagName !== 'SELECT' || !(list instanceof HTMLElement)) return;
   if (list.dataset.bound === 'true') return;
+  const EventCtor = select.ownerDocument.defaultView?.Event;
+  if (typeof EventCtor !== 'function') return;
   list.dataset.bound = 'true';
 
   for (const radio of list.querySelectorAll('input[type="radio"]')) {
     radio.addEventListener('change', () => {
       if (!radio.checked) return;
       select.value = radio.value;
-      select.dispatchEvent(new Event('change', { bubbles: true }));
+      select.dispatchEvent(new EventCtor('change', { bubbles: true }));
     });
   }
   const sync = () => {
