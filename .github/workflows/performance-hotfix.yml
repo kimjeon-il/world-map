@@ -48,23 +48,11 @@ jobs:
               text = file.read_text(encoding='utf-8')
               count = text.count(old)
               if count != 1:
-                  raise SystemExit(f'{path}: expected one replacement, found {count}')
+                  print(f'{path}: expected one replacement, found {count}; anchor={old[:100]!r}')
+                  raise SystemExit(1)
               file.write_text(text.replace(old, new, 1), encoding='utf-8')
 
           app_path = 'assets/js/app.js'
-
-          replace_once(
-              app_path,
-              '''    const panel = mobileSheetPanel(kind);
-              surfaceController.close(surface);
-          ''',
-              '''    const panel = mobileSheetPanel(kind);
-              clearMobileSheetDragPresentation(panel);
-              if (activeSheetDrag?.panel === panel) activeSheetDrag = null;
-              document.body.classList.remove('map-sheet-dragging');
-              surfaceController.close(surface);
-          ''',
-          )
 
           helper_marker = '''  function beginMobileSheetDrag(panel, source, pointerId, clientY) {
           '''
