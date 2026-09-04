@@ -246,30 +246,6 @@ jobs:
 
           replace_once(
               app_path,
-              '''      const current = sheetSnapIndex.get(panel.id) ?? MOBILE_SHEET_DEFAULT_SNAP;
-              const target = current === SHEET_SNAP_RATIOS.length - 1 ? 0 : SHEET_SNAP_RATIOS.length - 1;
-          ''',
-              '''      clearMobileSheetDragPresentation(panel);
-              const current = sheetSnapIndex.get(panel.id) ?? MOBILE_SHEET_DEFAULT_SNAP;
-              const target = current === SHEET_SNAP_RATIOS.length - 1 ? 0 : SHEET_SNAP_RATIOS.length - 1;
-          ''',
-          )
-
-          replace_once(
-              app_path,
-              '''    handle.addEventListener('keydown', event => {
-              if (!isMobile()) return;
-              const current = sheetSnapIndex.get(panel.id) ?? MOBILE_SHEET_DEFAULT_SNAP;
-          ''',
-              '''    handle.addEventListener('keydown', event => {
-              if (!isMobile()) return;
-              clearMobileSheetDragPresentation(panel);
-              const current = sheetSnapIndex.get(panel.id) ?? MOBILE_SHEET_DEFAULT_SNAP;
-          ''',
-          )
-
-          replace_once(
-              app_path,
               '''    panel.addEventListener('transitionend', event => {
               if (event.target !== panel || !['height', 'width', 'transform'].includes(event.propertyName)) return;
               queueMapResize('panel-layout');
