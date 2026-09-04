@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
-const bootstrapPath = path.join(process.cwd(), 'assets/js/bootstrap.js');
+const root = process.cwd();
+const bootstrapPath = path.join(root, 'assets/js/bootstrap.js');
 let bootstrap = fs.readFileSync(bootstrapPath, 'utf8');
 const before = `    app.onload = () => {
       setProgress('빠른 지도를 표시하는 중입니다.', 99);
@@ -13,4 +14,12 @@ const after = `    app.onload = () => setProgress('빠른 지도를 표시하는
 if (!bootstrap.includes(before)) throw new Error('Missing canonical-load fallback block');
 bootstrap = bootstrap.replace(before, after);
 fs.writeFileSync(bootstrapPath, bootstrap, 'utf8');
-console.log('Canonical data is now gated strictly by pandolab:interactive.');
+
+const indexPath = path.join(root, 'index.html');
+let index = fs.readFileSync(indexPath, 'utf8');
+const tokenLink = /^\s*<link rel="stylesheet" data-pandolab-ui-v2="tokens-ui-v2"[^>]*>\s*\n/m;
+if (!tokenLink.test(index)) throw new Error('Missing standalone token stylesheet link');
+index = index.replace(tokenLink, '');
+fs.writeFileSync(indexPath, index, 'utf8');
+
+console.log('Canonical data is gated by pandolab:interactive and UI tokens load only through the bundle.');
