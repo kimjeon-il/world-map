@@ -1,0 +1,67 @@
+name: Performance observability UI diagnostic
+
+on:
+  push:
+    branches:
+      - perf/phase1-observability
+
+permissions:
+  contents: write
+
+concurrency:
+  group: performance-observability-ui-diagnostic
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: perf/phase1-observability
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check UI spacing
+        run: pnpm check:ui-spacing
+
+      - name: Check UI components
+        run: pnpm check:ui-components
+
+      - name: Check UI architecture
+        run: pnpm check:ui-architecture
+
+      - name: Check UI layering
+        run: pnpm check:ui-layering
+
+      - name: Check UI information architecture
+        run: pnpm check:ui-ia
+
+      - name: Check object registry
+        run: pnpm check:object-registry
+
+      - name: Check surface state
+        run: pnpm check:surface-state
+
+      - name: Remove diagnostic workflow
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/performance-observability-ui-diagnostic.yml
+          git commit -m "chore: remove observability UI diagnostic workflow"
+          git push origin HEAD:perf/phase1-observability
