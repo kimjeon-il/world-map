@@ -54,6 +54,9 @@ jobs:
 
           app_path = 'assets/js/app.js'
 
+          # Programmatic closes already pass through the settlement finalizer.
+
+
           helper_marker = '''  function beginMobileSheetDrag(panel, source, pointerId, clientY) {
           '''
           helper_block = '''  const mobileSheetSettlement = new WeakMap();
@@ -244,21 +247,6 @@ jobs:
           ''',
           )
 
-          replace_once(
-              app_path,
-              '''    panel.addEventListener('transitionend', event => {
-              if (event.target !== panel || !['height', 'width', 'transform'].includes(event.propertyName)) return;
-              queueMapResize('panel-layout');
-            });
-          ''',
-              '''    panel.addEventListener('transitionend', event => {
-              if (event.target !== panel || !['height', 'width', 'transform'].includes(event.propertyName)) return;
-              if (event.propertyName === 'transform' && finalizeMobileSheetSettlement(panel)) return;
-              queueMapResize('panel-layout');
-            });
-          ''',
-          )
-
           surfaces = Path('assets/css/layout/surfaces.css')
           text = surfaces.read_text(encoding='utf-8')
           marker = '''[data-layout="mobile"] .workspace-surface.mobile-open {
@@ -334,7 +322,6 @@ jobs:
             assert.match(moveSource, /applyMobileSheetDragPreview/);
             assert.doesNotMatch(moveSource, /setMobileSheetHeight|refreshMapSheetMetrics|queueMapResize/);
             assert.match(app, /function finalizeMobileSheetSettlement/);
-            assert.match(app, /event\.propertyName === 'transform' && finalizeMobileSheetSettlement\(panel\)/);
             assert.match(surfaces, /\.workspace-surface\.mobile-open:is\(\.is-sheet-dragging, \.is-sheet-settling\)/);
             assert.match(surfaces, /transform: translate3d\(0, var\(--sheet-drag-offset, 0px\), 0\)/);
             assert.match(surfaces, /\.workspace-surface\.is-sheet-dragging[\s\S]*transition: none/);
