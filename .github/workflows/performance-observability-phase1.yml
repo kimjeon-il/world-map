@@ -37,7 +37,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Validate instrumentation
+      - name: Lint instrumentation
         run: |
           pnpm exec eslint \
             assets/js/modules/runtime-performance-metrics.js \
@@ -48,6 +48,9 @@ jobs:
             tests/unit/runtime-performance-metrics.test.mjs \
             tests/unit/runtime-performance-contract.test.mjs \
             tests/browser/performance-observability.spec.mjs
+
+      - name: Run focused unit tests
+        run: |
           node --test \
             tests/unit/runtime-performance-metrics.test.mjs \
             tests/unit/runtime-performance-contract.test.mjs \
@@ -56,7 +59,9 @@ jobs:
             tests/unit/country-edit-transaction-reliability.test.mjs \
             tests/unit/persistence-service.test.mjs \
             tests/unit/startup-performance-contract.test.mjs
-          pnpm check:js
+
+      - name: Check JavaScript architecture
+        run: pnpm check:js
 
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
