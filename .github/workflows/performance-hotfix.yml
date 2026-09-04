@@ -45,7 +45,7 @@ jobs:
 
       - name: Validate changed runtime
         run: |
-          pnpm exec eslint assets/js/bootstrap.js assets/js/modules/ui-runtime.js assets/js/workers/data-loader-worker.js scripts/check-ui-layering.mjs tests/unit/startup-performance-contract.test.mjs
+          pnpm exec eslint assets/js/bootstrap.js assets/js/modules/ui-runtime.js assets/js/workers/data-loader-worker.js scripts/check-object-registry.mjs scripts/check-ui-layering.mjs tests/unit/startup-performance-contract.test.mjs
           pnpm check:js
           pnpm check:ui
           pnpm check:architecture
