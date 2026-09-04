@@ -77,6 +77,35 @@
       "decodedBytes": 12416062,
       "sha256": "b4b94e138ed702e13b33be11e2c0962ebf858a3ea18310d9df893b41012b9b0d"
     },
+    "canonicalCountryPacket": {
+      "url": "countries-canonical-v0.32.0.pcg.gz",
+      "encoding": "gzip",
+      "compressedBytes": 5122198,
+      "decodedBytes": 8826432,
+      "sha256": "48245955aa2c31fbb0a2e6b437a01f4c25106768db036ddeefbd3b2d56e5c3fd",
+      "header": [
+        826753872,
+        1,
+        258,
+        4274,
+        4293,
+        548464,
+        13289,
+        258,
+        259,
+        4275,
+        4294,
+        516,
+        80,
+        13369,
+        13628,
+        14664,
+        31764,
+        48940,
+        51008,
+        8826432
+      ]
+    },
     "canonicalMesh": {
       "url": "world-mesh-v0.12.6.bin.gz",
       "encoding": "gzip",
