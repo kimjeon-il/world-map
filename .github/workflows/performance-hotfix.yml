@@ -1,5 +1,5 @@
 name: Performance hotfix
-# validation-attempt: 5
+# validation-attempt: 6
 
 on:
   push:
@@ -53,6 +53,11 @@ jobs:
           pnpm check:ui
           pnpm check:architecture
           node --test tests/unit/startup-performance-contract.test.mjs tests/unit/surface-controller.test.mjs tests/unit/map-render-coordinator.test.mjs
+
+      - name: Inspect full unit contract inputs
+        run: |
+          git status --short
+          find tests/unit -maxdepth 1 -type f -name '*data-loader*' -print -exec sed -n '1,180p' {} \;
 
       - name: Commit performance fix
         run: |
