@@ -23,12 +23,9 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertIn('id="mapLayersTabBtn"', INDEX)
         self.assertIn('id="mapViewTabBtn"', INDEX)
 
-    def test_editor_trigger_is_outside_the_view_toolbar(self):
-        view_toolbar = re.search(r'<div class="[^"]*map-view-toolbar[^"]*".*?</div>\s*\n\s*<div class="editor-edge-slot"', INDEX, re.S)
-        self.assertIsNotNone(view_toolbar)
-        toolbar_only = view_toolbar.group(0).split('<div class="editor-edge-slot"', 1)[0]
-        self.assertNotIn('togglePanelBtn', toolbar_only)
-        self.assertEqual(INDEX.count('id="togglePanelBtn"'), 1)
+    def test_obsolete_editor_edge_trigger_is_removed(self):
+        self.assertNotIn('editor-edge-slot', INDEX + CSS)
+        self.assertNotIn('togglePanelBtn', INDEX + CSS)
 
     def test_common_surface_state_and_manual_editor_collapse_exist(self):
         for token in ('activeSurface', 'layersOpen', 'editorOpen', 'editorManuallyCollapsed'):
@@ -65,13 +62,6 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertIn('--map-safe-left: 0px', compact)
         self.assertNotIn('--compact-rail-width', CSS)
         self.assertNotIn('queueMapResize();', APP[APP.index('function toggleEditorPanel'):APP.index('function syncMobileNavigation')])
-
-    def test_wide_editor_trigger_is_a_persistent_drawer_edge_handle(self):
-        self.assertIn('top: 50%', CSS[CSS.index('.editor-edge-slot {'):CSS.index('.editor-edge-trigger {')])
-        open_rule = re.search(r'#app\[data-layout="wide"\] \.workspace\.editor-drawer-open \.editor-edge-slot \{([^}]+)\}', CSS)
-        self.assertIsNotNone(open_rule)
-        self.assertIn('right: calc(var(--panel-right-width) + var(--ui-map-edge))', open_rule.group(1))
-        self.assertIn("surfaceState.editorOpen ? '편집창 닫기' : '편집창 열기'", APP)
 
     def test_layer_search_accordion_and_virtual_list_are_present(self):
         self.assertIn('id="layerSearchResults"', INDEX)
