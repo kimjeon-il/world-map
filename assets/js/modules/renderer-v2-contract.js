@@ -1,4 +1,4 @@
-export const RENDERER_V2_PASS_IDS = Object.freeze({
+const RENDERER_V2_PASS_IDS = Object.freeze({
   TERRAIN: 'terrain',
   COUNTRY_FILL: 'country-fill',
   DISTRIBUTION_FILL: 'distribution-fill',
@@ -44,13 +44,6 @@ export const RENDERER_V2_RUNTIME_CONTRACT = Object.freeze({
   canonicalGeometryIsNeverLodMutated: true,
   canvasFallbackConsumesCanonicalState: true,
 });
-
-export function rendererV2PassIds({ phase = '' } = {}) {
-  const normalized = String(phase || '');
-  return RENDERER_V2_PASSES
-    .filter(pass => !normalized || pass.phase === normalized)
-    .map(pass => pass.id);
-}
 
 export function validateRendererV2PassOrder(passes = RENDERER_V2_PASSES) {
   const ids = new Set();

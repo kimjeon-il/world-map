@@ -40,7 +40,7 @@ function normalizeInstantiation(raw) {
   return { mode, countryUpdates };
 }
 
-export function normalizeGeometryVersion(raw) {
+function normalizeGeometryVersion(raw) {
   const geometry = POLYGON_TYPES.has(raw?.geometry?.type)
     && Array.isArray(raw.geometry.coordinates)
     && raw.geometry.coordinates.length
@@ -156,7 +156,7 @@ export function materializePilotEntities(definitions, countriesData, combineGeom
   }).filter(entity => entity?.geometryVersions?.length);
 }
 
-export function normalizeWorldSnapshot(raw) {
+function normalizeWorldSnapshot(raw) {
   const id = text(raw?.id);
   if (!id) return null;
   return {
