@@ -1,0 +1,38 @@
+import { test, expect } from '@playwright/test';
+
+test('compact create commands retain library, keyboard and mobile sheet access', async ({ page }, testInfo) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await expect(page.locator('#bootstrapLoading')).toHaveAttribute('hidden', '', { timeout: 30_000 });
+  await expect(page.locator('#app')).toHaveAttribute('data-readiness', 'enhanced', { timeout: 90_000 });
+  await page.locator('#createMenuBtn').click();
+  const menu = page.locator('#createMenu');
+  await expect(menu).toBeVisible();
+  await expect(menu.locator('small, .create-menu-chevron, .create-menu-group')).toHaveCount(0);
+  await expect(menu.locator('.surface-header')).toBeHidden();
+  await expect(menu.locator('.create-menu-item')).toHaveCount(8);
+  await expect(page.locator('#createBuildPanel strong')).toHaveText(['국가', '하위단위', '지방', '분포', '지명', '강', '호수']);
+  const box = await menu.boundingBox();
+  expect(box.width).toBeLessThanOrEqual(262);
+  expect(box.height).toBeLessThan(390);
+  expect(await page.locator('#addCountryBtn').evaluate(el => getComputedStyle(el).textAlign)).toBe('left');
+  await menu.screenshot({ path: testInfo.outputPath('create-menu-desktop.png') });
+  await page.locator('#createLibraryTabBtn').click();
+  await expect(page.locator('#addFromLibraryBtn')).toBeVisible();
+  await page.locator('#createBuildTabBtn').click();
+  await page.locator('#addRiverBtn').focus();
+  await page.keyboard.press('Enter');
+  await expect(menu).toBeHidden();
+  await page.keyboard.press('Escape');
+  await page.setViewportSize({ width: 390, height: 844 });
+  if (await page.locator('#mobileMapBtn').getAttribute('aria-expanded') !== 'true') await page.locator('#mobileMapBtn').click();
+  await page.locator('#createMenuBtn').click();
+  await expect(menu).toBeVisible();
+  await expect(page.locator('#mobileCloseCreateBtn')).toBeVisible();
+  expect((await page.locator('#addCountryBtn').boundingBox()).height).toBeGreaterThanOrEqual(44);
+  await page.locator('#mobileCloseCreateBtn').click();
+  await expect(menu).toBeHidden();
+  expect(errors).toEqual([]);
+});
