@@ -102,7 +102,6 @@ export function createHistoricalLibraryController({
       `${typeLabels[entity.type]} · ${period(entity)}`,
       entity.metadata?.referenceDate ? `기준일 ${entity.metadata.referenceDate}` : '',
       version.certainty ? `신뢰도 ${version.certainty}` : '',
-      entity.metadata?.pilot ? '시험 데이터' : '',
       entity.metadata?.approximateGeometry ? '근사 경계' : '',
     ].filter(Boolean).join(' · ');
     const source = document.createElement('p');
@@ -167,7 +166,7 @@ export function createHistoricalLibraryController({
       const strong = document.createElement('strong');
       strong.textContent = entity.displayNames?.ko || entity.canonicalName;
       const small = document.createElement('small');
-      small.textContent = `${typeLabels[entity.type]} · ${period(entity)}${entity.metadata?.pilot ? ' · 시험 데이터' : ''}`;
+      small.textContent = `${typeLabels[entity.type]} · ${period(entity)}`;
       button.append(strong, small);
       fragment.appendChild(button);
     }

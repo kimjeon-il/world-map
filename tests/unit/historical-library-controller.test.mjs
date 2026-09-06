@@ -25,7 +25,19 @@ function fakeElement(ownerDocument) {
     replaceChildren(...children) { this.children = children; },
     append(...children) { this.children.push(...children); },
     appendChild(child) { this.children.push(child); return child; },
-    querySelector() { return null; },
+    querySelector(selector) {
+      return this.querySelectorAll(selector)[0] || null;
+    },
+    querySelectorAll(selector) {
+      return this.children.filter(child => {
+        if (!child?.attributes) return false;
+        if (selector.includes('[role="option"]') && child.attributes.get('role') !== 'option') return false;
+        if (selector.includes('[data-library-entity-id]') && !child.dataset?.libraryEntityId) return false;
+        if (selector.includes('[aria-selected="true"]') && child.attributes.get('aria-selected') !== 'true') return false;
+        if (selector.includes('[role="option"]') || selector.includes('[data-library-entity-id]') || selector.includes('[aria-selected="true"]')) return true;
+        return false;
+      });
+    },
     setAttribute(name, value) { attributes.set(name, String(value)); },
     removeAttribute(name) { attributes.delete(name); },
     getAttribute(name) { return attributes.get(name) ?? null; },
@@ -154,4 +166,53 @@ test('historical library controller locks controls while async instantiation run
   assert.equal(elements.modal.classList.contains('hidden'), false);
   assert.equal(elements.search.disabled, false);
   assert.equal(reportedErrors, 1);
+});
+
+test('historical library hides the pilot badge while retaining pilot metadata', async () => {
+  const document = {
+    defaultView: { Event: class { constructor(type) { this.type = type; } } },
+    createElement() { return fakeElement(document); },
+    createDocumentFragment() { return fakeElement(document); },
+  };
+  const names = [
+    'open', 'modal', 'card', 'close', 'backdrop', 'search', 'clearSearch', 'type', 'status', 'year', 'geographicRegion',
+    'results', 'preview', 'snapshot', 'snapshotButton', 'childDepth', 'add', 'addOptions', 'optionsBack',
+  ];
+  const elements = Object.fromEntries(names.map(name => [name, fakeElement(document)]));
+  const entity = {
+    libraryId: 'historical-country:test-badge', type: 'country', canonicalName: 'Test', displayNames: { ko: '테스트' },
+    alternateNames: [], metadata: { pilot: true, approximateGeometry: true, referenceDate: '1989-04-25' },
+    sourceInfo: { title: 'Source' },
+  };
+  const version = { id: 'test-badge-v1', certainty: 'medium', datePrecision: 'reference-date', geometry: { type: 'Polygon', coordinates: [] } };
+  const controller = createHistoricalLibraryController({
+    document,
+    elements,
+    service: {
+      load: async () => {}, list: () => [entity], snapshots: () => [], search: () => [entity],
+      get: id => (id === entity.libraryId ? entity : null), getSnapshot: () => null,
+    },
+    typeLabels: { country: '국가' },
+    selectGeometryVersion: () => version,
+    renderMapPreview: () => fakeElement(document),
+    createEmptyState: () => fakeElement(document),
+    replaceSelectOptions() {},
+    collator: new Intl.Collator('ko'),
+    isMobile: () => false,
+    closeCreateMenu() {},
+    instantiate: async () => ({ added: 0 }),
+    confirm() {},
+    setStatus() {},
+    reportError() {},
+    requestFrame: callback => callback(),
+  });
+  controller.connect();
+  await controller.open();
+  controller.select(entity.libraryId);
+  const resultText = elements.results.children[0].children[0].children[1].textContent;
+  const previewText = elements.preview.children.map(child => child.textContent || '').join(' · ');
+  assert.equal(entity.metadata.pilot, true);
+  assert.doesNotMatch(resultText, /시험 데이터/);
+  assert.doesNotMatch(previewText, /시험 데이터/);
+  assert.match(previewText, /근사 경계/);
 });
