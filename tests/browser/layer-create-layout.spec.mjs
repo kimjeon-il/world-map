@@ -55,19 +55,15 @@ test('create menu preserves all existing actions and unique icons', async ({ pag
   expect(errors).toEqual([]);
 });
 
-test('create menu keeps build and library routes separate', async ({ page }) => {
+test('create menu exposes build and library actions without tabs', async ({ page }) => {
   const errors = await openApp(page, viewports[0], 'light');
   await openCreateMenu(page, 'wide');
-  await expect(page.locator('#createBuildTabBtn')).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('#createBuildPanel')).toBeVisible();
-  await expect(page.locator('#createLibraryPanel')).toBeHidden();
-  await page.locator('#createLibraryTabBtn').click();
-  await expect(page.locator('#createLibraryTabBtn')).toHaveAttribute('aria-selected', 'true');
-  await expect(page.locator('#createLibraryPanel')).toBeVisible();
-  await expect(page.locator('#createBuildPanel')).toBeHidden();
+  await expect(page.locator('#createMenu [role="tab"]')).toHaveCount(0);
+  await expect(page.locator('#addFromLibraryBtn')).toBeVisible();
   await page.locator('#createMenuBtn').click();
   await page.locator('#createMenuBtn').click();
-  await expect(page.locator('#createLibraryPanel')).toBeVisible();
+  await expect(page.locator('#addFromLibraryBtn')).toBeVisible();
   expect(errors).toEqual([]);
 });
 

@@ -10,9 +10,10 @@ body.file-menu-open #app .topbar { z-index: 150; }
 #app .topbar-center { flex: 1 1 auto; }
 #app #fileMenu { position: absolute; top: calc(100% + var(--ui-space-2)); left: 0; right: auto; max-width: calc(100vw - 24px); }
 .layer-panel-footer { flex: 0 0 auto; border-top: 1px solid var(--border); background: var(--surface-elevated); padding: var(--ui-space-2); padding-bottom: max(var(--ui-space-2), env(safe-area-inset-bottom)); }
-.layer-action-bar, .layer-selection-actions { display: flex; align-items: center; gap: var(--ui-space-1); }
-.layer-action-bar { justify-content: space-between; }
-#app .layer-action-bar .create-menu-btn { display: inline-flex; min-width: 88px; }
+.layer-action-bar { display: flex; align-items: center; justify-content: flex-start; gap: var(--ui-space-1); }
+#app .layer-action-bar > .icon-btn { flex: 0 0 var(--ui-control-height); width: var(--ui-control-height); min-width: 0; height: var(--ui-control-height); padding: 0; border: 0; background: transparent; box-shadow: none; color: var(--text-soft); }
+#app .layer-action-bar > .icon-btn:is(:hover, :focus-visible):not(:disabled) { background: var(--surface-hover); color: var(--text); }
+#app .layer-action-bar > .layer-delete-action:hover:not(:disabled) { color: var(--danger-text); background: var(--danger-surface); }
 .layer-delete-action:hover:not(:disabled) { color: var(--danger-text); background: var(--danger-surface); }
 .layer-color-swatch { display: inline-flex; flex: 0 0 14px; width: 14px; height: 14px; border: 1px solid var(--border-strong); border-radius: 3px; }
 .layer-color-swatch.is-type-icon { border: 0; color: var(--muted); }
@@ -29,11 +30,10 @@ body.file-menu-open #app .topbar { z-index: 150; }
 }
 #app:not([data-layout="mobile"]) #createMenu > .surface-header { display: none; }
 #app #createMenu .surface-content-create { padding: var(--ui-space-1); }
-#app #createMenu .create-menu-routes { padding-inline: var(--ui-space-1); }
-#app:not([data-layout="mobile"]) #createMenu .create-menu-routes { min-height: 36px; flex: 0 0 36px; }
-#app:not([data-layout="mobile"]) #createMenu .create-menu-routes .ui-tab { min-height: 36px; height: 36px; }
+#app #createMenu .create-menu-category[data-map-category="features"] { border-top: 0; padding-top: 0; margin-top: 0; }
 #app:not([data-layout="mobile"]) #createMenu .surface-body { min-height: 0; overflow-y: auto; }
 @media (max-width: 799px) {
+  #app .layer-action-bar > .icon-btn { flex-basis: var(--ui-touch-height); width: var(--ui-touch-height); height: var(--ui-touch-height); }
   #app[data-layout="mobile"] #createMenu .create-menu-item { min-height: var(--ui-touch-height); }
   #app[data-layout="mobile"] #createMenu .surface-header .sheet-close-btn { display: inline-flex; position: relative; z-index: 2; }
   #app .topbar { gap: var(--ui-space-1); }
