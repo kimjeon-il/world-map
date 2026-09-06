@@ -10,8 +10,10 @@ export function createHistoricalLibraryService({
   dataUrl,
   fetchJson,
   getCountriesData,
+  getMaterializationCountriesData = null,
   displayName,
   combineGeometries,
+  subtractGeometries = null,
   currentYear = () => new Date().getFullYear(),
 }) {
   let library = null;
@@ -26,8 +28,16 @@ export function createHistoricalLibraryService({
         throw new Error('역사 라이브러리 schemaVersion이 현재 형식과 일치하지 않습니다.');
       }
       const countriesData = getCountriesData();
+      const materializationCountriesData = typeof getMaterializationCountriesData === 'function'
+        ? getMaterializationCountriesData()
+        : countriesData;
       const currentEntities = createCurrentCountryLibraryEntities(countriesData, { displayName });
-      const pilotEntities = materializePilotEntities(pilot.entities, countriesData, combineGeometries);
+      const pilotEntities = materializePilotEntities(
+        pilot.entities,
+        materializationCountriesData,
+        combineGeometries,
+        subtractGeometries,
+      );
       const currentSnapshot = {
         id: 'current-world',
         name: '현재 세계',

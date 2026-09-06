@@ -94,14 +94,6 @@ export function createHistoricalLibraryController({
       elements.card?.classList.remove('is-detail', 'is-options');
       return;
     }
-    const back = document.createElement('button');
-    back.type = 'button';
-    back.className = 'ui-button btn ghost historical-library-back';
-    back.textContent = '검색 결과로 돌아가기';
-    back.addEventListener('click', () => {
-      elements.card?.classList.remove('is-detail');
-      requestFrame(() => elements.results.querySelector('[aria-selected="true"]')?.focus());
-    });
     const title = document.createElement('h3');
     title.textContent = entity.displayNames?.ko || entity.canonicalName;
     const meta = document.createElement('p');
@@ -119,6 +111,17 @@ export function createHistoricalLibraryController({
     source.textContent = `출처: ${sourceEntries.length
       ? sourceEntries.map(item => item?.title).filter(Boolean).join(' · ')
       : (entity.sourceInfo?.title || version.sourceId || '미지정')}`;
+    const flagPreview = document.createElement('div');
+    flagPreview.className = 'editor-flag-preview';
+    const flagUrl = String(entity.metadata?.defaultFlagDataUrl || '');
+    if (flagUrl) {
+      const image = document.createElement('img');
+      image.src = flagUrl;
+      image.alt = `${entity.displayNames?.ko || entity.canonicalName} 국기`;
+      flagPreview.appendChild(image);
+    } else {
+      flagPreview.textContent = '국기 없음';
+    }
     const advanced = document.createElement('details');
     advanced.className = 'ui-disclosure editor-disclosure';
     const summary = document.createElement('summary');
@@ -139,12 +142,14 @@ export function createHistoricalLibraryController({
     addAdvanced('신뢰도', version.certainty);
     addAdvanced('상세 출처', `${entity.sourceInfo?.title || version.sourceId || '미지정'}${entity.sourceInfo?.license ? ` · ${entity.sourceInfo.license}` : ''}${version.notes || entity.sourceInfo?.notes ? ` · ${version.notes || entity.sourceInfo.notes}` : ''}`);
     advanced.append(summary, body);
-    elements.preview.replaceChildren(back, title, renderMapPreview(entity, version), meta, source, advanced);
+    elements.preview.replaceChildren(title, flagPreview, renderMapPreview(entity, version), meta, source, advanced);
     elements.add.disabled = false;
-    elements.addOptions?.classList.add('hidden');
-    elements.optionsBack?.classList.add('hidden');
-    elements.add.textContent = '프로젝트에 추가';
-    elements.card?.classList.remove('is-options');
+    elements.addOptions?.classList.remove('hidden');
+    if (elements.addOptions) elements.addOptions.open = true;
+    elements.optionsBack?.classList.remove('hidden');
+    elements.add.textContent = '추가';
+    elements.add.setAttribute('aria-label', '선택한 항목을 현재 프로젝트에 추가');
+    elements.add.dataset.tooltip = '선택한 항목을 현재 프로젝트에 추가';
   }
 
   function renderResults() {
@@ -216,9 +221,11 @@ export function createHistoricalLibraryController({
     try {
       const result = await instantiate([selectedId], elements.year.value, elements.childDepth.value);
       const added = Number(result?.added || 0);
+      const deleted = Number(result?.deleted || 0);
       if (!added) setStatus('이미 현재 프로젝트에 있는 항목입니다.', 'success', 2800);
       else if (Number(result?.subtracted || 0)) {
-        setStatus(`라이브러리 국가 ${added}개를 추가하고 기존 국가 ${result.subtracted}개에서 영토를 차감했습니다.`, 'success', 4200);
+        const deletedText = deleted ? ` 이 중 ${deleted}개는 완전히 대체되어 제거했습니다.` : '';
+        setStatus(`라이브러리 항목 ${added}개를 추가하고 기존 국가 ${result.subtracted}개의 겹친 영토를 대체했습니다.${deletedText}`, 'success', 4200);
       } else {
         setStatus(`라이브러리 항목 ${added}개를 독립 프로젝트 인스턴스로 추가했습니다.`, 'success', 4200);
       }
@@ -232,24 +239,15 @@ export function createHistoricalLibraryController({
 
   function advanceAdd() {
     if (!selectedId) return;
-    if (elements.addOptions?.classList.contains('hidden')) {
-      elements.addOptions.classList.remove('hidden');
-      elements.addOptions.open = true;
-      elements.optionsBack?.classList.remove('hidden');
-      elements.add.textContent = '추가 확정';
-      elements.card?.classList.add('is-options');
-      requestFrame(() => elements.childDepth?.focus());
-      return;
-    }
     void addSelected();
   }
 
   function returnToDetail() {
     elements.addOptions?.classList.add('hidden');
     elements.optionsBack?.classList.add('hidden');
-    elements.add.textContent = '프로젝트에 추가';
-    elements.card?.classList.remove('is-options');
-    requestFrame(() => elements.add?.focus());
+    elements.add.textContent = '추가';
+    elements.card?.classList.remove('is-detail', 'is-options');
+    requestFrame(() => elements.results.querySelector('[aria-selected="true"]')?.focus());
   }
 
   function requestSnapshot() {

@@ -15,7 +15,7 @@ export const LIBRARY_ENTITY_TYPES = Object.freeze({
 
 const TYPES = new Set(Object.values(LIBRARY_ENTITY_TYPES));
 const POLYGON_TYPES = new Set(['Polygon', 'MultiPolygon']);
-const INSTANTIATION_MODES = new Set(['independent', 'country-territory-priority']);
+const INSTANTIATION_MODES = new Set(['independent', 'territory-replacement']);
 const text = value => String(value ?? '').trim();
 const clone = value => structuredClone(value);
 function dateContains(version, referenceDate) {
@@ -26,7 +26,10 @@ function dateContains(version, referenceDate) {
 const startYear = value => parseTemporal(value)?.year ?? null;
 
 function normalizeInstantiation(raw) {
-  const mode = text(raw?.mode) || 'independent';
+  const requestedMode = text(raw?.mode) || 'independent';
+  const mode = requestedMode === 'country-territory-priority'
+    ? 'territory-replacement'
+    : requestedMode;
   if (!INSTANTIATION_MODES.has(mode)) throw new Error(`지원하지 않는 라이브러리 추가 방식입니다: ${mode}`);
   const countryUpdates = {};
   for (const [countryId, update] of Object.entries(raw?.countryUpdates || {})) {
@@ -135,21 +138,34 @@ export function createCurrentCountryLibraryEntities(countriesData, { displayName
   }).filter(Boolean);
 }
 
-export function materializePilotEntities(definitions, countriesData, combineGeometries) {
+export function materializePilotEntities(definitions, countriesData, combineGeometries, subtractGeometries = null) {
   const countryGeometry = new Map((countriesData?.features || []).map(feature => [
     text(feature?.id),
     feature.geometry,
   ]));
   return (definitions || []).map(definition => {
     const versions = (definition.geometryVersions || []).map(version => {
-      if (POLYGON_TYPES.has(version?.geometry?.type)
+      let geometry = POLYGON_TYPES.has(version?.geometry?.type)
         && Array.isArray(version.geometry.coordinates)
-        && version.geometry.coordinates.length) {
-        return { ...version, geometry: clone(version.geometry) };
+        && version.geometry.coordinates.length
+        ? clone(version.geometry)
+        : null;
+      if (!geometry) {
+        const memberGeometries = (version.memberCountryIds || []).map(id => countryGeometry.get(text(id))).filter(Boolean);
+        if (!memberGeometries.length) return null;
+        geometry = memberGeometries.length === 1
+          ? clone(memberGeometries[0])
+          : (typeof combineGeometries === 'function' ? combineGeometries(memberGeometries) : memberGeometries[0]);
       }
-      const memberGeometries = (version.memberCountryIds || []).map(id => countryGeometry.get(text(id))).filter(Boolean);
-      if (!memberGeometries.length) return null;
-      const geometry = typeof combineGeometries === 'function' ? combineGeometries(memberGeometries) : memberGeometries[0];
+      if (POLYGON_TYPES.has(version?.includeGeometry?.type) && Array.isArray(version.includeGeometry.coordinates)) {
+        geometry = typeof combineGeometries === 'function'
+          ? combineGeometries([geometry, clone(version.includeGeometry)])
+          : geometry;
+      }
+      if (POLYGON_TYPES.has(version?.excludeGeometry?.type) && Array.isArray(version.excludeGeometry.coordinates)) {
+        if (typeof subtractGeometries !== 'function') throw new Error(`${definition.libraryId}의 제외 경계를 처리할 수 없습니다.`);
+        geometry = subtractGeometries(geometry, clone(version.excludeGeometry));
+      }
       return geometry ? { ...version, geometry } : null;
     }).filter(Boolean);
     return normalizeHistoricalLibraryEntity({ ...definition, geometryVersions: versions });

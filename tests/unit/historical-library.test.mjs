@@ -68,23 +68,54 @@ test('pilot geometry is materialized from member countries and instances retain 
   assert.deepEqual(instance.instantiation, { mode: 'independent', countryUpdates: {} });
 });
 
-test('pilot geometry accepts immutable inline polygons and territory-priority metadata', () => {
+test('pilot geometry accepts immutable inline polygons and territory-replacement metadata', () => {
   const inline = square(10, 11);
   const [entity] = materializePilotEntities([{
     libraryId: 'historical-country:inline', type: 'country', canonicalName: 'Inline',
     alternateNames: ['Alias'],
-    instantiation: { mode: 'country-territory-priority', countryUpdates: { DEU: { name: 'Federal Republic' } } },
+    instantiation: { mode: 'territory-replacement', countryUpdates: { DEU: { name: 'Federal Republic' } } },
     geometryVersions: [{ id: 'inline-v1', geometry: inline, certainty: 'medium' }],
   }], { type: 'FeatureCollection', features: [] }, () => null);
   inline.coordinates[0][0][0] = 999;
   assert.equal(entity.geometryVersions[0].geometry.coordinates[0][0][0], 10);
   assert.deepEqual(entity.instantiation, {
-    mode: 'country-territory-priority',
+    mode: 'territory-replacement',
     countryUpdates: { DEU: { name: 'Federal Republic' } },
   });
   const instance = instantiateLibraryEntity(entity);
   instance.geometry.coordinates[0][0][0] = 888;
   assert.equal(entity.geometryVersions[0].geometry.coordinates[0][0][0], 10);
+});
+
+test('pilot geometry can add and subtract explicit adjustment masks from canonical members', () => {
+  const calls = [];
+  const [entity] = materializePilotEntities([{
+    libraryId: 'historical-subunit:adjusted', type: 'subunit', canonicalName: 'Adjusted',
+    parentLibraryId: 'historical-country:parent', sovereignLibraryId: 'historical-country:parent', adminLevel: 1,
+    geometryVersions: [{
+      id: 'adjusted-v1', memberCountryIds: ['BASE'], includeGeometry: square(2, 3), excludeGeometry: square(0, 1),
+    }],
+  }], {
+    type: 'FeatureCollection',
+    features: [{ type: 'Feature', id: 'BASE', properties: { name: 'Base' }, geometry: square(0, 2) }],
+  }, geometries => {
+    calls.push(['union', geometries.length]);
+    return square(0, 3);
+  }, (geometry, excluded) => {
+    calls.push(['difference', geometry.coordinates[0][0][0], excluded.coordinates[0][0][0]]);
+    return square(1, 3);
+  });
+  assert.deepEqual(calls, [['union', 2], ['difference', 0, 0]]);
+  assert.deepEqual(entity.geometryVersions[0].geometry, square(1, 3));
+});
+
+test('legacy territory-priority metadata normalizes to the unified replacement mode', () => {
+  const entity = normalizeHistoricalLibraryEntity({
+    libraryId: 'historical-country:legacy', type: 'country', canonicalName: 'Legacy',
+    instantiation: { mode: 'country-territory-priority' },
+    geometryVersions: [{ id: 'legacy-v1', geometry: square() }],
+  });
+  assert.equal(entity.instantiation.mode, 'territory-replacement');
 });
 
 const historicalData = JSON.parse(readFileSync(new URL('../../assets/data/historical-library-pilot.json', import.meta.url), 'utf8'));

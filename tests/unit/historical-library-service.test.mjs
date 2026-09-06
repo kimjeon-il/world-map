@@ -97,3 +97,27 @@ test('historical library service allows retry after a failed load', async () => 
   await service.load();
   assert.equal(attempts, 2);
 });
+
+test('pilot geometry can use pristine countries without exposing them as current library countries', async () => {
+  const service = createHistoricalLibraryService({
+    dataUrl: '/library.json',
+    fetchJson: async () => ({
+      schemaVersion: 2,
+      entities: [{
+        libraryId: 'historical-country:from-pristine', type: 'country', canonicalName: 'From pristine',
+        geometryVersions: [{ id: 'from-pristine:1', memberCountryIds: ['BBB'] }],
+      }],
+      snapshots: [],
+    }),
+    getCountriesData: countries,
+    getMaterializationCountriesData: () => ({
+      type: 'FeatureCollection',
+      features: [{ type: 'Feature', id: 'BBB', properties: { name: 'Pristine B' }, geometry: square(4) }],
+    }),
+    displayName: feature => feature.properties.name,
+    combineGeometries: geometries => geometries[0],
+  });
+  await service.load();
+  assert.equal(service.get('current-country:BBB'), null);
+  assert.deepEqual(service.get('historical-country:from-pristine').geometryVersions[0].geometry, square(4));
+});
