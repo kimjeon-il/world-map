@@ -1,0 +1,74 @@
+import { expect, test } from '@playwright/test';
+import { selectUiOption } from './helpers/ui-select.mjs';
+
+test('Subunit editor and creation use one desktop/mobile surface', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await expect(page.locator('#bootstrapLoading')).toHaveAttribute('hidden', '', { timeout: 30_000 });
+  await expect(page.locator('#app')).toHaveAttribute('data-readiness', 'enhanced', { timeout: 90_000 });
+  expect(errors).toEqual([]);
+  await expect(page.locator('#addSubunitBtn')).toHaveCount(1);
+  await expect(page.locator('#addTerritoryBtn, #addAdministrativeBtn, #territoryProperties, #administrativeProperties')).toHaveCount(0);
+  await page.evaluate(() => window.PANDOLAB_TERRITORIAL.select('country', 'DEU'));
+  await page.locator('#addSubunitBtn').evaluate(button => button.click());
+  await expect(page.locator('#territorialCreateModal')).toBeVisible();
+  await expect(page.locator('#territorialCreateTitle')).toContainText('하위단위');
+  await page.locator('#territorialCreateCancelBtn').click();
+  const chooserPromise = page.waitForEvent('filechooser');
+  await page.locator('#openGisBtn').evaluate(button => button.click());
+  const chooser = await chooserPromise;
+  await chooser.setFiles({
+    name: 'subunit-smoke.geojson', mimeType: 'application/geo+json',
+    buffer: Buffer.from(JSON.stringify({ type: 'FeatureCollection', features: [{ type: 'Feature',
+      properties: { name: '하위단위 검증' }, geometry: { type: 'Polygon', coordinates: [[[9, 50], [9, 51], [10, 51], [10, 50], [9, 50]]] } }] })),
+  });
+  await expect(page.locator('#gisImportModal')).toBeVisible();
+  await expect(page.locator('#gisImportConfirmBtn')).toBeEnabled({ timeout: 30_000 });
+  await page.locator('#gisImportNextBtn').click();
+  await selectUiOption(page, '#gisTargetType', 'subunit');
+  await selectUiOption(page, '#gisTargetCountry', 'DEU');
+  for (const step of ['3/5', '4/5', '5/5']) {
+    await page.locator('#gisImportNextBtn').click();
+    await expect(page.locator('#gisStepIndicator')).toContainText(step, { timeout: 30_000 });
+  }
+  await page.locator('#gisImportConfirmBtn').click();
+  await expect.poll(() => page.evaluate(() => window.PANDOLAB_TERRITORIAL.list({ type: 'subunit' }).some(unit => unit.properties.name === '하위단위 검증')), { timeout: 60_000 }).toBe(true);
+  const id = await page.evaluate(() => {
+    const unit = window.PANDOLAB_TERRITORIAL.list({ type: 'subunit' }).find(item => item.properties.name === '하위단위 검증');
+    window.PANDOLAB_TERRITORIAL.select('subunit', unit.id);
+    return unit.id;
+  });
+  await expect(page.locator('#subunitProperties')).toBeVisible();
+  await expect(page.locator('#subunitNameInput')).toHaveValue('하위단위 검증');
+  await page.locator('#subunitLevelInput').fill('2');
+  await page.locator('#subunitLevelInput').press('Tab');
+  await expect.poll(() => page.evaluate(key => window.PANDOLAB_TERRITORIAL.get(key).properties.adminLevel, id)).toBe(2);
+  const originalColor = await page.locator('#subunitColorInput').inputValue();
+  await page.evaluate(key => window.PANDOLAB_TERRITORIAL.setColor('subunit', key, '#ff9900'), id);
+  await expect(page.locator('#subunitColorInput')).toHaveValue('#ff9900');
+  await page.locator('#undoBtn').click();
+  // Existing history restore clears selection; inspect the restored object,
+  // not the hidden editor's retained input value.
+  await page.evaluate(key => window.PANDOLAB_TERRITORIAL.select('subunit', key), id);
+  await expect(page.locator('#subunitColorInput')).toHaveValue(originalColor);
+  await page.locator('#redoBtn').click();
+  await page.evaluate(key => window.PANDOLAB_TERRITORIAL.select('subunit', key), id);
+  await expect(page.locator('#subunitColorInput')).toHaveValue('#ff9900');
+  expect(await page.evaluate(key => {
+    window.PANDOLAB_TERRITORIAL.setLocked('subunit', key, true);
+    return window.PANDOLAB_TERRITORIAL.isLocked('subunit', key);
+  }, id)).toBe(true);
+  expect(await page.evaluate(key => {
+    window.PANDOLAB_TERRITORIAL.setLocked('subunit', key, false);
+    return window.PANDOLAB_TERRITORIAL.isLocked('subunit', key);
+  }, id)).toBe(false);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator('#addSubunitBtn')).toHaveCount(1);
+  await page.locator('#addSubunitBtn').evaluate(button => button.click());
+  await expect(page.locator('#territorialCreateModal')).toBeVisible();
+  expect(errors).toEqual([]);
+});

@@ -9,8 +9,7 @@ export const HISTORICAL_LIBRARY_SCHEMA_VERSION = 2;
 
 export const LIBRARY_ENTITY_TYPES = Object.freeze({
   COUNTRY: 'country',
-  TERRITORY: 'territory',
-  ADMIN: 'admin',
+  SUBUNIT: 'subunit',
   REGION: 'region',
 });
 
@@ -63,7 +62,8 @@ function normalizeGeometryVersion(raw) {
 }
 
 export function normalizeHistoricalLibraryEntity(raw) {
-  const type = text(raw?.type).toLowerCase();
+  const inputType = text(raw?.type).toLowerCase();
+  const type = ['territory', 'admin'].includes(inputType) ? 'subunit' : inputType;
   const libraryId = text(raw?.libraryId);
   if (!libraryId || !TYPES.has(type)) return null;
   const interval = normalizeTemporalInterval(raw.startDate, raw.endDate);
@@ -87,7 +87,7 @@ export function normalizeHistoricalLibraryEntity(raw) {
     endDate: interval.validTo,
     parentLibraryId: text(raw.parentLibraryId),
     sovereignLibraryId: text(raw.sovereignLibraryId),
-    adminLevel: type === LIBRARY_ENTITY_TYPES.ADMIN ? Math.max(1, Number(raw.adminLevel || 1)) : null,
+    adminLevel: type === LIBRARY_ENTITY_TYPES.SUBUNIT && (Number(raw.adminLevel) > 0 || inputType === 'admin') ? Math.max(1, Number(raw.adminLevel) || 1) : null,
     geometryVersions,
     instantiation: normalizeInstantiation(raw.instantiation),
     metadata: raw.metadata && typeof raw.metadata === 'object' ? clone(raw.metadata) : {},
