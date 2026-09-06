@@ -33,7 +33,7 @@ class V0240TerritorialUnitModelTests(unittest.TestCase):
     def test_hydro_edits_are_a_separate_project_domain(self):
         self.assertIn("name: 'hydroEdits', scope: 'document', fallback: () => []", PROJECT_STATE)
         self.assertIn("hydroEdits: []", APP)
-        self.assertIn('id="genericFeaturesLayerChildren"', INDEX)
+        self.assertIn("layerGroup: 'genericFeatures'", APP)
         self.assertIn("layerGroup: 'hydro'", APP)
         self.assertIn('id="hydroEditFields"', INDEX)
         self.assertIn("function renderHydroEdits()", APP)
@@ -55,12 +55,12 @@ class V0240TerritorialUnitModelTests(unittest.TestCase):
             self.assertIn(field, MODEL)
         self.assertIn("TERRITORIAL_UNIT_TYPES.REGION", MODEL)
         self.assertIn("TERRITORIAL_COVERAGE_MODES.EXPLICIT", MODEL)
-        for element_id in ("regionsLayerChildren", "regionProperties"):
+        for element_id in ("regionProperties",):
             self.assertIn(f'id="{element_id}"', INDEX)
 
     def test_dedicated_layers_create_flows_and_editors_exist(self):
         for element_id in (
-            "territoriesLayerChildren", "administrativeLayerChildren", "regionsLayerChildren",
+
             "addTerritoryBtn", "addAdministrativeBtn", "addRegionBtn",
             "territoryProperties", "administrativeProperties", "regionProperties",
             "splitTerritoryBtn", "mergeTerritoryBtn", "splitAdministrativeBtn",

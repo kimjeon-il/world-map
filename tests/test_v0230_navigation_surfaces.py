@@ -6,6 +6,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).parents[1]
+LAYER_MODEL = (ROOT / "assets/js/modules/layer-list-model.js").read_text(encoding="utf-8")
+LAYER_CONTROLLER = (ROOT / "assets/js/modules/layer-tree-controller.js").read_text(encoding="utf-8")
 INDEX = (ROOT / "index.html").read_text(encoding="utf-8")
 APP = (ROOT / "assets/js/app.js").read_text(encoding="utf-8")
 CSS = (ROOT / "assets/css/app.css").read_text(encoding="utf-8")
@@ -65,14 +67,11 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
 
     def test_layer_search_accordion_and_virtual_list_are_present(self):
         self.assertIn('id="layerSearchResults"', INDEX)
-        self.assertIn('LAYER_VIRTUAL_ROW_HEIGHT', APP)
-        self.assertIn('renderVirtualizedLayerGroup', APP)
-        self.assertIn('const folderKeys = activeLayerFolderKeys();', APP)
+        self.assertIn('const virtual = rows.length > 80', LAYER_CONTROLLER)
+        self.assertIn('visibleLayerRows(presentation, snapshot.folders, search)', LAYER_CONTROLLER)
         self.assertNotIn("HYDRO_FOLDER_STATE_PREFIX", APP)
-        self.assertIn("const TERRITORIAL_UNIT_FOLDER_STATE_PREFIX = 'territorial-unit-folder:';", APP)
-        self.assertIn("!key.startsWith(TERRITORIAL_UNIT_FOLDER_STATE_PREFIX)", APP)
-        self.assertIn("'rivers',", APP)
-        self.assertIn("'lakes',", APP)
+        self.assertNotIn('TERRITORIAL_UNIT_FOLDER_STATE_PREFIX', APP)
+        self.assertIn("return ['countries', 'rivers', 'lakes'];", APP)
         self.assertIn('searchText: id', APP)
 
     def test_sheet_content_owns_vertical_scrolling(self):
@@ -131,11 +130,10 @@ class V0230NavigationSurfaceTests(unittest.TestCase):
         self.assertIn("tab.setAttribute('aria-selected', String(active))", SURFACE_TABS)
         self.assertIn('tab.tabIndex = active ? 0 : -1', SURFACE_TABS)
 
-    def test_generic_feature_folder_is_conditional(self):
-        self.assertIn('class="layer-folder" data-layer-group="genericFeatures" hidden', INDEX)
-        self.assertIn('category.layerGroups.forEach(group => {', APP)
+    def test_generic_features_are_direct_object_rows(self):
+        self.assertNotIn('class="layer-folder"', INDEX)
         self.assertIn("if (group === 'genericFeatures')", APP)
-        self.assertIn('const hidden = !allItems.length;', APP)
+        self.assertIn('else objects.push(item)', LAYER_MODEL)
         self.assertNotIn('data-map-object-type="generic"', INDEX)
 
     def test_build_version_is_v0230(self):

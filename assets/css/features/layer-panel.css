@@ -49,113 +49,47 @@
   display: none;
 }
 
-/* The row keeps the visibility/name pair as its primary reading order. */
-.layer-folder-row,
-.layer-child,
-.layer-subfolder-row,
-.layer-skeleton-row,
-.layer-child-skeleton {
-  min-height: var(--ui-v2-layer-row-height);
-  height: var(--ui-v2-layer-row-height);
+/* One scroll surface for bundles, objects and virtualized rows. */
+#app .layer-list, #app .layer-search-results { display: block; }
+#app .layer-list.hidden, #app .layer-search-results.hidden { display: none; }
+#app .layer-child, #app .layer-bundle-row {
+  height: var(--ui-v2-layer-row-height); min-height: var(--ui-v2-layer-row-height);
+  box-sizing: border-box; margin: 0; flex-shrink: 0;
 }
-
-.layer-folder-row {
-  grid-template-columns: var(--ui-tree-action-size) minmax(0, 1fr);
+#app .layer-bundle-row {
+  display: grid; grid-template-columns: 16px var(--ui-tree-action-size) minmax(0, 1fr);
+  align-items: center; gap: var(--ui-space-1); padding: 0 var(--ui-row-padding-x);
 }
-.layer-folder-row.has-layer-style {
-  grid-template-columns: var(--ui-tree-action-size) minmax(0, 1fr);
+#app .layer-bundle-row > .layer-child-name { grid-column: 3; }
+.layer-bundle-toggle { padding: 0; border: 0; background: transparent; color: var(--muted); display: grid; place-items: center; }
+.layer-bundle-toggle .disclosure-icon { width: 14px; height: 14px; }
+.layer-bundle-toggle[aria-expanded="false"] .disclosure-icon { transform: rotate(-90deg); }
+.layer-item-type { flex: 0 0 auto; color: var(--muted); font-size: var(--ui-font-caption); font-weight: normal; margin-left: auto; }
+#app .layer-child-name { background: transparent; color: inherit; }
+.layer-child.is-selected .layer-item-type { color: inherit; opacity: .75; }
+#app .layer-child[data-bundle-member] { padding-inline-start: calc(var(--ui-row-padding-x) + 20px); }
+#app .layer-child.layer-search-result {
+  width: 100%; grid-template-columns: var(--ui-tree-action-size) minmax(0, 1fr) var(--ui-tree-action-size);
+  gap: var(--ui-space-1); padding: 0 var(--ui-row-padding-x); text-align: left;
 }
-.layer-folder-row > .layer-visibility-control {
-  grid-column: 1;
-}
-.layer-folder-row > .layer-folder-name {
-  grid-column: 2;
-}
-.layer-folder-row > .layer-folder-toggle,
-.layer-folder-row > .layer-style-toggle {
-  position: absolute;
-  inset-block-start: 50%;
-  transform: translateY(-50%);
-}
-.layer-folder-row > .layer-folder-toggle {
-  inset-inline-end: calc(var(--ui-tree-action-size) + var(--ui-space-1));
-}
-.layer-folder-row > .layer-style-toggle {
-  inset-inline-end: 0;
-}
-
-.layer-folder-row .layer-folder-toggle,
-.layer-folder-row .layer-style-toggle {
-  opacity: 0;
-  pointer-events: none;
-}
-.layer-folder-row:hover .layer-folder-toggle,
-.layer-folder-row:focus-within .layer-folder-toggle,
-.layer-folder-row:hover .layer-style-toggle,
-.layer-folder-row:focus-within .layer-style-toggle,
-.layer-folder-row .layer-folder-toggle:focus-visible,
-.layer-folder-row .layer-style-toggle:focus-visible,
-.layer-folder-row .layer-folder-toggle[aria-expanded="true"],
-.layer-folder-row .layer-style-toggle:is(.active, [aria-expanded="true"]),
-.layer-folder-row:has(.layer-folder-name:focus-visible) .layer-folder-toggle,
-.layer-folder-row:has(.layer-folder-name:focus-visible) .layer-style-toggle {
-  opacity: 1;
-  pointer-events: auto;
-}
-
+#app .layer-child.layer-search-result.has-no-menu { grid-template-columns: var(--ui-tree-action-size) minmax(0, 1fr); }
+.layer-bundle-row[data-load-state="loading"] .layer-item-type::after { content: " · 로딩"; }
+.layer-bundle-row[data-load-state="error"] .layer-item-type::after { content: " · 오류"; }
 .layer-child-menu { opacity: 0; }
-.layer-child:hover .layer-child-menu,
-.layer-child:focus-within .layer-child-menu,
-.layer-child.is-selected .layer-child-menu,
-.layer-child.is-primary-selected .layer-child-menu {
-  opacity: 1;
-}
-
-/* One disclosure glyph, one state rule. Text chevrons are not used. */
-.layer-folder-row .disclosure-icon,
-.layer-subfolder-row .disclosure-icon {
-  transform: rotate(0deg);
-  transition: transform 140ms ease;
-}
-.layer-folder-row[aria-expanded="false"] .disclosure-icon,
-.layer-subfolder-row[aria-expanded="false"] .disclosure-icon {
-  transform: rotate(-90deg);
-}
-
+.layer-child:hover .layer-child-menu, .layer-child:focus-within .layer-child-menu,
+.layer-child.is-selected .layer-child-menu { opacity: 1; }
+.map-object-style-settings > summary { cursor: pointer; }
+.layer-type-settings { padding-block: var(--ui-space-2); border-top: 1px solid var(--border); }
+.layer-type-settings-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-1); }
+.layer-type-settings-heading > label { flex: 1; }
+#app .layer-type-settings .layer-inline-style-panel { margin: 0; }
 @media (max-width: 799px) {
-  .layer-folder-row,
-  .layer-child,
-  .layer-subfolder-row,
-  .layer-skeleton-row,
-  .layer-child-skeleton {
-    min-height: var(--ui-v2-layer-row-height-mobile);
-    height: var(--ui-v2-layer-row-height-mobile);
+  #app .layer-child, #app .layer-bundle-row {
+    height: var(--ui-v2-layer-row-height-mobile); min-height: var(--ui-v2-layer-row-height-mobile);
   }
-
+  #app .layer-bundle-row { grid-template-columns: 16px var(--ui-v2-layer-visibility-size-mobile) minmax(0, 1fr); }
   .layer-visibility-control {
-    width: var(--ui-v2-layer-visibility-size-mobile);
-    min-width: var(--ui-v2-layer-visibility-size-mobile);
+    width: var(--ui-v2-layer-visibility-size-mobile); min-width: var(--ui-v2-layer-visibility-size-mobile);
     height: var(--ui-v2-layer-visibility-size-mobile);
-  }
-
-  .layer-folder-row {
-    grid-template-columns: var(--ui-v2-layer-visibility-size-mobile) minmax(0, 1fr);
-  }
-  .layer-folder-row > .layer-folder-toggle,
-  .layer-folder-row > .layer-style-toggle {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .layer-folder-row > .layer-folder-toggle {
-    inset-inline-end: calc(var(--ui-v2-layer-visibility-size-mobile) + var(--ui-space-1));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .layer-folder-row .layer-folder-toggle,
-  .layer-folder-row .layer-style-toggle,
-  .layer-child-menu,
-  .disclosure-icon {
-    transition: none;
   }
 }
