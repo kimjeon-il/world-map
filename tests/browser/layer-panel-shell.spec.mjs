@@ -24,7 +24,6 @@ test('layer footer owns actions and header owns history across desktop and mobil
   await expect(page.locator('#objectDeleteBtn')).toBeDisabled();
   await page.locator('#layerSearchInput').fill('프랑스');
   await page.locator('#layerSearchResults [data-item-id="FRA"]').click({ modifiers: ['Control'] });
-  await expect(page.locator('#multiSelectionCount')).toHaveText('2개 선택됨');
   await expect(page.locator('#objectLockBtn')).toHaveAttribute('aria-label', '모두 잠금');
   await page.locator('#objectLockBtn').click();
   await expect(page.locator('#objectLockBtn')).toHaveAttribute('aria-pressed', 'true');

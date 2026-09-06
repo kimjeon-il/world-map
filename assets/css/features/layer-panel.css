@@ -11,9 +11,6 @@
 .layer-action-bar, .layer-selection-actions { display: flex; align-items: center; gap: var(--ui-space-1); }
 .layer-action-bar { justify-content: space-between; }
 #app .layer-action-bar .create-menu-btn { display: inline-flex; min-width: 88px; }
-.layer-selection-summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-space-1); margin-bottom: var(--ui-space-2); }
-.layer-selection-summary > strong { font-size: var(--ui-font-sm); margin-right: auto; }
-.layer-selection-summary > button { padding-inline: var(--ui-space-1); }
 .layer-delete-action:hover:not(:disabled) { color: var(--danger-text); background: var(--danger-surface); }
 .layer-color-swatch { display: inline-flex; flex: 0 0 14px; width: 14px; height: 14px; border: 1px solid var(--border-strong); border-radius: 3px; }
 .layer-color-swatch.is-type-icon { border: 0; color: var(--muted); }

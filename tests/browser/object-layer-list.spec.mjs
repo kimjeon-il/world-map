@@ -35,7 +35,6 @@ test('object list shares bundles, direct rows and actions on desktop and mobile'
   // Search selects the same objects; modifier selection crosses types.
   await page.locator('#layerSearchInput').fill('독일');
   await page.locator('#layerSearchResults [data-layer-item-select="countries"][data-item-id="DEU"]').click({ modifiers: ['Control'] });
-  await expect(page.locator('#multiSelectionCount')).toHaveText('2개 선택됨');
   // Cross-domain batch mutation remains constrained by the existing action policy.
   await expect(page.locator('#objectLockBtn')).toBeDisabled();
   await page.locator('#layerSearchClearBtn').click();
