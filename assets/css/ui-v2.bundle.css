@@ -1536,55 +1536,6 @@ body.create-menu-open [data-layout="compact"] .surface-create {
 
 .topbar :is(button, .ui-button) { min-height: var(--ui-v2-control-sm); }
 
-.map-tool-toolbar {
-  top: var(--ui-map-edge);
-  left: 50%;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ui-space-0-5);
-  padding: var(--ui-toolbar-padding);
-  border: 1px solid var(--toolbar-border);
-  border-radius: var(--ui-v2-radius-lg);
-  background: var(--toolbar-bg);
-  box-shadow: var(--control-shadow);
-  transform: translateX(-50%);
-}
-
-.map-tool-toolbar .map-tool-btn {
-  min-height: var(--ui-v2-control-md);
-  height: var(--ui-v2-control-md);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ui-space-1-5);
-  padding-inline: var(--ui-space-3);
-  border-color: transparent;
-  background: transparent;
-  color: var(--text-soft);
-  font-size: var(--ui-v2-font-sm);
-  font-weight: var(--ui-v2-weight-semibold);
-}
-
-.map-tool-toolbar .map-tool-btn:hover,
-.map-tool-toolbar .map-tool-btn:focus-visible {
-  border-color: transparent;
-  background: var(--surface-hover);
-  color: var(--text-strong);
-}
-
-.map-tool-toolbar .map-tool-btn:is(.active, [aria-pressed="true"]) {
-  border-color: transparent;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  color: var(--text-strong);
-}
-
-.map-tool-toolbar .map-tool-btn:is(.active, [aria-pressed="true"]) .ui-icon { color: var(--accent); }
-
-.mode-editing-context:not(.hidden) ~ .map-tool-toolbar,
-body.mode-editing-active .map-tool-toolbar {
-  opacity: .22;
-  pointer-events: none;
-}
-
 .mode-task-window {
   border: 1px solid var(--overlay-border);
   border-radius: var(--ui-v2-radius-lg);
@@ -1875,28 +1826,14 @@ body.create-menu-open [data-layout="wide"] .left-panel {
 
 [data-layout="wide"] .create-menu-btn { display: none; }
 
-[data-layout="wide"] .map-tool-toolbar {
-  left: calc(var(--map-safe-left) + ((100% - var(--map-safe-left)) / 2));
-}
-
 [data-layout="wide"] .map-command-toolbar {
   left: calc(var(--map-safe-left) + var(--ui-map-edge));
 }
 
 @media (max-width: 1199px) {
-  .map-tool-toolbar { max-width: calc(100vw - (var(--ui-space-6) * 2)); }
 }
 
 @media (max-width: 799px) {
-  .map-tool-toolbar { top: var(--ui-space-2); }
-
-  .map-tool-toolbar .map-tool-btn {
-    min-width: var(--ui-touch-height);
-    min-height: var(--ui-touch-height);
-    height: var(--ui-touch-height);
-    justify-content: center;
-    padding-inline: var(--ui-space-2);
-  }
 
   .map-bottom-status {
     height: auto;
@@ -1905,14 +1842,12 @@ body.create-menu-open [data-layout="wide"] .left-panel {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .map-tool-toolbar .map-tool-btn,
   .mode-task-window { transition: none; }
 }
 
 /* Editor-owned layout refinements. */
 .map-command-toolbar,
-.map-view-toolbar,
-.mobile-zoom-dock {
+.map-view-toolbar{
   width: max-content;
   max-width: calc(100% - var(--map-safe-left, 0) - var(--map-safe-right, 0) - (var(--ui-map-edge) * 2));
   align-self: start;
@@ -2369,8 +2304,6 @@ body.file-menu-open .mobile-backdrop {
   .surface-create .create-menu-item { min-height: var(--ui-touch-height); }
   .surface-map .projection-btn { min-height: var(--ui-touch-height); }
 
-  body.mobile-direct-edit .map-tool-toolbar { display: none; }
-
   body.mobile-direct-edit .mode-editing-context {
     position: relative;
     z-index: 60;
@@ -2503,18 +2436,6 @@ body.file-menu-open .mobile-backdrop {
 .action-status.ui-toast.warning .status-dot {
   background: var(--ui-v2-feedback-warning-dot);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-v2-feedback-warning-dot) 14%, transparent);
-}
-
-.engine-status[data-feedback-tone="working"] {
-  color: var(--status-text);
-}
-
-.engine-status[data-feedback-tone="warning"] {
-  color: var(--ui-v2-feedback-warning-text);
-}
-
-.engine-status[data-feedback-tone="error"] {
-  color: var(--ui-v2-status-error-text);
 }
 
 .project-save-status[data-save-state="saving"] .project-save-status-dot {
@@ -2705,8 +2626,7 @@ body.file-menu-open .mobile-backdrop {
 }
 
 .historical-library-result[aria-selected="true"],
-.ui-tab[aria-selected="true"],
-.map-tool-btn[aria-pressed="true"] {
+.ui-tab[aria-selected="true"]{
   box-shadow: inset 0 -2px color-mix(in srgb, var(--accent) 68%, transparent);
 }
 
@@ -2758,17 +2678,6 @@ body.file-menu-open .mobile-backdrop {
   [role="radio"]:focus-visible {
     outline: 2px solid Highlight;
     outline-offset: var(--ui-v2-focus-offset);
-  }
-
-  :is(
-    .historical-library-result[aria-selected="true"],
-    .ui-tab[aria-selected="true"],
-    .map-tool-btn[aria-pressed="true"],
-    .ui-segment-option[aria-checked="true"]
-  ) {
-    border-color: Highlight;
-    outline: 1px solid Highlight;
-    box-shadow: none;
   }
 
   .ui-alert,
