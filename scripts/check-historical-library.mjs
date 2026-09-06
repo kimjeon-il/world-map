@@ -58,34 +58,36 @@ const materializedEntities = materializePilotEntities(
 const materializedById = new Map(materializedEntities.map(item => [item.libraryId, item]));
 const supplementalHistoricalChecks = [
   {
-    id: 'historical-country:ukraine-1991-2014',
-    version: 'historical-country:ukraine-1991-2014:1991-2014-r1',
+    id: 'historical-country:ukraine',
+    version: 'historical-country:ukraine:1991-2014-r1',
     points: [[34.1, 44.95], [36.2, 45.3]],
   },
   {
-    id: 'historical-country:kingdom-of-yugoslavia',
-    version: 'historical-country:kingdom-of-yugoslavia:1918-1941-r1',
-    points: [[20.46, 44.81], [15.98, 45.81], [18.41, 43.86], [21.43, 42.0], [21.17, 42.66], [19.26, 42.44]],
+    id: 'historical-country:yugoslavia',
+    versions: [
+      {
+        id: 'historical-country:kingdom-of-yugoslavia:1918-1941-r1',
+        points: [[20.46, 44.81], [15.98, 45.81], [18.41, 43.86], [21.43, 42.0], [21.17, 42.66], [19.26, 42.44]],
+      },
+      {
+        id: 'historical-country:sfr-yugoslavia:1945-1992-r1',
+        points: [[20.46, 44.81], [15.98, 45.81], [18.41, 43.86], [21.43, 42.0], [21.17, 42.66], [19.26, 42.44]],
+      },
+      {
+        id: 'historical-country:federal-republic-of-yugoslavia:1992-2003-r1',
+        points: [[20.46, 44.81], [21.17, 42.66], [19.26, 42.44]],
+        outside: [[15.98, 45.81]],
+      },
+    ],
   },
   {
-    id: 'historical-country:sfr-yugoslavia',
-    version: 'historical-country:sfr-yugoslavia:1945-1992-r1',
-    points: [[20.46, 44.81], [15.98, 45.81], [18.41, 43.86], [21.43, 42.0], [21.17, 42.66], [19.26, 42.44]],
-  },
-  {
-    id: 'historical-country:federal-republic-of-yugoslavia',
-    version: 'historical-country:federal-republic-of-yugoslavia:1992-2003-r1',
-    points: [[20.46, 44.81], [21.17, 42.66], [19.26, 42.44]],
-    outside: [[15.98, 45.81]],
-  },
-  {
-    id: 'historical-country:sudan-1956-2011',
-    version: 'historical-country:sudan-1956-2011:1956-2011-r1',
+    id: 'historical-country:sudan',
+    version: 'historical-country:sudan:1956-2011-r1',
     points: [[32.56, 15.5], [31.58, 4.85]],
   },
   {
-    id: 'historical-country:indonesia-1945-2002',
-    version: 'historical-country:indonesia-1945-2002:1945-2002-r1',
+    id: 'historical-country:indonesia',
+    version: 'historical-country:indonesia:1945-2002-r1',
     points: [[106.82, -6.18], [125.57, -8.56]],
   },
 ];
@@ -95,22 +97,25 @@ for (const check of supplementalHistoricalChecks) {
   if (definition.type !== 'country' || definition.instantiation?.mode !== 'territory-replacement') {
     throw new Error(`${check.id} must use the unified territory-replacement country mode`);
   }
-  const version = definition.geometryVersions?.find(item => item.id === check.version);
-  if (!version) throw new Error(`${check.id} geometry version is missing: ${check.version}`);
   const materialized = materializedById.get(check.id);
-  const geometry = materialized?.geometryVersions?.find(item => item.id === check.version)?.geometry;
-  if (!geometry) throw new Error(`${check.id} could not be materialized`);
-  const issues = validateGeometry({
-    type: 'Feature', id: check.id,
-    properties: { name: definition.displayNames?.ko || definition.canonicalName },
-    geometry,
-  });
-  if (issues.length) throw new Error(`${check.id} fails app geometry validation: ${issues[0].message}`);
-  for (const point of check.points || []) {
-    if (!geometryCovers(point, geometry)) throw new Error(`${check.id} does not cover representative point ${point.join(',')}`);
-  }
-  for (const point of check.outside || []) {
-    if (geometryCovers(point, geometry)) throw new Error(`${check.id} unexpectedly covers outside point ${point.join(',')}`);
+  const versions = check.versions || [{ id: check.version, points: check.points, outside: check.outside }];
+  for (const expectedVersion of versions) {
+    const version = definition.geometryVersions?.find(item => item.id === expectedVersion.id);
+    if (!version) throw new Error(`${check.id} geometry version is missing: ${expectedVersion.id}`);
+    const geometry = materialized?.geometryVersions?.find(item => item.id === expectedVersion.id)?.geometry;
+    if (!geometry) throw new Error(`${check.id} could not be materialized: ${expectedVersion.id}`);
+    const issues = validateGeometry({
+      type: 'Feature', id: check.id,
+      properties: { name: definition.displayNames?.ko || definition.canonicalName },
+      geometry,
+    });
+    if (issues.length) throw new Error(`${expectedVersion.id} fails app geometry validation: ${issues[0].message}`);
+    for (const point of expectedVersion.points || []) {
+      if (!geometryCovers(point, geometry)) throw new Error(`${expectedVersion.id} does not cover representative point ${point.join(',')}`);
+    }
+    for (const point of expectedVersion.outside || []) {
+      if (geometryCovers(point, geometry)) throw new Error(`${expectedVersion.id} unexpectedly covers outside point ${point.join(',')}`);
+    }
   }
 }
 const polygonArea = polygon => Math.max(0, Math.abs(countryGeometry.ringSignedArea(polygon[0] || []))

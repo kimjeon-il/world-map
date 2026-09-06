@@ -161261,23 +161261,25 @@
       }
     },
     {
-      "libraryId": "historical-country:ukraine-1991-2014",
+      "libraryId": "historical-country:ukraine",
       "type": "country",
-      "canonicalName": "Ukraine with Crimea before 2014",
+      "canonicalName": "Ukraine",
       "displayNames": {
-        "ko": "우크라이나(2014년 이전 국경)",
-        "en": "Ukraine (pre-2014 borders)"
+        "ko": "우크라이나",
+        "en": "Ukraine"
       },
       "alternateNames": [
         "우크라이나(크림반도 포함)",
         "Ukraine with Crimea",
-        "Ukraine before 2014"
+        "Ukraine before 2014",
+        "우크라이나(2014년 이전 국경)",
+        "Ukraine (pre-2014 borders)"
       ],
       "startDate": "1991-08-24",
       "endDate": "2014-03-17",
       "geometryVersions": [
         {
-          "id": "historical-country:ukraine-1991-2014:1991-2014-r1",
+          "id": "historical-country:ukraine:1991-2014-r1",
           "validFrom": "1991-08-24",
           "validTo": "2014-03-17",
           "memberCountryIds": [
@@ -163017,20 +163019,28 @@
       }
     },
     {
-      "libraryId": "historical-country:kingdom-of-yugoslavia",
+      "libraryId": "historical-country:yugoslavia",
       "type": "country",
-      "canonicalName": "Kingdom of Yugoslavia",
+      "canonicalName": "Yugoslavia",
       "displayNames": {
-        "ko": "유고슬라비아 왕국",
-        "en": "Kingdom of Yugoslavia"
+        "ko": "유고슬라비아",
+        "en": "Yugoslavia"
       },
       "alternateNames": [
         "유고슬라비아 왕국",
+        "Kingdom of Yugoslavia",
         "Kingdom of Serbs, Croats and Slovenes",
-        "SHS 왕국"
+        "유고슬라비아 사회주의 연방공화국",
+        "Socialist Federal Republic of Yugoslavia",
+        "SFR Yugoslavia",
+        "SFRY",
+        "유고슬라비아 연방공화국",
+        "Federal Republic of Yugoslavia",
+        "세르비아-몬테네그로",
+        "FRY"
       ],
       "startDate": "1918-12-01",
-      "endDate": "1941-04-17",
+      "endDate": "2003-02-04",
       "geometryVersions": [
         {
           "id": "historical-country:kingdom-of-yugoslavia:1918-1941-r1",
@@ -163049,47 +163059,7 @@
           "certainty": "medium",
           "sourceId": "natural-earth-5.1.1-historical-successor-union",
           "notes": "현재 후계국 외곽선 합집으로 재구성한 유고슬라비아 왕국의 참고 경계입니다."
-        }
-      ],
-      "metadata": {
-        "geographicRegion": "Europe",
-        "pilot": true,
-        "approximateGeometry": true,
-        "referenceDate": "1931"
-      },
-      "sourceInfo": {
-        "title": "Natural Earth 5.1.1 Admin 0 with historical territory adjustment",
-        "license": "Natural Earth public domain",
-        "sources": [
-          {
-            "title": "Natural Earth 5.1.1 Admin 0 Countries",
-            "license": "Public domain"
-          }
-        ],
-        "notes": "현재 후계국 외곽선 합집으로 재구성한 유고슬라비아 왕국의 참고 경계입니다."
-      },
-      "instantiation": {
-        "mode": "territory-replacement",
-        "countryUpdates": {}
-      }
-    },
-    {
-      "libraryId": "historical-country:sfr-yugoslavia",
-      "type": "country",
-      "canonicalName": "Socialist Federal Republic of Yugoslavia",
-      "displayNames": {
-        "ko": "유고슬라비아 사회주의 연방공화국",
-        "en": "Socialist Federal Republic of Yugoslavia"
-      },
-      "alternateNames": [
-        "유고슬라비아 사회주의 연방공화국",
-        "SFR Yugoslavia",
-        "SFRY",
-        "티토 유고슬라비아"
-      ],
-      "startDate": "1945-11-29",
-      "endDate": "1992-04-27",
-      "geometryVersions": [
+        },
         {
           "id": "historical-country:sfr-yugoslavia:1945-1992-r1",
           "validFrom": "1945-11-29",
@@ -163107,47 +163077,7 @@
           "certainty": "medium",
           "sourceId": "natural-earth-5.1.1-historical-successor-union",
           "notes": "현재 후계국 외곽선 합집으로 재구성한 유고슬라비아 사회주의 연방공화국의 참고 경계입니다."
-        }
-      ],
-      "metadata": {
-        "geographicRegion": "Europe",
-        "pilot": true,
-        "approximateGeometry": true,
-        "referenceDate": "1989"
-      },
-      "sourceInfo": {
-        "title": "Natural Earth 5.1.1 Admin 0 with historical territory adjustment",
-        "license": "Natural Earth public domain",
-        "sources": [
-          {
-            "title": "Natural Earth 5.1.1 Admin 0 Countries",
-            "license": "Public domain"
-          }
-        ],
-        "notes": "현재 후계국 외곽선 합집으로 재구성한 유고슬라비아 사회주의 연방공화국의 참고 경계입니다."
-      },
-      "instantiation": {
-        "mode": "territory-replacement",
-        "countryUpdates": {}
-      }
-    },
-    {
-      "libraryId": "historical-country:federal-republic-of-yugoslavia",
-      "type": "country",
-      "canonicalName": "Federal Republic of Yugoslavia",
-      "displayNames": {
-        "ko": "유고슬라비아 연방공화국(세르비아-몬테네그로)",
-        "en": "Federal Republic of Yugoslavia (Serbia and Montenegro)"
-      },
-      "alternateNames": [
-        "유고슬라비아 연방공화국",
-        "세르비아-몬테네그로",
-        "Federal Republic of Yugoslavia",
-        "FRY"
-      ],
-      "startDate": "1992-04-27",
-      "endDate": "2003-02-04",
-      "geometryVersions": [
+        },
         {
           "id": "historical-country:federal-republic-of-yugoslavia:1992-2003-r1",
           "validFrom": "1992-04-27",
@@ -163166,11 +163096,10 @@
       "metadata": {
         "geographicRegion": "Europe",
         "pilot": true,
-        "approximateGeometry": true,
-        "referenceDate": "1998"
+        "approximateGeometry": true
       },
       "sourceInfo": {
-        "title": "Natural Earth 5.1.1 Admin 0 with historical territory adjustment",
+        "title": "Natural Earth 5.1.1 Admin 0 with historical Yugoslav state versions",
         "license": "Natural Earth public domain",
         "sources": [
           {
@@ -163178,7 +163107,7 @@
             "license": "Public domain"
           }
         ],
-        "notes": "세르비아·몬테네그로와 당시 세르비아에 포함된 코소보를 합친 참고 경계입니다."
+        "notes": "유고슬라비아 왕국·사회주의 연방공화국·연방공화국을 하나의 국가 정체성 아래 기간별 경계 버전으로 보존한 참고 자료입니다."
       },
       "instantiation": {
         "mode": "territory-replacement",
@@ -163186,24 +163115,25 @@
       }
     },
     {
-      "libraryId": "historical-country:sudan-1956-2011",
+      "libraryId": "historical-country:sudan",
       "type": "country",
-      "canonicalName": "Sudan before South Sudan independence",
+      "canonicalName": "Sudan",
       "displayNames": {
-        "ko": "수단(남수단 분리 전)",
-        "en": "Sudan before South Sudan independence"
+        "ko": "수단",
+        "en": "Sudan"
       },
       "alternateNames": [
         "북수단",
         "수단(2011년 이전)",
         "Sudan before 2011",
-        "Greater Sudan"
+        "Greater Sudan",
+        "수단(남수단 분리 전)"
       ],
       "startDate": "1956-01-01",
       "endDate": "2011-07-08",
       "geometryVersions": [
         {
-          "id": "historical-country:sudan-1956-2011:1956-2011-r1",
+          "id": "historical-country:sudan:1956-2011-r1",
           "validFrom": "1956-01-01",
           "validTo": "2011-07-08",
           "memberCountryIds": [
@@ -163239,23 +163169,24 @@
       }
     },
     {
-      "libraryId": "historical-country:indonesia-1945-2002",
+      "libraryId": "historical-country:indonesia",
       "type": "country",
-      "canonicalName": "Indonesia before East Timor independence",
+      "canonicalName": "Indonesia",
       "displayNames": {
-        "ko": "인도네시아(동티모르 분리 전)",
-        "en": "Indonesia before East Timor independence"
+        "ko": "인도네시아",
+        "en": "Indonesia"
       },
       "alternateNames": [
         "인도네시아(2002년 이전)",
         "Indonesia with East Timor",
-        "Indonesia before 2002"
+        "Indonesia before 2002",
+        "인도네시아(동티모르 분리 전)"
       ],
       "startDate": "1945-08-17",
       "endDate": "2002-05-19",
       "geometryVersions": [
         {
-          "id": "historical-country:indonesia-1945-2002:1945-2002-r1",
+          "id": "historical-country:indonesia:1945-2002-r1",
           "validFrom": "1945-08-17",
           "validTo": "2002-05-19",
           "memberCountryIds": [
