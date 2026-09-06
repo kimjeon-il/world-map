@@ -54,39 +54,8 @@ async function openCountryEditor(page) {
 }
 
 async function expectFlatIdentificationDisclosure(page) {
-  const country = page.locator('#countryProperties');
-  const identification = country.locator(':scope > .editor-disclosure');
-  await expect(identification.locator(':scope > summary')).toContainText('식별 정보');
-  await expect(country).not.toContainText('추가 정보');
-  await expect(identification.locator('#countryCodeInput')).toBeAttached();
-  await expect(identification.locator('#originalNameValue')).toBeAttached();
-  const styles = await identification.evaluate(element => {
-    const style = getComputedStyle(element);
-    const summary = element.querySelector(':scope > summary');
-    const body = element.querySelector(':scope > .editor-disclosure-body');
-    return {
-      background: style.backgroundColor,
-      borderTop: style.borderTopWidth,
-      borderRight: style.borderRightWidth,
-      borderBottom: style.borderBottomWidth,
-      borderLeft: style.borderLeftWidth,
-      radius: style.borderRadius,
-      shadow: style.boxShadow,
-      summaryPaddingLeft: getComputedStyle(summary).paddingLeft,
-      bodyPaddingLeft: getComputedStyle(body).paddingLeft,
-    };
-  });
-  expect(styles).toMatchObject({
-    background: 'rgba(0, 0, 0, 0)',
-    borderTop: '0px',
-    borderRight: '0px',
-    borderBottom: '0px',
-    borderLeft: '0px',
-    radius: '0px',
-    shadow: 'none',
-    summaryPaddingLeft: '0px',
-    bodyPaddingLeft: '0px',
-  });
+  await expect(page.locator('#countryCodeInput, #originalNameValue, #capitalInput')).toHaveCount(0);
+  await expect(page.locator('#countryProperties')).not.toContainText('식별 정보');
 }
 
 for (const layout of layouts) {

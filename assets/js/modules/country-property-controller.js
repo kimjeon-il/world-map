@@ -1,3 +1,5 @@
+import { countrySelectionStatus } from './country-display.js';
+
 export function createCountryPropertyController({
   window,
   document,
@@ -56,7 +58,7 @@ export function createCountryPropertyController({
       const current = getCountryView(view.ref);
       if (current?.feature?.geometry !== geometry) return;
       if (elements.area) elements.area.textContent = formatArea(value);
-      if (elements.selectionStatus) elements.selectionStatus.textContent = `국가 · ${view.displayName} · ${formatArea(value)}`;
+      if (elements.selectionStatus) elements.selectionStatus.textContent = countrySelectionStatus(view, formatArea(value));
       syncStatus();
     };
     if (typeof window?.requestIdleCallback === 'function') window.requestIdleCallback(calculate, { timeout: 800 });
@@ -71,14 +73,11 @@ export function createCountryPropertyController({
     const startedAt = globalThis.performance?.now?.() || Date.now();
     showPropertyForm('country', view.displayName, { resetScroll: !refreshOnly });
     const fieldsStartedAt = globalThis.performance?.now?.() || Date.now();
-    if (elements.name) elements.name.value = view.override.name || view.properties.name || '';
-    if (elements.code) elements.code.textContent = view.id;
+    if (elements.name) elements.name.value = view.displayName;
     const color = resolveColor(view);
     if (elements.color) elements.color.value = color.value;
     syncColorPicker('country', { value: color.value, defaultColor: defaultColor(), isDefault: color.isDefault });
-    if (elements.capital) elements.capital.value = view.override.capital || '';
     if (elements.notes) elements.notes.value = view.override.notes || '';
-    if (elements.originalName) elements.originalName.textContent = view.properties.name || '—';
     renderFlag(resolveFlagUrl(view), view.displayName);
     const geometry = view.feature.geometry;
     const cached = geometry && areaCache.has(geometry);
@@ -88,8 +87,8 @@ export function createCountryPropertyController({
       elements.area.dataset.tooltip = '구면 근사 면적이며 고정밀 GIS 측정값과 차이가 날 수 있습니다.';
     }
     if (elements.selectionStatus) elements.selectionStatus.textContent = cached
-      ? `국가 · ${view.displayName} · ${formatArea(area)}`
-      : `국가 · ${view.displayName}`;
+      ? countrySelectionStatus(view, formatArea(area))
+      : countrySelectionStatus(view);
     if (!cached) scheduleArea(view, token);
     syncStatus();
     syncActions(view);
@@ -107,7 +106,6 @@ export function createCountryPropertyController({
       commitField(field, transform(event.target.value));
     });
     bindField(elements.name, 'name', value => value.trim());
-    bindField(elements.capital, 'capital', value => value.trim());
     bindField(elements.notes, 'notes');
     elements.flagUpload?.addEventListener('click', () => elements.flagFile?.click());
     elements.flagFile?.addEventListener('change', event => {
