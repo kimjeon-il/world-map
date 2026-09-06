@@ -1413,6 +1413,8 @@ body.create-menu-open [data-layout="compact"] .surface-create {
 
 /* Document commands live in the header; only viewport controls float on the map. */
 #app .topbar { display: flex; justify-content: flex-start; }
+/* The menu shares the header's stacking context; lift it above workspace panels. */
+body.file-menu-open #app .topbar { z-index: 150; }
 #app .topbar-file-actions { position: relative; flex: 0 0 auto; }
 #app .topbar-history { display: flex; align-items: center; gap: var(--ui-space-1); flex: 0 0 auto; }
 #app .topbar-center { flex: 1 1 auto; }
