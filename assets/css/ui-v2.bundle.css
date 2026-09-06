@@ -398,9 +398,7 @@
 /* Destructive intent is reserved for the final confirmation action. */
 .danger-btn,
 .danger-ghost,
-.mode-draft-action-btn.danger,
-.editor-object-delete,
-.object-actions-delete {
+.mode-draft-action-btn.danger {
   border-color: var(--ui-control-border);
   background: var(--ui-control-bg);
   color: var(--ui-control-text);
@@ -408,18 +406,14 @@
 
 .danger-btn:hover:not(:disabled),
 .danger-ghost:hover:not(:disabled),
-.mode-draft-action-btn.danger:hover:not(:disabled),
-.editor-object-delete:hover:not(:disabled),
-.object-actions-delete:hover:not(:disabled) {
+.mode-draft-action-btn.danger:hover:not(:disabled) {
   border-color: var(--ui-control-border-hover);
   background: var(--ui-control-bg-hover);
   color: var(--text-strong);
 }
 .danger-btn:active:not(:disabled),
 .danger-ghost:active:not(:disabled),
-.mode-draft-action-btn.danger:active:not(:disabled),
-.editor-object-delete:active:not(:disabled),
-.object-actions-delete:active:not(:disabled) {
+.mode-draft-action-btn.danger:active:not(:disabled) {
   border-color: var(--ui-control-border);
   background: var(--ui-control-bg-pressed);
   color: var(--ui-control-text);
@@ -1388,6 +1382,41 @@ body.create-menu-open [data-layout="compact"] .surface-create {
 
 /* Layer feature states are loaded after primitives so stateful SVGs win the
  * generic icon defaults without changing the shared icon primitive. */
+
+/* Document commands live in the header; only viewport controls float on the map. */
+#app .topbar { display: flex; justify-content: flex-start; }
+#app .topbar-file-actions { position: relative; flex: 0 0 auto; }
+#app .topbar-history { display: flex; align-items: center; gap: var(--ui-space-1); flex: 0 0 auto; }
+#app .topbar-center { flex: 1 1 auto; }
+#app #fileMenu { position: absolute; top: calc(100% + var(--ui-space-2)); left: 0; right: auto; max-width: calc(100vw - 24px); }
+.layer-panel-footer { flex: 0 0 auto; border-top: 1px solid var(--border); background: var(--surface-elevated); padding: var(--ui-space-2); padding-bottom: max(var(--ui-space-2), env(safe-area-inset-bottom)); }
+.layer-action-bar, .layer-selection-actions { display: flex; align-items: center; gap: var(--ui-space-1); }
+.layer-action-bar { justify-content: space-between; }
+#app .layer-action-bar .create-menu-btn { display: inline-flex; min-width: 88px; }
+.layer-selection-summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-space-1); margin-bottom: var(--ui-space-2); }
+.layer-selection-summary > strong { font-size: var(--ui-font-sm); margin-right: auto; }
+.layer-selection-summary > button { padding-inline: var(--ui-space-1); }
+.layer-delete-action:hover:not(:disabled) { color: var(--danger-text); background: var(--danger-surface); }
+.layer-color-swatch { display: inline-flex; flex: 0 0 14px; width: 14px; height: 14px; border: 1px solid var(--border-strong); border-radius: 3px; }
+.layer-color-swatch.is-type-icon { border: 0; color: var(--muted); }
+.layer-color-swatch .ui-icon { width: 14px; height: 14px; }
+.layer-search-result > strong { display: flex; align-items: center; gap: var(--ui-space-2); }
+.layer-child-name { gap: var(--ui-space-2); }
+.layer-child-name-label { flex: 1 1 auto; text-align: left; }
+#app:not([data-layout="mobile"]) #createMenu {
+  position: fixed; top: auto; right: auto; left: var(--layer-create-left, 8px); bottom: var(--layer-create-bottom, 64px);
+  width: min(340px, calc(100vw - 16px)); height: auto; max-height: var(--layer-create-height, calc(100dvh - 120px));
+  transform: none; z-index: 140;
+}
+#app:not([data-layout="mobile"]) #createMenu .surface-body { min-height: 0; overflow-y: auto; }
+@media (max-width: 799px) {
+  #app .topbar { gap: var(--ui-space-1); }
+  #app .topbar .brand { flex: 0 1 auto; }
+  #app .topbar .brand strong { font-size: var(--ui-font-md); }
+  #app .topbar-center { padding: 0; }
+  #app .adaptive-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #app #fileMenu { left: auto; right: auto; position: fixed; top: calc(var(--ui-topbar-height) + 8px); inset-inline-start: 8px; }
+}
 .layer-visibility-control .layer-visibility-eye-off { display: none; }
 .layer-visibility-control .layer-visibility-toggle:not(:checked) ~ .layer-visibility-eye {
   display: none;
@@ -1519,6 +1548,36 @@ body.create-menu-open [data-layout="compact"] .surface-create {
 
 [data-layout="wide"] .surface-map { width: var(--ui-shell-left-panel-width); }
 [data-layout="wide"] .surface-editor { width: var(--ui-shell-right-panel-width); }
+
+/* The wide inspector occupies workspace area, not an overlay over the map. */
+#app[data-layout="wide"] .workspace.editor-drawer-open .map-wrap {
+  right: var(--ui-shell-right-panel-width);
+  width: calc(100% - var(--ui-shell-right-panel-width));
+}
+.editor-task-slot[hidden] { display: none !important; }
+.editor-task-slot { display: flex; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+#rightPanel[data-editor-content="task"] > :is(.surface-header, .editor-view-tabs, #editorScrollBody) { display: none !important; }
+#rightPanel[data-editor-content="task"] #modeEditingContext {
+  display: flex; flex: 1 1 auto; width: 100%; max-width: none; min-height: 0;
+}
+#rightPanel[data-editor-content="task"] #modeEditingHud {
+  display: flex; flex-direction: column; flex: 1 1 auto; width: 100%; max-width: none;
+  min-height: 0; border: 0; border-radius: 0; box-shadow: none; background: var(--surface-elevated);
+}
+#rightPanel[data-editor-content="task"] .mode-task-window-header {
+  flex: 0 0 auto; min-height: var(--ui-surface-header-height-compact); border-bottom: 1px solid var(--border);
+}
+#rightPanel[data-editor-content="task"] #modeTaskWindowContent {
+  display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden;
+}
+#rightPanel[data-editor-content="task"] .mode-task-window-body {
+  flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto;
+}
+#rightPanel[data-editor-content="task"] #modeActionBar {
+  flex: 0 0 auto; width: 100%; max-width: none; margin: 0; border-radius: 0; box-shadow: none;
+  border: 0; border-top: 1px solid var(--border);
+}
+#rightPanel[data-editor-content="task"] #modeTaskMinimizeBtn { display: none !important; }
 
 .topbar {
   min-height: var(--ui-shell-topbar-height);
@@ -1724,9 +1783,7 @@ body.create-menu-open [data-layout="wide"] [data-od-id="workspace-layers"]::afte
   font-weight: var(--ui-v2-weight-bold);
 }
 
-[data-layout="wide"] .left-panel,
-[data-layout="wide"] .right-panel,
-[data-layout="wide"] .right-panel.collapsed {
+[data-layout="wide"] .left-panel {
   top: 0;
   right: auto;
   bottom: 0;
@@ -1746,30 +1803,6 @@ body.create-menu-open [data-layout="wide"] [data-od-id="workspace-layers"]::afte
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-}
-
-[data-layout="wide"] .right-panel,
-[data-layout="wide"] .right-panel.collapsed {
-  transform: translateX(calc(-100% - var(--ui-space-5)));
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-[data-layout="wide"] .right-panel.mobile-open,
-[data-layout="wide"] .right-panel.collapsed.mobile-open {
-  transform: translateX(0);
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-}
-
-[data-layout="wide"] .workspace.editor-drawer-open .left-panel,
-body.create-menu-open [data-layout="wide"] .left-panel {
-  transform: translateX(calc(-100% - var(--ui-space-5)));
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
 }
 
 [data-layout="wide"] :is(.left-panel, .right-panel) > .surface-header {
@@ -1819,19 +1852,7 @@ body.create-menu-open [data-layout="wide"] .left-panel {
   border-bottom: 1px solid var(--border);
 }
 
-[data-layout="wide"] .create-menu-wrap {
-  width: 0;
-  min-width: 0;
-}
 
-[data-layout="wide"] .create-menu-btn { display: none; }
-
-[data-layout="wide"] .map-command-toolbar {
-  left: calc(var(--map-safe-left) + var(--ui-map-edge));
-}
-
-@media (max-width: 1199px) {
-}
 
 @media (max-width: 799px) {
 
@@ -1845,9 +1866,7 @@ body.create-menu-open [data-layout="wide"] .left-panel {
   .mode-task-window { transition: none; }
 }
 
-/* Editor-owned layout refinements. */
-.map-command-toolbar,
-.map-view-toolbar{
+.map-view-toolbar {
   width: max-content;
   max-width: calc(100% - var(--map-safe-left, 0) - var(--map-safe-right, 0) - (var(--ui-map-edge) * 2));
   align-self: start;
@@ -2172,8 +2191,7 @@ body.create-menu-open [data-layout="wide"] .left-panel {
 /* Historical library refinements. */
 
 /* Panel-owned visibility refinements. */
-.ui-dialog-kicker,
-.create-toolbar-divider {
+.ui-dialog-kicker {
   display: none;
 }
 

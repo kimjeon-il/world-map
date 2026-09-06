@@ -1,5 +1,40 @@
 /* Layer feature states are loaded after primitives so stateful SVGs win the
  * generic icon defaults without changing the shared icon primitive. */
+
+/* Document commands live in the header; only viewport controls float on the map. */
+#app .topbar { display: flex; justify-content: flex-start; }
+#app .topbar-file-actions { position: relative; flex: 0 0 auto; }
+#app .topbar-history { display: flex; align-items: center; gap: var(--ui-space-1); flex: 0 0 auto; }
+#app .topbar-center { flex: 1 1 auto; }
+#app #fileMenu { position: absolute; top: calc(100% + var(--ui-space-2)); left: 0; right: auto; max-width: calc(100vw - 24px); }
+.layer-panel-footer { flex: 0 0 auto; border-top: 1px solid var(--border); background: var(--surface-elevated); padding: var(--ui-space-2); padding-bottom: max(var(--ui-space-2), env(safe-area-inset-bottom)); }
+.layer-action-bar, .layer-selection-actions { display: flex; align-items: center; gap: var(--ui-space-1); }
+.layer-action-bar { justify-content: space-between; }
+#app .layer-action-bar .create-menu-btn { display: inline-flex; min-width: 88px; }
+.layer-selection-summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-space-1); margin-bottom: var(--ui-space-2); }
+.layer-selection-summary > strong { font-size: var(--ui-font-sm); margin-right: auto; }
+.layer-selection-summary > button { padding-inline: var(--ui-space-1); }
+.layer-delete-action:hover:not(:disabled) { color: var(--danger-text); background: var(--danger-surface); }
+.layer-color-swatch { display: inline-flex; flex: 0 0 14px; width: 14px; height: 14px; border: 1px solid var(--border-strong); border-radius: 3px; }
+.layer-color-swatch.is-type-icon { border: 0; color: var(--muted); }
+.layer-color-swatch .ui-icon { width: 14px; height: 14px; }
+.layer-search-result > strong { display: flex; align-items: center; gap: var(--ui-space-2); }
+.layer-child-name { gap: var(--ui-space-2); }
+.layer-child-name-label { flex: 1 1 auto; text-align: left; }
+#app:not([data-layout="mobile"]) #createMenu {
+  position: fixed; top: auto; right: auto; left: var(--layer-create-left, 8px); bottom: var(--layer-create-bottom, 64px);
+  width: min(340px, calc(100vw - 16px)); height: auto; max-height: var(--layer-create-height, calc(100dvh - 120px));
+  transform: none; z-index: 140;
+}
+#app:not([data-layout="mobile"]) #createMenu .surface-body { min-height: 0; overflow-y: auto; }
+@media (max-width: 799px) {
+  #app .topbar { gap: var(--ui-space-1); }
+  #app .topbar .brand { flex: 0 1 auto; }
+  #app .topbar .brand strong { font-size: var(--ui-font-md); }
+  #app .topbar-center { padding: 0; }
+  #app .adaptive-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #app #fileMenu { left: auto; right: auto; position: fixed; top: calc(var(--ui-topbar-height) + 8px); inset-inline-start: 8px; }
+}
 .layer-visibility-control .layer-visibility-eye-off { display: none; }
 .layer-visibility-control .layer-visibility-toggle:not(:checked) ~ .layer-visibility-eye {
   display: none;
