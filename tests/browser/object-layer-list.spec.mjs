@@ -9,17 +9,17 @@ test('object list shares bundles, direct rows and actions on desktop and mobile'
   await page.goto('/?debug=1');
   await expect(page.locator('#app')).toHaveAttribute('data-readiness', 'enhanced', { timeout: 90_000 });
   await expect(page.locator('#layerSection .layer-category,#layerSection .layer-folder,#layerSection [data-layer-style-toggle]')).toHaveCount(0);
-  await expect(page.locator('.layer-bundle-row .layer-child-name-label')).toHaveText(['세계 국가', '기본 강', '기본 호수']);
-  await expect(page.locator('[data-bundle-key="countries"] .layer-item-type')).toHaveText('국가 258');
+  await expect(page.locator('.layer-bundle-row .layer-child-name-label')).toHaveText(['정치체', '지형지물']);
+  await expect(page.locator('.layer-bundle-row .layer-item-type')).toHaveCount(0);
   const footerY = (await page.locator('.layer-panel-footer').boundingBox()).y;
-  await page.locator('.layer-bundle-toggle[data-layer-folder-toggle="countries"]').click();
+  await page.locator('.layer-bundle-toggle[data-layer-folder-toggle="polities"]').click();
   await expect(page.locator('.layer-list')).toHaveAttribute('data-virtualized', 'true');
   expect(await page.locator('.layer-list .layer-child').count()).toBeLessThan(80);
   await page.locator('.layer-list').evaluate(el => { el.scrollTop = el.scrollHeight; });
-  await expect(page.locator('[data-bundle-key="lakes"]')).toBeVisible();
+  await expect(page.locator('[data-bundle-key="landforms"]')).toBeVisible();
   expect((await page.locator('.layer-panel-footer').boundingBox()).y).toBe(footerY);
   await page.locator('.layer-list').evaluate(el => { el.scrollTop = 0; });
-  await page.locator('.layer-bundle-toggle[data-layer-folder-toggle="countries"]').click();
+  await page.locator('.layer-bundle-toggle[data-layer-folder-toggle="polities"]').click();
 
   // The existing creation workflow inserts a direct, sorted row, not a type folder.
   await page.locator('#createMenuBtn').click();
@@ -56,7 +56,7 @@ test('object list shares bundles, direct rows and actions on desktop and mobile'
   await expect(page.locator('[data-layer-style-opacity="countries"]')).toBeVisible();
   await page.locator('#countriesVisible').uncheck();
   await page.locator('#mapLayersTabBtn').click();
-  const worldEye = page.locator('[data-bundle-key="countries"] input');
+  const worldEye = page.locator('[data-bundle-key="polities"] input');
   await expect(worldEye).not.toBeChecked();
   await worldEye.check();
   await expect(worldEye).toBeChecked();
@@ -65,7 +65,7 @@ test('object list shares bundles, direct rows and actions on desktop and mobile'
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('#app')).toHaveAttribute('data-layout', 'mobile');
   if (await page.locator('#mobileMapBtn').getAttribute('aria-expanded') !== 'true') await page.locator('#mobileMapBtn').click();
-  await expect(page.locator('.layer-bundle-row')).toHaveCount(3);
+  await expect(page.locator('.layer-bundle-row')).toHaveCount(2);
   await expect(language).toBeVisible();
   await expect(page.locator('.layer-panel-footer #createMenuBtn')).toBeVisible();
   await expect.poll(async () => { const box = await page.locator('.layer-panel-footer').boundingBox(); return box.y + box.height; }).toBeLessThanOrEqual(780);
