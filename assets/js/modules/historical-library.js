@@ -223,8 +223,11 @@ export function createHistoricalLibrary({ schemaVersion, entities = [], snapshot
   });
 }
 
-export function instantiateLibraryEntity(entity, referenceDate = null) {
-  const version = selectGeometryVersion(entity, referenceDate);
+export function instantiateLibraryEntity(entity, referenceDate = null, geometryVersionId = '') {
+  const requestedVersionId = text(geometryVersionId);
+  const version = requestedVersionId
+    ? (entity?.geometryVersions || []).find(candidate => candidate.id === requestedVersionId)
+    : selectGeometryVersion(entity, referenceDate);
   if (!entity || !version) throw new Error('선택한 시점에 사용할 경계 버전이 없습니다.');
   return {
     libraryId: entity.libraryId,

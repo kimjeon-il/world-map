@@ -79,11 +79,11 @@ export function createHistoricalLibraryService({
     return [...selected];
   }
 
-  function instantiateDescriptors(rootIds, referenceDate, childDepth = 'none') {
+  function instantiateDescriptors(rootIds, referenceDate, childDepth = 'none', versionOverrides = {}) {
     return entityRefsWithChildren(rootIds, childDepth)
       .map(id => library?.get(id))
       .filter(Boolean)
-      .map(entity => instantiateLibraryEntity(entity, referenceDate));
+      .map(entity => instantiateLibraryEntity(entity, referenceDate, versionOverrides?.[entity.libraryId]));
   }
 
   return Object.freeze({

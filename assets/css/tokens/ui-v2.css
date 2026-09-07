@@ -96,6 +96,7 @@
   --ui-v2-control-sm: 44px;
   --ui-v2-control-md: 44px;
   --ui-v2-control-lg: 44px;
+  --ui-v2-layer-action-size: 30px;
   --ui-v2-command-row-min-height: 48px;
   --ui-v2-workflow-action-min-width: 9rem;
   --ui-v2-confirm-modal-width: 430px;
@@ -152,6 +153,7 @@
   --ui-surface-tab-indicator-height: 3px;
   --ui-surface-tab-indicator-bottom: var(--ui-v2-space-0-5);
   --ui-content-action-min-height: var(--ui-v2-touch-height);
+  --ui-layer-action-size: var(--ui-v2-layer-action-size);
   --ui-content-command-row-min-height: var(--ui-v2-command-row-min-height);
   --ui-workflow-action-min-width: var(--ui-v2-workflow-action-min-width);
   --ui-confirm-modal-width: var(--ui-v2-confirm-modal-width);

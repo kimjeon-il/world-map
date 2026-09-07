@@ -12,6 +12,7 @@ body.file-menu-open #app .topbar { z-index: 150; }
 .layer-panel-footer { flex: 0 0 auto; border-top: 1px solid var(--border); background: var(--surface-elevated); padding: var(--ui-space-2); padding-bottom: max(var(--ui-space-2), env(safe-area-inset-bottom)); }
 .layer-action-bar { display: flex; align-items: center; justify-content: flex-start; gap: var(--ui-space-1); }
 #app .layer-action-bar > .icon-btn { flex: 0 0 var(--ui-control-height); width: var(--ui-control-height); min-width: 0; height: var(--ui-control-height); padding: 0; border: 0; background: transparent; box-shadow: none; color: var(--text-soft); }
+#app:not([data-layout="mobile"]) .layer-action-bar > .icon-btn { flex-basis: var(--ui-layer-action-size); width: var(--ui-layer-action-size); height: var(--ui-layer-action-size); }
 #app .layer-action-bar > .icon-btn:is(:hover, :focus-visible):not(:disabled) { background: var(--surface-hover); color: var(--text); }
 #app .layer-action-bar > .layer-delete-action:hover:not(:disabled) { color: var(--danger-text); background: var(--danger-surface); }
 .layer-delete-action:hover:not(:disabled) { color: var(--danger-text); background: var(--danger-surface); }
@@ -30,7 +31,6 @@ body.file-menu-open #app .topbar { z-index: 150; }
 }
 #app:not([data-layout="mobile"]) #createMenu > .surface-header { display: none; }
 #app #createMenu .surface-content-create { padding: var(--ui-space-1); }
-#app #createMenu .create-menu-category[data-map-category="features"] { border-top: 0; padding-top: 0; margin-top: 0; }
 #app:not([data-layout="mobile"]) #createMenu .surface-body { min-height: 0; overflow-y: auto; }
 @media (max-width: 799px) {
   #app .layer-action-bar > .icon-btn { flex-basis: var(--ui-touch-height); width: var(--ui-touch-height); height: var(--ui-touch-height); }

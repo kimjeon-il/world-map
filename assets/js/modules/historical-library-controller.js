@@ -19,6 +19,7 @@ export function createHistoricalLibraryController({
   requestFrame = callback => requestAnimationFrame(callback),
 }) {
   let selectedId = '';
+  let selectedVersionId = '';
   let loading = false;
 
   function setLoadingState(nextLoading) {
@@ -82,8 +83,10 @@ export function createHistoricalLibraryController({
 
   function renderPreview() {
     const entity = service.get(selectedId);
-    const version = entity ? selectGeometryVersion(entity, elements.year.value) : null;
+    const automaticVersion = entity ? selectGeometryVersion(entity, elements.year.value) : null;
+    const version = entity?.geometryVersions?.find(candidate => candidate.id === selectedVersionId) || automaticVersion;
     if (!entity || !version) {
+      selectedVersionId = '';
       const help = document.createElement('p');
       help.className = 'editor-help';
       help.textContent = '항목을 선택하면 시대·경계 버전·출처를 확인할 수 있습니다.';
@@ -96,6 +99,28 @@ export function createHistoricalLibraryController({
     }
     const title = document.createElement('h3');
     title.textContent = entity.displayNames?.ko || entity.canonicalName;
+    const versionField = document.createElement('label');
+    versionField.className = 'ui-field field-group historical-library-version-field';
+    const versionLabel = document.createElement('span');
+    versionLabel.textContent = '경계 버전';
+    const versionSelect = document.createElement('select');
+    versionSelect.id = 'historicalLibraryGeometryVersionInput';
+    versionSelect.setAttribute('aria-label', `${entity.displayNames?.ko || entity.canonicalName} 경계 버전`);
+    for (const candidate of entity.geometryVersions || []) {
+      const option = document.createElement('option');
+      option.value = candidate.id;
+      option.textContent = `${candidate.validFrom || '?'}–${candidate.validTo || '현재'}`;
+      option.selected = candidate.id === version.id;
+      versionSelect.appendChild(option);
+    }
+    versionField.append(versionLabel, versionSelect);
+    const versionNotes = document.createElement('p');
+    versionNotes.className = 'editor-help historical-library-version-notes';
+    versionNotes.textContent = version.notes || '';
+    versionSelect.addEventListener('change', () => {
+      selectedVersionId = versionSelect.value;
+      renderPreview();
+    });
     const meta = document.createElement('p');
     meta.className = 'editor-help';
     meta.textContent = [
@@ -141,7 +166,7 @@ export function createHistoricalLibraryController({
     addAdvanced('신뢰도', version.certainty);
     addAdvanced('상세 출처', `${entity.sourceInfo?.title || version.sourceId || '미지정'}${entity.sourceInfo?.license ? ` · ${entity.sourceInfo.license}` : ''}${version.notes || entity.sourceInfo?.notes ? ` · ${version.notes || entity.sourceInfo.notes}` : ''}`);
     advanced.append(summary, body);
-    elements.preview.replaceChildren(title, flagPreview, renderMapPreview(entity, version), meta, source, advanced);
+    elements.preview.replaceChildren(title, versionField, versionNotes, flagPreview, renderMapPreview(entity, version), meta, source, advanced);
     elements.add.disabled = false;
     elements.addOptions?.classList.remove('hidden');
     if (elements.addOptions) elements.addOptions.open = true;
@@ -182,6 +207,7 @@ export function createHistoricalLibraryController({
 
   function select(id) {
     if (loading) return;
+    if (selectedId !== String(id || '')) selectedVersionId = '';
     selectedId = String(id || '');
     renderResults();
     renderPreview();
@@ -218,7 +244,8 @@ export function createHistoricalLibraryController({
     if (loading || !selectedId) return;
     setLoadingState(true);
     try {
-      const result = await instantiate([selectedId], elements.year.value, elements.childDepth.value);
+      const versionOverrides = selectedVersionId ? { [selectedId]: selectedVersionId } : {};
+      const result = await instantiate([selectedId], elements.year.value, elements.childDepth.value, versionOverrides);
       const added = Number(result?.added || 0);
       const deleted = Number(result?.deleted || 0);
       if (!added) setStatus('이미 현재 프로젝트에 있는 항목입니다.', 'success', 2800);
@@ -283,7 +310,10 @@ export function createHistoricalLibraryController({
     ]) {
       element?.addEventListener(eventName, () => {
         renderResults();
-        if (element === elements.year) renderPreview();
+        if (element === elements.year) {
+          selectedVersionId = '';
+          renderPreview();
+        }
       });
     }
     elements.clearSearch?.addEventListener('click', () => {
