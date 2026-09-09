@@ -37,8 +37,9 @@ async function openLayers(page, layout) {
 }
 
 async function openLibrary(page, layout) {
-  if (layout === 'wide') await page.locator('#createMenuBtn').click();
-  else await page.locator('#mobileCreateBtn').click();
+  if (layout !== 'wide' && await page.locator('#mobileMapBtn').getAttribute('aria-expanded') !== 'true') await page.locator('#mobileMapBtn').click();
+  await page.locator('#mapLayersTabBtn').click();
+  await page.locator('#createMenuBtn').click();
   await page.locator('#addFromLibraryBtn').click();
   await expect(page.locator('#historicalLibraryModal')).toBeVisible();
 }

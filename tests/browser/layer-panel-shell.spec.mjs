@@ -11,7 +11,7 @@ test('layer footer owns actions and header owns history across desktop and mobil
   await expect(page.locator('#mobileCreateBtn,#mapCommandToolbar,#objectLockMenuBtn,#objectDeleteMenuBtn,#multiPropertiesLockInput,#editorCommonActions,#editorDeleteActions')).toHaveCount(0);
   await expect(page.locator('.topbar #undoBtn')).toHaveCount(1);
   await expect(page.locator('.topbar #mobileFileBtn')).toHaveCount(1);
-  await expect(page.locator('.layer-panel-footer #createMenuBtn')).toBeVisible();
+  await expect(page.locator('.layer-list-tools #createMenuBtn')).toBeVisible();
   await expect(page.locator('#objectLockBtn')).toBeDisabled();
   await expect(page.locator('#objectDeleteBtn')).toBeDisabled();
   const footerY = (await page.locator('.layer-panel-footer').boundingBox()).y;
@@ -43,8 +43,8 @@ test('layer footer owns actions and header owns history across desktop and mobil
   const menu = await page.locator('#createMenu').boundingBox();
   const trigger = await page.locator('#createMenuBtn').boundingBox();
   expect(menu.y).toBeGreaterThanOrEqual(0);
-  expect(menu.y + menu.height).toBeLessThanOrEqual(trigger.y);
-  await page.locator('#mobileCloseCreateBtn').click();
+  expect(menu.y >= trigger.y + trigger.height || menu.y + menu.height <= trigger.y).toBe(true);
+  await page.locator('#addCountryBtn').press('Escape');
   await page.locator('#mobileFileBtn').click();
   await expect(page.locator('#fileMenu')).toBeVisible();
   expect((await page.locator('#fileMenu').boundingBox()).x).toBeLessThan(300);
@@ -62,7 +62,7 @@ test('layer footer owns actions and header owns history across desktop and mobil
   const mobileMenu = await page.locator('#createMenu').boundingBox();
   expect(mobileMenu.x).toBeGreaterThanOrEqual(0);
   expect(mobileMenu.x + mobileMenu.width).toBeLessThanOrEqual(390);
-  expect(mobileMenu.y).toBeGreaterThan(52);
+  expect(mobileMenu.y).toBeGreaterThanOrEqual(8);
   await page.keyboard.press('Escape');
   await expect(page.locator('#createMenu')).not.toBeVisible();
   await expect(page.locator('.map-view-toolbar')).toHaveCount(1);

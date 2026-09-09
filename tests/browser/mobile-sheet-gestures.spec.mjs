@@ -106,12 +106,11 @@ async function finishBodyTouch(page, target, start, deltaY, identifier = 81, dur
   }, { start, deltaY, identifier });
 }
 
-test('mobile sheets hide header close buttons and resize from the full header', async ({ page }) => {
+test('mobile map and editor sheets share header controls and resize gestures', async ({ page }) => {
   await openApp(page);
   const headerMetrics = [];
   for (const [trigger, panel] of [
     ['#mobileMapBtn', '#leftPanel'],
-    ['#mobileCreateBtn', '#createMenu'],
     ['#mobileEditBtn', '#rightPanel'],
   ]) {
     await openSheet(page, trigger, panel);
@@ -129,9 +128,9 @@ test('mobile sheets hide header close buttons and resize from the full header', 
       };
     }));
   }
-  expect(headerMetrics.map(value => value.height)).toEqual([76, 76, 76]);
+  expect(headerMetrics.map(value => value.height)).toEqual([80, 80]);
   expect(headerMetrics.map(value => [value.paddingTop, value.paddingBottom])).toEqual([
-    ['28px', '8px'], ['28px', '8px'], ['28px', '8px'],
+    ['26px', '6px'], ['26px', '6px'],
   ]);
   for (const value of headerMetrics) {
     expect(value.handleTop).toBeGreaterThanOrEqual(0);
@@ -139,8 +138,7 @@ test('mobile sheets hide header close buttons and resize from the full header', 
   }
 
   await openSheet(page, '#mobileMapBtn', '#leftPanel');
-  await expect(page.locator('#mobileCloseLeftBtn')).toBeHidden();
-  await expect(page.locator('#mobileCloseCreateBtn')).toBeHidden();
+  await expect(page.locator('#mobileCloseLeftBtn')).toBeVisible();
   await expect(page.locator('#mobileCloseRightBtn')).toBeHidden();
 
   const initialHeight = await page.locator('#leftPanel').evaluate(element => element.getBoundingClientRect().height);
@@ -215,10 +213,10 @@ test('map layer and view bodies keep touch scrolling while nested folders chain 
 
 test('active navigation and browser back both dismiss the current mobile sheet', async ({ page }) => {
   await openApp(page);
-  await openSheet(page, '#mobileCreateBtn', '#createMenu');
-  await expect.poll(() => page.evaluate(() => globalThis.history.state?.__atlaswrightMobileSheet)).toBe('create');
-  await page.locator('#mobileCreateBtn').tap();
-  await expect(page.locator('#createMenu')).toBeHidden();
+  await openSheet(page, '#mobileMapBtn', '#leftPanel');
+  await expect.poll(() => page.evaluate(() => globalThis.history.state?.__atlaswrightMobileSheet)).toBe('map');
+  await page.locator('#mobileMapBtn').tap();
+  await expect(page.locator('#leftPanel')).toBeHidden();
   await expect.poll(() => page.evaluate(() => globalThis.history.state?.__atlaswrightMobileSheet || null)).toBe(null);
 
   await openSheet(page, '#mobileEditBtn', '#rightPanel');

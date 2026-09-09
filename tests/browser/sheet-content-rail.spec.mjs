@@ -38,7 +38,7 @@ async function readRails(page, kind) {
       return {
         header: inset('#leftPanel > .surface-header'),
         tabs: inset('.map-panel-tabs'),
-        search: (() => { const value = box('.layer-search'); return [value.left, value.right]; })(),
+        search: (() => { const value = box('.layer-list-tools'); return [value.left, value.right]; })(),
         content: [
           list.left + list.paddingLeft,
           list.right - list.paddingRight - (list.offsetWidth - list.clientWidth),
@@ -53,8 +53,8 @@ async function readRails(page, kind) {
       };
     }
     if (kind === 'create') {
-      const header = box('#createMenu > .surface-header');
-      const content = inset('.surface-content-create');
+      const header = box('#createMenu');
+      const content = inset('#createMenu');
       const item = box('.create-menu-item');
       return {
         ...(header.offsetWidth > 0 ? { header: [header.left + header.paddingLeft, header.right - header.paddingRight] } : {}),
@@ -89,7 +89,8 @@ test('sheet headers, tabs, and content share one rail in every layout', async ({
     await page.locator('#mapViewTabBtn').click();
     expectAligned(await readRails(page, 'view'));
 
-    await page.locator(layout.name === 'wide' ? '#createMenuBtn' : '#mobileCreateBtn').click();
+    await page.locator('#mapLayersTabBtn').click();
+    await page.locator('#createMenuBtn').click();
     await expect(page.locator('#createMenu')).toBeVisible();
     expectAligned(await readRails(page, 'create'));
 

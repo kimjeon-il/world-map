@@ -2,12 +2,13 @@
 
 이 문서는 UI 공통 규칙의 단일 원본이다. 기존 UI v2의 디자인 방향은 유지하되 글자·조작 영역은 아래 합의 규격으로 대체한다. 컴포넌트 계약과 예외는 [UI Components v2](ui-components-v2.md)를 참조한다.
 
-이번 단계는 문서 정리만 수행한다. 아래 규격은 개편의 목표이며 현재 CSS·DOM이 모두 준수한다는 뜻이 아니다. 실제 CSS·DOM 개편, 파일 통합, 검사 코드 변경, 커밋·배포는 후속 작업이다. 앱 코드·공개 API·저장 형식·기능 및 렌더링 모델은 변경하지 않는다.
+아래 규격은 구현의 기준이며 현재 CSS·DOM이 모두 준수한다는 뜻이 아니다. 적용 현황과 남은 검증은 [공통 UI 적용 감사](ui-common-rules-audit.md)에 구분해서 기록한다. 공개 API·저장 형식·기능 및 렌더링 모델은 유지한다.
 
-## 확정 규격과 미확정 사항
+## 확정 규격
 
 - **확정**: 글자·컨트롤 규격, 정보 순서, 정렬·스크롤·상태 규칙, 반응형 허용 범위, CSS 소유권.
-- **미확정**: 패널 폭, 헤더·상단바·상태 영역 높이, drawer inset, sheet snap 등 shell 수치. 현재 값은 구현 현황이지 새 규격의 확정값이 아니다. 새 컨트롤과의 적합성은 후속 shell 설계에서 결정한다.
+- **Shell**: 상단바 최소 3rem, 컴퓨터 헤더 최소 3.25rem, wide 레이어 17.5rem, Inspector 20rem, compact drawer 20rem(화면 양쪽 0.5rem 이내), 상태 영역 최소 2rem, 모바일 헤더 최소 5rem, 하단 내비게이션 최소 3.5rem + safe-area, 콘텐츠 좌우 rail 1rem.
+- 헤더와 상단바는 실제 높이를 공통 `surface-metrics`에서 측정해 시작 위치에 연결한다. 모바일 접힘은 최소 5.25rem이며 실제 헤더보다 작지 않다. 편집 시트 48/86dvh, 지도·추가 시트 52/88dvh를 가용 높이로 제한한다.
 - 과거 시안의 작은 글자, 28/30px 컨트롤, 모바일 visibility 32px 규격은 아래 목표 규격으로 대체한다. 다른 문서나 시안의 수치와 충돌하면 이 문서를 우선한다.
 
 ### 글자
@@ -57,7 +58,7 @@
 - 모바일·컴퓨터의 글자·아이콘·정보 순서는 동일하다. 배치와 터치 영역만 달리한다.
 - 화면 폭을 이유로 기능을 삭제하거나 정보 순서를 바꾸지 않는다. 다열 콘텐츠의 세로 재배치와 터치 영역 확대는 허용한다.
 - 상단바 높이와 패널 시작 위치는 같은 토큰에서 계산한다. 개별 `+4px` 보정은 금지한다.
-- shell 수치는 아직 미확정이다. 현재 breakpoint와 controller 동작을 문서 정리만으로 변경하지 않는다.
+- breakpoint는 mobile 800px 미만, compact 800–1359px, wide 1360px 이상이다. controller의 기존 open/close·focus·history 계약은 유지한다.
 
 ## 1. 계층과 책임
 
@@ -130,7 +131,7 @@
 
 ## 4. Surface DOM contract
 
-지도 / 만들기 / 편집은 외형과 위치가 달라도 내부 shell 계약은 동일하다.
+지도 / 편집은 외형과 위치가 달라도 내부 shell 계약은 동일하다. 레이어 추가 하위메뉴는 Surface가 아니다.
 
 ```text
 workspace-surface
@@ -146,11 +147,12 @@ workspace-surface
 
 슬롯 이름은 역할 설명이다. 헤더에는 창 제목과 창 제어만 두고, 객체 탐색은 컨텍스트, 편집 작업은 본문에 둔다. 선택적 슬롯은 빈 공간 없이 생략한다. 같은 역할의 헤더·탭·필드·작업 행은 같은 컴포넌트를 사용한다. 이 목표 계약을 문서화하는 단계에서 새 DOM이나 ID를 추가하지 않는다.
 
-기존 연결을 보존할 surface는 다음 세 개다.
+기존 연결을 보존할 surface는 다음 두 개다.
 
 - `#leftPanel.surface-map`
-- `#createMenu.surface-create`
 - `#rightPanel.surface-editor`
+
+`#createMenu.layer-create-menu`는 모든 폭에서 레이어 추가 버튼에 연결된 하위메뉴다. 헤더·탭·drag handle·snap·독립 history는 없으며 Surface controller의 상태를 바꾸지 않는다. 현재 항목·순서·라이브러리 진입은 유지한다. Escape·Tab·바깥 클릭으로 닫고, breakpoint 변경과 레이어 닫힘에도 종료한다.
 
 각 tab button은 `.ui-button.ui-tab`을 조합하고 `data-surface-tab`으로 의미를 선언한다. Wide에서 창 모양을 다르게 만드는 것은 Layout 책임이며, feature별로 header/tabs/body 순서를 바꾸지 않는다.
 

@@ -28,7 +28,7 @@
 
 ## Surface contract
 
-지도, 추가, 편집의 목표 shell 계약은 공통 규칙 문서의 「Surface DOM contract」를 따른다. 선택적 슬롯 이름은 역할 설명이며 이 문서만으로 기존 클래스나 ID를 바꾸지 않는다.
+지도·편집의 shell 계약은 공통 규칙 문서의 「Surface DOM contract」를 따른다. 레이어 추가는 별도 메뉴 계약을 사용한다.
 
 ```text
 workspace-surface
@@ -44,7 +44,7 @@ workspace-surface
 
 Surface 내부 구조와 기본 chrome은 `components/surface.css`가 소유한다. Wide/Compact/Mobile의 위치·크기·열림 상태는 `layout/surfaces.css`가 소유한다.
 
-- 기존 연결 대상은 `#leftPanel.surface-map`, `#createMenu.surface-create`, `#rightPanel.surface-editor`를 유지한다.
+- 기존 연결 대상은 `#leftPanel.surface-map`, `#rightPanel.surface-editor`다.
 - 헤더 제목 슬롯은 긴 제목을 처리하고 액션 슬롯을 밀지 않는다.
 - ObjectContext는 객체명·유형·잠금 상태·지도에서 보기를 담당한다. 잠금 변경·삭제·유형별 편집은 본문 작업 영역을 사용한다.
 - Tab은 기존 `.ui-button.ui-tab`, `data-surface-tab`, tab/tabpanel ARIA 연결과 키보드 동작을 유지한다.
@@ -52,6 +52,13 @@ Surface 내부 구조와 기본 chrome은 `components/surface.css`가 소유한�
 - 사용하지 않는 슬롯은 빈 공간 없이 생략한다. shell 수치와 반응형 정책은 공통 규칙 문서를 참조한다.
 
 ## Content components
+
+### 레이어 추가와 스크롤 예외
+
+- `#createMenu`는 `role="menu"`, 기존 생성 버튼은 `role="menuitem"`을 사용한다. 모든 폭에서 같은 목록이며 별도 창으로 전환하지 않는다.
+- 버튼에 `aria-haspopup="menu"`, `aria-controls`, `aria-expanded`를 연결한다. 방향키·Home/End·Enter/Space·Escape·Tab을 지원한다.
+- 가용 높이가 제한된 메뉴, 가상화 목록, Library 목록·상세만 독립 스크롤을 소유한다.
+- 공통 overlay scrollbar는 native scrolling과 분리된 chrome이다. 우측 1rem rail 내부에 위치하며 좌우 콘텐츠 폭을 바꾸지 않는다. 모바일 본문은 native touch scrolling을 유지한다. scrollbar는 얇은 rail 내 직접 조작이라는 명시적 예외로 너비 1rem, thumb 최소 높이 3rem을 사용하고 키보드 대체 조작을 제공한다.
 
 편집기 및 이후 추가되는 기능은 다음 의미 단위를 우선 사용한다.
 

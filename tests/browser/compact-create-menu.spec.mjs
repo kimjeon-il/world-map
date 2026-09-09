@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('compact create commands retain library, keyboard and mobile sheet access', async ({ page }, testInfo) => {
+test('layer add stays a submenu with keyboard and library access at every width', async ({ page }, testInfo) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -15,17 +15,16 @@ test('compact create commands retain library, keyboard and mobile sheet access',
   await expect(menu.locator('.create-menu-item')).toHaveCount(8);
   await expect(menu.locator('[role="tablist"], [role="tabpanel"]')).toHaveCount(0);
   const bar = page.locator('.layer-action-bar');
-  expect(await bar.locator(':scope > button').evaluateAll(nodes => nodes.map(n => n.id))).toEqual(['createMenuBtn', 'objectLockBtn', 'objectDeleteBtn']);
+  expect(await bar.locator(':scope > button').evaluateAll(nodes => nodes.map(n => n.id))).toEqual(['objectLockBtn', 'objectDeleteBtn']);
   await expect(page.locator('#createMenuBtn')).toHaveAccessibleName('레이어 추가');
-  await expect(page.locator('#createMenuBtn span')).toHaveCount(0);
+  await expect(page.locator('#createMenuBtn span')).toHaveText('추가');
   await page.mouse.move(1100, 100);
   const buttons = await bar.locator(':scope > button').evaluateAll(nodes => nodes.map(n => ({ x: n.getBoundingClientRect().x, right: n.getBoundingClientRect().right, background: getComputedStyle(n).backgroundColor })));
   expect(buttons[1].x - buttons[0].right).toBeLessThanOrEqual(8);
-  expect(buttons[2].x - buttons[1].right).toBeLessThanOrEqual(8);
-  await expect.poll(() => bar.locator(':scope > button').evaluateAll(nodes => nodes.map(n => getComputedStyle(n).backgroundColor))).toEqual(['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']);
+  await expect.poll(() => bar.locator(':scope > button').evaluateAll(nodes => nodes.map(n => getComputedStyle(n).backgroundColor))).toEqual(['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']);
   await expect(page.locator('#createBuildPanel strong')).toHaveText(['국가', '하위단위', '지방', '분포', '지명', '강', '호수']);
   const box = await menu.boundingBox();
-  expect(box.width).toBeLessThanOrEqual(262);
+  expect(box.width).toBeLessThanOrEqual(282);
   expect(box.height).toBeLessThan(390);
   expect(await page.locator('#addCountryBtn').evaluate(el => getComputedStyle(el).textAlign)).toBe('left');
   await menu.screenshot({ path: testInfo.outputPath('create-menu-desktop.png') });
@@ -43,9 +42,11 @@ test('compact create commands retain library, keyboard and mobile sheet access',
   if (await page.locator('#mobileMapBtn').getAttribute('aria-expanded') !== 'true') await page.locator('#mobileMapBtn').click();
   await page.locator('#createMenuBtn').click();
   await expect(menu).toBeVisible();
-  await expect(page.locator('#mobileCloseCreateBtn')).toBeVisible();
+  await expect(menu).toHaveAttribute('role', 'menu');
+  await expect(menu.locator('.surface-header, .sheet-drag-handle')).toHaveCount(0);
+  await expect(page.locator('#leftPanel')).toHaveClass(/mobile-open/);
   expect((await page.locator('#addCountryBtn').boundingBox()).height).toBeGreaterThanOrEqual(44);
-  await page.locator('#mobileCloseCreateBtn').click();
+  await page.locator('#addCountryBtn').press('Escape');
   await expect(menu).toBeHidden();
   expect(errors).toEqual([]);
 });
