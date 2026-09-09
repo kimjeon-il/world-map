@@ -1708,7 +1708,19 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 
 .editor-object-context-main { display: flex; align-items: center; gap: var(--ui-v2-button-gap); }
 .editor-object-context-main > .editor-object-heading { flex: 1; min-width: 0; }
-.editor-flag-trigger { flex: 0 0 auto; padding: var(--ui-space-1); }
+.editor-flag-trigger {
+  flex: 0 0 auto;
+  padding: var(--ui-space-1);
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+.editor-flag-trigger:hover:not(:disabled),
+.editor-flag-trigger:active:not(:disabled) {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
 .editor-flag-thumbnail { display: grid; place-items: center; width: 2.5rem; height: 1.75rem; }
 .editor-flag-thumbnail img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .editor-flag-menu {
@@ -2252,6 +2264,40 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 
 .map-view-settings .ui-choice-row,
 .map-view-settings .field-group { margin: 0; }
+
+.map-view-settings .ui-choice-copy {
+  min-width: 0;
+  display: grid;
+  gap: var(--ui-space-0-5);
+}
+
+.map-view-settings .ui-choice-copy > strong {
+  font-weight: var(--ui-weight-medium);
+}
+
+.map-view-settings .ui-choice-copy > small {
+  color: var(--muted);
+  font-size: var(--ui-font-sm);
+  line-height: var(--ui-line-normal);
+}
+
+/* Terrain modes use the same quiet radio-row treatment as distribution modes.
+   Selection is communicated by the radio itself, not a card-sized highlight. */
+.map-view-settings .terrain-mode-option {
+  min-height: var(--ui-v2-control-mobile-height);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+.map-view-settings .terrain-mode-option:hover,
+.map-view-settings .terrain-mode-option:has(input:checked) {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text);
+}
 
 .map-view-settings .layer-setting-hint:empty { display: none; }
 
