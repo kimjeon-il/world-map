@@ -110,11 +110,12 @@
   --ui-v2-confirm-modal-width: 430px;
   --ui-v2-coast-modal-width: 560px;
   --ui-v2-control-padding-x: 0.625rem;
-  --ui-v2-toggle-width: 30px;
-  --ui-v2-toggle-height: 17px;
-  --ui-v2-toggle-thumb-size: 13px;
-  --ui-v2-toggle-mobile-width: 32px;
-  --ui-v2-toggle-mobile-height: 18px;
+  --ui-v2-toggle-width: 2.25rem;
+  --ui-v2-toggle-height: 1.25rem;
+  --ui-v2-toggle-thumb-size: 0.875rem;
+  --ui-v2-toggle-thumb-inset: calc((var(--ui-v2-toggle-height) - var(--ui-v2-toggle-thumb-size)) / 2);
+  --ui-v2-toggle-mobile-width: var(--ui-v2-toggle-width);
+  --ui-v2-toggle-mobile-height: var(--ui-v2-toggle-height);
   --ui-v2-control-mobile-height: 3rem;
   --ui-v2-focus-offset: 2px;
   --ui-v2-touch-height: 3rem;
@@ -418,7 +419,7 @@ html { font-size: 100%; }
 .ui-toggle > input[type="checkbox"]::before {
   position: absolute;
   top: 50%;
-  left: var(--ui-space-0-5);
+  left: var(--ui-v2-toggle-thumb-inset);
   width: var(--ui-v2-toggle-thumb-size);
   height: var(--ui-v2-toggle-thumb-size);
   border: 0;
@@ -434,7 +435,7 @@ html { font-size: 100%; }
 }
 
 .ui-toggle > input[type="checkbox"]:checked::before {
-  left: calc(100% - var(--ui-v2-toggle-thumb-size) - var(--ui-space-0-5));
+  left: calc(100% - var(--ui-v2-toggle-thumb-size) - var(--ui-v2-toggle-thumb-inset));
 }
 
 .ui-toggle > input[type="checkbox"]:focus-visible {
