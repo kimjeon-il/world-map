@@ -1505,6 +1505,12 @@ body.file-menu-open #app .topbar { z-index: 150; }
 .layer-child:hover .layer-child-menu, .layer-child:focus-within .layer-child-menu,
 .layer-child.is-selected .layer-child-menu { opacity: 1; }
 .map-object-style-settings > summary { cursor: pointer; }
+
+@media (hover: hover) and (pointer: fine) {
+  .layer-type-settings-heading:not(:hover):not(:focus-within) .layer-style-toggle[aria-expanded="false"] {
+    opacity: 0;
+  }
+}
 .layer-type-settings { padding-block: var(--ui-space-2); border-top: 1px solid var(--border); }
 .layer-type-settings-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-1); }
 .layer-type-settings-heading > label { flex: 1; }
@@ -1524,6 +1530,12 @@ body.file-menu-open #app .topbar { z-index: 150; }
 /* source: assets/css/components/editor-shell.css */
 
 /* Editor shell, map toolbar, edit-session HUD, and persistent status. */
+
+.workspace.editor-drawer-open .status-selection,
+.workspace:has(.right-panel.mobile-open) .status-selection,
+.workspace:has(.mode-action-bar:not(.hidden)) .status-primary {
+  display: none;
+}
 
 [data-layout="wide"] .surface-map { width: var(--ui-shell-left-panel-width); }
 [data-layout="wide"] .surface-editor { width: var(--ui-shell-right-panel-width); }

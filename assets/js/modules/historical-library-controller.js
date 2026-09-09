@@ -89,7 +89,7 @@ export function createHistoricalLibraryController({
       selectedVersionId = '';
       const help = document.createElement('p');
       help.className = 'editor-help';
-      help.textContent = '항목을 선택하면 시대·경계 버전·출처를 확인할 수 있습니다.';
+      help.textContent = '항목을 선택하세요.';
       elements.preview.replaceChildren(help);
       elements.add.disabled = true;
       elements.addOptions?.classList.add('hidden');
@@ -116,7 +116,7 @@ export function createHistoricalLibraryController({
     versionField.append(versionLabel, versionSelect);
     const versionNotes = document.createElement('p');
     versionNotes.className = 'editor-help historical-library-version-notes';
-    versionNotes.textContent = version.notes || '';
+    versionNotes.textContent = version.notes || entity.sourceInfo?.notes || '';
     versionSelect.addEventListener('change', () => {
       selectedVersionId = versionSelect.value;
       renderPreview();
@@ -124,17 +124,24 @@ export function createHistoricalLibraryController({
     const meta = document.createElement('p');
     meta.className = 'editor-help';
     meta.textContent = [
-      `${typeLabels[entity.type]} · ${period(entity)}`,
-      entity.metadata?.referenceDate ? `기준일 ${entity.metadata.referenceDate}` : '',
-      version.certainty ? `신뢰도 ${version.certainty}` : '',
+      version.certainty === 'low' ? '정확도가 낮은 경계' : version.certainty === 'medium' ? '경계 일부 불확실' : '',
       entity.metadata?.approximateGeometry ? '근사 경계' : '',
     ].filter(Boolean).join(' · ');
     const source = document.createElement('p');
     source.className = 'editor-help';
     const sourceEntries = Array.isArray(entity.sourceInfo?.sources) ? entity.sourceInfo.sources : [];
-    source.textContent = `출처: ${sourceEntries.length
-      ? sourceEntries.map(item => item?.title).filter(Boolean).join(' · ')
-      : (entity.sourceInfo?.title || version.sourceId || '미지정')}`;
+    const primarySource = sourceEntries[0] || entity.sourceInfo || {};
+    const sourceTitle = primarySource.title || version.sourceId || '미지정';
+    const sourceUrl = primarySource.url || entity.sourceInfo?.url || '';
+    if (/^https?:\/\//i.test(sourceUrl)) {
+      const link = document.createElement('a');
+      link.href = sourceUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = '출처';
+      link.setAttribute('aria-label', `출처: ${sourceTitle}`);
+      source.append(link);
+    } else source.textContent = `출처: ${sourceTitle}`;
     const flagPreview = document.createElement('div');
     flagPreview.className = 'editor-flag-preview';
     const flagUrl = String(entity.metadata?.defaultFlagDataUrl || '');
@@ -149,24 +156,23 @@ export function createHistoricalLibraryController({
     const advanced = document.createElement('details');
     advanced.className = 'ui-disclosure editor-disclosure';
     const summary = document.createElement('summary');
-    summary.textContent = '고급 정보';
+    summary.textContent = '출처·이용 조건';
     const body = document.createElement('dl');
     body.className = 'historical-library-advanced';
     const addAdvanced = (term, value) => {
+      if (!value) return;
       const dt = document.createElement('dt');
       const dd = document.createElement('dd');
       dt.textContent = term;
       dd.textContent = String(value || '—');
       body.append(dt, dd);
     };
-    const alternativeNames = [...new Set([...(entity.alternateNames || []), ...Object.values(entity.displayNames || {})].filter(Boolean))].join(' · ');
-    addAdvanced('별칭·다국어 이름', alternativeNames);
-    addAdvanced('GeometryVersion', version.id || version.geometryVersionId);
-    addAdvanced('날짜 정밀도', version.datePrecision);
-    addAdvanced('신뢰도', version.certainty);
-    addAdvanced('상세 출처', `${entity.sourceInfo?.title || version.sourceId || '미지정'}${entity.sourceInfo?.license ? ` · ${entity.sourceInfo.license}` : ''}${version.notes || entity.sourceInfo?.notes ? ` · ${version.notes || entity.sourceInfo.notes}` : ''}`);
+    addAdvanced('이용 조건', primarySource.license || entity.sourceInfo?.license);
+    for (const item of sourceEntries.slice(1)) addAdvanced(item.title || '출처', [item.url, item.license].filter(Boolean).join(' · '));
     advanced.append(summary, body);
-    elements.preview.replaceChildren(title, versionField, versionNotes, flagPreview, renderMapPreview(entity, version), meta, source, advanced);
+    elements.preview.replaceChildren(title, versionField, flagPreview, renderMapPreview(entity, version),
+      ...(meta.textContent ? [meta] : []), ...(versionNotes.textContent ? [versionNotes] : []), source,
+      ...(body.children.length ? [advanced] : []));
     elements.add.disabled = false;
     elements.addOptions?.classList.remove('hidden');
     if (elements.addOptions) elements.addOptions.open = true;
