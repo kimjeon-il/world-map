@@ -106,6 +106,31 @@ async function finishBodyTouch(page, target, start, deltaY, identifier = 81, dur
   }, { start, deltaY, identifier });
 }
 
+test('mobile handles stay centered when pressed and preserve keyboard dismissal', async ({ page }) => {
+  await openApp(page);
+  for (const width of [360, 390, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const [trigger, panel] of [['#mobileMapBtn', '#leftPanel'], ['#mobileEditBtn', '#rightPanel']]) {
+      await openSheet(page, trigger, panel);
+      const handle = page.locator(`${panel} .sheet-drag-handle`);
+      const before = await handle.boundingBox();
+      await page.mouse.move(before.x + before.width / 2, before.y + before.height / 2);
+      await page.mouse.down();
+      const pressed = await handle.boundingBox();
+      expect(pressed.x).toBeCloseTo(before.x);
+      expect(pressed.width).toBe(before.width);
+      expect(pressed.height).toBeGreaterThanOrEqual(48);
+      expect(pressed.x + pressed.width / 2).toBeCloseTo(width / 2);
+      await expect(handle).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+      await expect(page.locator(`${panel} .sheet-close-btn`)).toBeHidden();
+      await page.mouse.up();
+      await handle.press('Escape');
+      await expect(page.locator(panel)).toBeHidden();
+      await expect(page.locator(trigger)).toBeFocused();
+    }
+  }
+});
+
 test('mobile map and editor sheets share header controls and resize gestures', async ({ page }) => {
   await openApp(page);
   const headerMetrics = [];
@@ -124,31 +149,34 @@ test('mobile map and editor sheets share header controls and resize gestures', a
         paddingTop: style.paddingTop,
         paddingBottom: style.paddingBottom,
         handleTop: handle.top - box.top,
+        handleBottom: handle.bottom - box.top,
+        handleHeight: handle.height,
         titleTop: title.top - box.top,
       };
     }));
   }
   expect(headerMetrics.map(value => value.height)).toEqual([80, 80]);
   expect(headerMetrics.map(value => [value.paddingTop, value.paddingBottom])).toEqual([
-    ['26px', '6px'], ['26px', '6px'],
+    ['0px', '6px'], ['0px', '6px'],
   ]);
   for (const value of headerMetrics) {
     expect(value.handleTop).toBeGreaterThanOrEqual(0);
-    expect(value.titleTop).toBeGreaterThanOrEqual(16);
+    expect(value.handleHeight).toBeGreaterThanOrEqual(48);
+    expect(value.titleTop).toBeGreaterThanOrEqual(value.handleBottom);
   }
 
   await openSheet(page, '#mobileMapBtn', '#leftPanel');
-  await expect(page.locator('#mobileCloseLeftBtn')).toBeVisible();
+  await expect(page.locator('#mobileCloseLeftBtn')).toBeHidden();
   await expect(page.locator('#mobileCloseRightBtn')).toBeHidden();
 
   const initialHeight = await page.locator('#leftPanel').evaluate(element => element.getBoundingClientRect().height);
   await dragHeader(page, '#leftPanel', -180);
   const expandedHeight = await page.locator('#leftPanel').evaluate(element => element.getBoundingClientRect().height);
   expect(expandedHeight).toBeGreaterThan(initialHeight);
-  await expect(page.locator('#leftPanel')).toHaveAttribute('data-sheet-snap', '1');
+  await expect(page.locator('#leftPanel')).toHaveAttribute('data-sheet-snap', '2');
 
   await page.getByRole('slider', { name: '지도 창 높이 조절' }).press('Home');
-  await expect(page.locator('#leftPanel')).toHaveAttribute('data-sheet-snap', '0');
+  await expect(page.locator('#leftPanel')).toHaveAttribute('data-sheet-snap', '1');
   await dragHeader(page, '#leftPanel', 240, 450);
   await expect(page.locator('#leftPanel')).toBeHidden();
   await expect(page.locator('#mobileMapBtn')).toHaveAttribute('aria-expanded', 'false');
