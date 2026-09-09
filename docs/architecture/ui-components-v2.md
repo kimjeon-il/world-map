@@ -1,43 +1,55 @@
 # UI Components v2
 
-2단계의 목적은 지도·추가·편집 화면의 공통 UI를 기능별 보정 CSS가 아니라 동일한 component 계약으로 렌더링하는 것이다. 기능 동작과 데이터 모델은 이 단계의 범위가 아니다.
+이 문서는 컴포넌트별 계약과 명시적 예외만 정의한다. 글자·컨트롤 수치, 반응형 허용 범위, 정렬·상태·CSS 소유권은 [UI Architecture v2](ui-architecture-v2.md)가 단일 원본이다. 수치를 이 문서에 복제하지 않는다.
+
+아래 계약은 후속 개편의 목표이며 현재 DOM·CSS의 준수 여부를 보증하지 않는다. 이번 단계는 문서만 정리하고 기능·DOM·버튼 ID·ARIA·controller를 변경하지 않는다.
 
 ## Canonical style sources
 
-공통 UI의 새 원본은 다음 layered CSS다.
+주요 컴포넌트의 담당 원본은 다음과 같다. 기존 파일 안의 모든 override를 승인하는 목록은 아니며, 다른 소유자의 속성을 덮어쓰는 규칙은 후속 이관 대상이다.
 
 - `assets/css/tokens/ui-v2.css`: Surface와 콘텐츠 component가 공유하는 의미 토큰
+- `assets/css/primitives/controls.css`: Button/Field/Icon의 외형과 상태
 - `assets/css/components/surface.css`: Surface/Header/Tabs/Body/Content
 - `assets/css/components/content.css`: Section/Field/ActionList/PropertyList/ObjectContext 호환 계약
+- `assets/css/components/command-row.css`: 작업 행의 아이콘·제목·설명·chevron 배열
+- `assets/css/components/editor-shell.css`: 편집 컨텍스트·toolbar·작업 HUD의 조합
 - `assets/css/components/workflows.css`: 편집 작업창·dialog·wizard 공통 표현
 - `assets/css/components/panels.css`: 지도·추가·Library/GIS 패널 표현
 - `assets/css/layout/surfaces.css`: wide/compact/mobile의 Surface 배치와 표시 상태
+- `assets/css/components/modals.css`: Dialog/Wizard shell
+- `assets/css/components/mobile-sheets.css`: 공통 handle·sheet 조작 계약
+- `assets/css/features/layer-panel.css`: 레이어 트리·가상화 콘텐츠 표현
+- `assets/css/components/feedback.css`: 지속 상태·toast·empty/loading/error 표현
+
+생성 bundle은 원본이 아니며 직접 편집하지 않는다.
 
 `app.css`는 기존 화면을 유지하기 위한 legacy compatibility source다. 새 공통 component 규칙을 `app.css`나 `phase1-ui-cleanup.css`에 추가하지 않는다.
 
 ## Surface contract
 
-지도, 추가, 편집은 모두 다음 shell을 사용한다.
+지도, 추가, 편집의 목표 shell 계약은 공통 규칙 문서의 「Surface DOM contract」를 따른다. 선택적 슬롯 이름은 역할 설명이며 이 문서만으로 기존 클래스나 ID를 바꾸지 않는다.
 
 ```text
 workspace-surface
   surface-header
     surface-header-title
     surface-header-actions
-  surface-tabs
+  object-context (선택적)
+  surface-tabs (선택적)
   surface-body
     surface-content
+  surface-footer (선택적)
 ```
 
 Surface 내부 구조와 기본 chrome은 `components/surface.css`가 소유한다. Wide/Compact/Mobile의 위치·크기·열림 상태는 `layout/surfaces.css`가 소유한다.
 
-Wide에서는 용도별 외형 차이를 유지할 수 있다.
-
-- 지도: 좌측 workspace surface
-- 추가: 작은 floating surface
-- 편집: 우측 editor surface
-
-Compact와 Mobile에서는 같은 Surface 구조와 sizing grammar를 사용한다.
+- 기존 연결 대상은 `#leftPanel.surface-map`, `#createMenu.surface-create`, `#rightPanel.surface-editor`를 유지한다.
+- 헤더 제목 슬롯은 긴 제목을 처리하고 액션 슬롯을 밀지 않는다.
+- ObjectContext는 객체명·유형·잠금 상태·지도에서 보기를 담당한다. 잠금 변경·삭제·유형별 편집은 본문 작업 영역을 사용한다.
+- Tab은 기존 `.ui-button.ui-tab`, `data-surface-tab`, tab/tabpanel ARIA 연결과 키보드 동작을 유지한다.
+- Footer는 필요한 취소·확정 액션을 묶는다. 본문 정보와 중복 설명을 추가하지 않는다.
+- 사용하지 않는 슬롯은 빈 공간 없이 생략한다. shell 수치와 반응형 정책은 공통 규칙 문서를 참조한다.
 
 ## Content components
 
@@ -51,17 +63,27 @@ Compact와 Mobile에서는 같은 Surface 구조와 sizing grammar를 사용한�
 
 현재의 `editor-*` 클래스는 기존 DOM 호환을 위해 component stylesheet에서 alias로 취급한다. 신규 기능은 새 `ui-*` component 이름을 사용하고 기존 feature 전용 skin을 복제하지 않는다.
 
-## Scroll ownership
+- 필드 label은 본문 역할이며 보조 설명 크기로 축소하지 않는다.
+- 공통 ObjectContext 구조는 content, 편집 전용 조합은 editor 담당이다.
+- Command Row는 선행 SVG·제목·선택적 설명·chevron으로 구성한다. 설명이 없으면 해당 공간을 생략하고 capability·disabled·dispatch는 유지한다.
+- 아이콘 단독 버튼은 의미가 일치하는 접근성 이름·tooltip을 유지한다. 대체 아이콘은 동시에 노출하지 않는다.
+- Dialog/Wizard는 기존 단계·확인·취소·focus 복귀를 유지한다. 일반 작업 행에 danger 색상을 적용하지 않는다.
 
-Surface shell 자체가 여러 중첩 스크롤 영역을 만들지 않는다.
+## 명시적 예외
 
-- 기본 Surface는 `surface-body` 하나가 scroll owner다.
-- 지도 레이어처럼 virtualized child가 스크롤을 소유해야 할 때만 `surface-body-delegated`를 사용한다.
-- 좌우 rail과 scrollbar gutter는 Surface token으로 공유한다.
+| 적용 조건 | 담당 컴포넌트 | 이유 | 검증 항목 |
+|---|---|---|---|
+| 가상화 목록이 스크롤을 소유 | Layer/Surface의 `surface-body-delegated` | 가상화 계산에 실제 목록 스크롤이 필요 | 본문과 이중 스크롤 없음, 행 높이·scroll offset 일치, 좌우 여백 유지 |
+| Library 목록·상세를 함께 표시 | Library list/detail | 각 영역을 독립 탐색 | 각각 단일 스크롤, 모바일 세로 배치에서 순서·focus 유지 |
+| 모바일 레이어 조작 | Layer row/visibility | 공통 버튼과 다른 목록 밀도 | 공통 규격의 레이어 전용 최소 높이·너비, 조작 영역 겹침 없음 |
+| 투영 아이콘 | Projection control | 평면지도·지구본 형태 식별 | 공통 규격의 투영 크기만 사용, 다른 아이콘 확대 없음 |
+| 지도 라벨 | 기존 지도 렌더링 계층 | 지도 좌표·줌과 연결된 별도 표현 | UI rem 이관으로 지도 라벨 렌더링 기준이 변경되지 않음 |
+
+추가 예외는 공통 규칙 문서의 등록 조건을 따른다. 기존 override가 있다는 이유만으로 예외로 인정하지 않는다.
 
 ## Migration rule
 
-2단계 이후 UI 변경은 다음 순서를 따른다.
+후속 UI 변경은 공통 규칙 문서의 완료 기준을 따른다. 각 컴포넌트의 `준수 / 위반 / 예외`, 현재 파일·selector·property, 담당 원본, 대체 규칙, 검증 결과를 기록한 뒤 아래 순서로 진행한다.
 
 1. 기존 component로 표현 가능한지 확인한다.
 2. 공통 요구라면 `components/`를 확장한다.
@@ -69,4 +91,4 @@ Surface shell 자체가 여러 중첩 스크롤 영역을 만들지 않는다.
 4. 기능 고유 표현만 `features/`에 둔다.
 5. legacy CSS에 새 보정 규칙을 추가하지 않는다.
 
-`phase1-ui-cleanup.css`에서 공통 action/property/empty-state 보정은 제거하고 layered component로 이동한다. 남아 있는 cleanup 규칙은 후속 단계에서 해당 책임 계층으로 계속 이동한다.
+별도 phase cleanup layer를 새로 만들지 않는다. `app.css`에 남은 공통 규칙은 해당 담당 컴포넌트로 이관하고 대체 규칙을 검증한 뒤 중복을 제거한다. 첫 회귀 사례와 화면 검증 조건은 공통 규칙 문서의 「후속 정리 경계」를 따른다.
