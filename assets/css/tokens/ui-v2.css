@@ -78,11 +78,6 @@
   --ui-v2-projection-icon-size: 1.125rem;
   --ui-v2-icon-stroke-width: 1.6;
   --ui-v2-brand-mark-size: 26px;
-  --ui-v2-workspace-nav-width: 64px;
-  --ui-v2-workspace-nav-height: 58px;
-  --ui-v2-workspace-active-inset: 14px;
-  --ui-v2-workspace-active-offset: 1px;
-  --ui-v2-workspace-active-width: 3px;
   --ui-v2-surface-header-height-desktop: 3.25rem;
 
   --ui-v2-space-0: 0;
@@ -122,7 +117,6 @@
   --ui-v2-layer-visibility-size-mobile: 2.75rem;
   --ui-v2-topbar-height: 3rem;
   --ui-v2-statusbar-height: 2rem;
-  --ui-v2-workspace-rail-width: 72px;
   --ui-v2-left-panel-width: 17.5rem;
   --ui-v2-right-panel-width: 20rem;
   --ui-v2-sheet-handle-space: 1.25rem;
@@ -136,7 +130,6 @@
      surfaces do not duplicate breakpoint-specific dimensions. */
   --ui-shell-topbar-height: var(--ui-topbar-measured, var(--ui-v2-topbar-height));
   --ui-shell-statusbar-height: var(--ui-v2-statusbar-height);
-  --ui-shell-workspace-rail-width: var(--ui-v2-workspace-rail-width);
   --ui-shell-left-panel-width: var(--ui-v2-left-panel-width);
   --ui-shell-right-panel-width: var(--ui-v2-right-panel-width);
   --ui-v2-radius-sm: 5px;

@@ -11,7 +11,7 @@ test('layer footer owns actions and header owns history across desktop and mobil
   await expect(page.locator('#mobileCreateBtn,#mapCommandToolbar,#objectLockMenuBtn,#objectDeleteMenuBtn,#multiPropertiesLockInput,#editorCommonActions,#editorDeleteActions')).toHaveCount(0);
   await expect(page.locator('.topbar #undoBtn')).toHaveCount(1);
   await expect(page.locator('.topbar #mobileFileBtn')).toHaveCount(1);
-  await expect(page.locator('.layer-list-tools #createMenuBtn')).toBeVisible();
+  await expect(page.locator('.layer-action-bar #createMenuBtn')).toBeVisible();
   await expect(page.locator('#objectLockBtn')).toBeDisabled();
   await expect(page.locator('#objectDeleteBtn')).toBeDisabled();
   const footerY = (await page.locator('.layer-panel-footer').boundingBox()).y;

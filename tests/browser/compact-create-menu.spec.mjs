@@ -15,13 +15,13 @@ test('layer add stays a submenu with keyboard and library access at every width'
   await expect(menu.locator('.create-menu-item')).toHaveCount(8);
   await expect(menu.locator('[role="tablist"], [role="tabpanel"]')).toHaveCount(0);
   const bar = page.locator('.layer-action-bar');
-  expect(await bar.locator(':scope > button').evaluateAll(nodes => nodes.map(n => n.id))).toEqual(['objectLockBtn', 'objectDeleteBtn']);
+  expect(await bar.locator(':scope > button').evaluateAll(nodes => nodes.map(n => n.id))).toEqual(['createMenuBtn', 'objectLockBtn', 'objectDeleteBtn']);
   await expect(page.locator('#createMenuBtn')).toHaveAccessibleName('레이어 추가');
-  await expect(page.locator('#createMenuBtn span')).toHaveText('추가');
+  await expect(page.locator('#createMenuBtn span')).toHaveCount(0);
   await page.mouse.move(1100, 100);
   const buttons = await bar.locator(':scope > button').evaluateAll(nodes => nodes.map(n => ({ x: n.getBoundingClientRect().x, right: n.getBoundingClientRect().right, background: getComputedStyle(n).backgroundColor })));
   expect(buttons[1].x - buttons[0].right).toBeLessThanOrEqual(8);
-  await expect.poll(() => bar.locator(':scope > button').evaluateAll(nodes => nodes.map(n => getComputedStyle(n).backgroundColor))).toEqual(['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']);
+  await expect.poll(() => bar.locator(':scope > button').evaluateAll(nodes => nodes.map(n => getComputedStyle(n).backgroundColor))).toEqual(['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']);
   await expect(page.locator('#createBuildPanel strong')).toHaveText(['국가', '하위단위', '지방', '분포', '지명', '강', '호수']);
   const box = await menu.boundingBox();
   expect(box.width).toBeLessThanOrEqual(282);

@@ -84,11 +84,6 @@
   --ui-v2-projection-icon-size: 1.125rem;
   --ui-v2-icon-stroke-width: 1.6;
   --ui-v2-brand-mark-size: 26px;
-  --ui-v2-workspace-nav-width: 64px;
-  --ui-v2-workspace-nav-height: 58px;
-  --ui-v2-workspace-active-inset: 14px;
-  --ui-v2-workspace-active-offset: 1px;
-  --ui-v2-workspace-active-width: 3px;
   --ui-v2-surface-header-height-desktop: 3.25rem;
 
   --ui-v2-space-0: 0;
@@ -128,7 +123,6 @@
   --ui-v2-layer-visibility-size-mobile: 2.75rem;
   --ui-v2-topbar-height: 3rem;
   --ui-v2-statusbar-height: 2rem;
-  --ui-v2-workspace-rail-width: 72px;
   --ui-v2-left-panel-width: 17.5rem;
   --ui-v2-right-panel-width: 20rem;
   --ui-v2-sheet-handle-space: 1.25rem;
@@ -142,7 +136,6 @@
      surfaces do not duplicate breakpoint-specific dimensions. */
   --ui-shell-topbar-height: var(--ui-topbar-measured, var(--ui-v2-topbar-height));
   --ui-shell-statusbar-height: var(--ui-v2-statusbar-height);
-  --ui-shell-workspace-rail-width: var(--ui-v2-workspace-rail-width);
   --ui-shell-left-panel-width: var(--ui-v2-left-panel-width);
   --ui-shell-right-panel-width: var(--ui-v2-right-panel-width);
   --ui-v2-radius-sm: 5px;
@@ -1496,9 +1489,9 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 }
 .layer-action-bar { display: flex; align-items: center; justify-content: flex-start; gap: var(--ui-v2-button-gap);
 }
-.app-root .layer-action-bar > .icon-btn { flex: 0 0 var(--ui-control-height); width: var(--ui-control-height); min-width: 0; height: var(--ui-control-height); color: var(--text-soft);
+.app-root .layer-action-bar > .icon-btn { flex: 0 0 var(--ui-control-height); width: var(--ui-control-height); min-width: var(--ui-control-height); min-height: var(--ui-control-height); height: auto; color: var(--text-soft);
 }
-.app-root:not([data-layout="mobile"]) .layer-action-bar > .icon-btn { flex-basis: var(--ui-layer-action-size); width: var(--ui-layer-action-size); height: var(--ui-layer-action-size);
+.app-root:not([data-layout="mobile"]) .layer-action-bar > .icon-btn { flex-basis: var(--ui-layer-action-size); width: var(--ui-layer-action-size); min-height: var(--ui-layer-action-size); height: auto;
 }
 .app-root .layer-action-bar > .icon-btn:is(:hover, :focus-visible):not(:disabled) { color: var(--text);
 }
@@ -1515,7 +1508,7 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 .layer-child-name-label { flex: 1 1 auto; text-align: left;
 }
 @media (max-width: 799px) {
-  .app-root .layer-action-bar > .icon-btn { flex-basis: var(--ui-touch-height); width: var(--ui-touch-height); height: var(--ui-touch-height);
+  .app-root .layer-action-bar > .icon-btn { flex-basis: var(--ui-touch-height); width: var(--ui-touch-height); min-height: var(--ui-touch-height); height: auto;
 }
   .app-root .topbar { gap: var(--ui-space-1);
 }
@@ -1753,10 +1746,10 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 .project-save-status:is(.dirty, .unsaved, [data-save-state="dirty"], [data-save-state="unsaved"]) .project-save-status-dot { background: var(--ui-v2-status-neutral-dot); }
 .project-save-status:is(.error, [data-save-state="error"]) .project-save-status-dot { background: var(--ui-v2-status-error-dot); }
 
-/* Reference-aligned desktop shell: one stable rail and one contextual pane. */
+/* Persistent left layer dock; editor overlays the map independently. */
 [data-layout="wide"] .workspace {
-  --projection-safe-left: calc(var(--ui-shell-workspace-rail-width) + var(--ui-shell-left-panel-width));
-  --map-safe-left: calc(var(--ui-shell-workspace-rail-width) + var(--ui-shell-left-panel-width));
+  --projection-safe-left: var(--ui-shell-left-panel-width);
+  --map-safe-left: var(--ui-shell-left-panel-width);
   --map-safe-right: 0px;
 }
 
@@ -1800,88 +1793,11 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 
 .topbar .brand strong { font-size: var(--ui-v2-font-xl); }
 
-[data-layout="wide"] .adaptive-nav {
-  position: absolute;
-  z-index: 39;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: var(--ui-shell-workspace-rail-width);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--ui-space-1);
-  padding: var(--ui-space-3) var(--ui-space-1);
-  border: 0;
-  border-inline-end: 1px solid var(--border);
-  background: var(--surface-elevated);
-  box-shadow: none;
-}
-
-[data-layout="wide"] .adaptive-nav .ui-nav-item {
-  position: relative;
-  width: var(--ui-v2-workspace-nav-width);
-  min-width: var(--ui-v2-workspace-nav-width);
-  min-height: var(--ui-v2-workspace-nav-height);
-  height: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ui-space-1);
-  padding: var(--ui-space-2) var(--ui-space-1);
-  border: 0;
-  border-radius: var(--ui-v2-radius-md);
-  background: transparent;
-  color: var(--muted);
-}
-
-[data-layout="wide"] .adaptive-nav .ui-nav-item:hover,
-[data-layout="wide"] .adaptive-nav .ui-nav-item:focus-visible {
-  background: var(--surface-hover);
-  color: var(--text-strong);
-}
-
-[data-layout="wide"] .adaptive-nav .ui-nav-item:is(.active, .sheet-open) {
-  background: transparent;
-  color: var(--text-strong);
-}
-
-[data-layout="wide"] .adaptive-nav .ui-nav-item:is(.active, .sheet-open)::after {
-  content: "";
-  position: absolute;
-  top: var(--ui-v2-workspace-active-inset);
-  bottom: var(--ui-v2-workspace-active-inset);
-  left: var(--ui-v2-workspace-active-offset);
-  width: var(--ui-v2-workspace-active-width);
-  border-radius: var(--ui-v2-radius-pill);
-  background: var(--accent);
-}
-
-[data-layout="wide"] .workspace.editor-drawer-open [data-od-id="workspace-layers"]::after{
-  opacity: 0;
-}
-
-[data-layout="wide"] .adaptive-nav .ui-icon {
-  width: var(--ui-v2-projection-icon-size);
-  height: var(--ui-v2-projection-icon-size);
-}
-
-[data-layout="wide"] .adaptive-nav .ui-nav-item strong {
-  font-size: var(--ui-v2-font-sm);
-  font-weight: var(--ui-v2-weight-regular);
-  line-height: 1;
-}
-
-[data-layout="wide"] .adaptive-nav .ui-nav-item:is(.active, .sheet-open) strong {
-  font-weight: var(--ui-v2-weight-bold);
-}
-
 [data-layout="wide"] .left-panel {
   top: 0;
   right: auto;
   bottom: 0;
-  left: var(--ui-shell-workspace-rail-width);
+  left: 0;
   width: var(--ui-shell-left-panel-width);
   border: 0;
   border-inline-end: 1px solid var(--border);
@@ -1918,8 +1834,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
   flex-basis: auto;
   border-bottom: 1px solid var(--border);
 }
-
-
 
 @media (max-width: 799px) {
 
@@ -2056,24 +1970,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
     min-height: var(--ui-v2-control-md);
     padding-inline: var(--ui-space-3);
     border-radius: var(--ui-v2-radius-md);
-  }
-
-  [data-layout="wide"] .adaptive-nav {
-    gap: var(--ui-space-2);
-    padding-block: var(--ui-space-3);
-    background: var(--surface-subtle);
-  }
-
-  [data-layout="wide"] .adaptive-nav .ui-nav-item {
-    width: calc(var(--ui-v2-workspace-nav-width) - var(--ui-space-2));
-    min-width: calc(var(--ui-v2-workspace-nav-width) - var(--ui-space-2));
-    min-height: calc(var(--ui-v2-workspace-nav-height) - var(--ui-space-2));
-    border-radius: var(--ui-v2-radius-lg);
-  }
-
-  [data-layout="wide"] .adaptive-nav .ui-nav-item:is(.active, .sheet-open) {
-    background: var(--surface-elevated);
-    color: var(--text-strong);
   }
 
   [data-layout="wide"] .left-panel {
@@ -2403,10 +2299,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 
 .layer-inline-style-panel { border-block: 0; }
 
-.layer-list-tools { display: flex; align-items: center; gap: var(--ui-space-2); min-width: 0; }
-.layer-list-tools .layer-search { flex: 1 1 auto; min-width: 0; }
-.layer-list-tools .layer-add-button { flex: 0 0 auto; gap: var(--ui-space-1); min-height: var(--ui-touch-height); padding-inline: var(--ui-space-2); }
-.layer-list-tools .layer-add-button .ui-icon { width: var(--ui-icon-size); height: var(--ui-icon-size); }
 
 .top-actions .file-menu-icon { color: var(--muted); }
 

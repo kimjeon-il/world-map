@@ -38,7 +38,7 @@ async function readRails(page, kind) {
       return {
         header: inset('#leftPanel > .surface-header'),
         tabs: inset('.map-panel-tabs'),
-        search: (() => { const value = box('.layer-list-tools'); return [value.left, value.right]; })(),
+        search: (() => { const value = box('.layer-search'); return [value.left, value.right]; })(),
         content: [
           list.left + list.paddingLeft,
           list.right - list.paddingRight - (list.offsetWidth - list.clientWidth),
