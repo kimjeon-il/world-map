@@ -153,6 +153,20 @@ test('East Prussia r3 library preserves the reviewed geometry and reports its li
   assert.equal(entity.metadata.artifactSha256, 'f058012d42205bb02705c8017fba2e3c0e920b2a9f8a9eb21b312b9f7bfbdc0b');
 });
 
+test('Prussian province library entries carry their historical province flags', () => {
+  for (const [libraryId, marker] of [
+    ['historical-country:east-prussia', 'id="Oben"'],
+    ['historical-country:west-prussia', 'id="Mitte"'],
+  ]) {
+    const entity = historicalData.entities.find(item => item.libraryId === libraryId);
+    const dataUrl = entity.metadata.defaultFlagDataUrl;
+    assert.match(dataUrl, /^data:image\/svg\+xml;base64,/);
+    const svg = Buffer.from(dataUrl.slice('data:image/svg+xml;base64,'.length), 'base64').toString('utf8');
+    assert.match(svg, /viewBox="0 0 600 400"/);
+    assert.match(svg, new RegExp(marker));
+  }
+});
+
 test('world snapshots remain templates with independent reference lists', () => {
   const refs = ['one'];
   const library = createHistoricalLibrary({ schemaVersion: 2, snapshots: [{ id: 'snapshot', name: 'Snapshot', referenceDate: '1914', entityRefs: refs }] });

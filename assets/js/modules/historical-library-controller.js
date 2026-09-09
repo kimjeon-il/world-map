@@ -12,6 +12,7 @@ export function createHistoricalLibraryController({
   collator,
   closeCreateMenu,
   instantiate,
+  ownershipContext = () => ({ missing: [], countries: [], parents: () => [] }),
   confirm,
   setStatus,
   reportError,
@@ -20,6 +21,75 @@ export function createHistoricalLibraryController({
   let selectedId = '';
   let selectedVersionId = '';
   let loading = false;
+  let requestGeneration = 0;
+  let ownershipChoices = null;
+  let confirmedImpact = '';
+
+  function resetOwnership() {
+    ownershipChoices = null;
+    confirmedImpact = '';
+    elements.ownership?.replaceChildren();
+    elements.ownership?.classList.add('hidden');
+    if (elements.add) elements.add.textContent = '추가';
+  }
+
+  function showOwnership(context) {
+    const host = elements.ownership;
+    if (!host) throw new Error('소속 설정 화면을 찾을 수 없습니다.');
+    ownershipChoices = {};
+    host.replaceChildren();
+    host.classList.remove('hidden');
+    const heading = document.createElement('h3');
+    heading.textContent = '소속 설정';
+    host.append(heading);
+    function field(title, control) {
+      const label = document.createElement('label');
+      label.className = 'ui-field field-group';
+      const text = document.createElement('span');
+      text.textContent = title;
+      label.append(text, control);
+      host.append(label);
+      return label;
+    }
+    for (const item of context.missing) {
+      const choice = { mode: 'subunit', countryId: item.countryId, parentId: item.countryId, name: item.name };
+      ownershipChoices[item.libraryId] = choice;
+      const mode = document.createElement('select');
+      replaceSelectOptions(mode, [
+        { value: 'subunit', label: '기존 국가의 하위단위로 추가' },
+        { value: 'country', label: '독립된 국가로 추가' },
+      ], 'subunit');
+      field(`${item.name} · 추가 방식`, mode);
+      const country = document.createElement('select');
+      replaceSelectOptions(country, [{ value: '', label: '소속 국가 선택' }, ...context.countries], choice.countryId);
+      const countryRow = field('소속 국가', country);
+      const parent = document.createElement('select');
+      const parentRow = field('상위 소속', parent);
+      const name = document.createElement('input');
+      name.value = item.name;
+      const nameRow = field('국가 이름', name);
+      function sync() {
+        choice.mode = mode.value;
+        choice.name = name.value;
+        choice.countryId = country.value;
+        const options = context.parents(country.value);
+        replaceSelectOptions(parent, options, choice.parentId);
+        choice.parentId = parent.value;
+        countryRow.hidden = mode.value === 'country';
+        parentRow.hidden = mode.value === 'country' || options.length < 2;
+        nameRow.hidden = mode.value !== 'country';
+        elements.add.disabled = Object.values(ownershipChoices).some(value => value.mode === 'country' ? !value.name.trim() : !value.countryId);
+        confirmedImpact = '';
+        host.querySelector('[data-library-impact]')?.remove();
+      }
+      mode.addEventListener('change', sync);
+      name.addEventListener('input', sync);
+      country.addEventListener('change', () => { choice.parentId = country.value; sync(); });
+      parent.addEventListener('change', () => { choice.parentId = parent.value; sync(); });
+      sync();
+    }
+    host.querySelector('select')?.focus();
+  }
 
   function setLoadingState(nextLoading) {
     loading = !!nextLoading;
@@ -160,6 +230,7 @@ export function createHistoricalLibraryController({
     versionField.append(versionLabel, versionSelect);
     versionSelect.addEventListener('change', () => {
       selectedVersionId = versionSelect.value;
+      resetOwnership();
       renderPreview();
     });
     const meta = document.createElement('p');
@@ -230,6 +301,7 @@ export function createHistoricalLibraryController({
   function select(id) {
     if (loading) return;
     if (selectedId !== String(id || '')) {
+      resetOwnership();
       selectedVersionId = '';
       elements.childDepth.value = 'none';
     }
@@ -240,6 +312,8 @@ export function createHistoricalLibraryController({
   }
 
   function close() {
+    requestGeneration += 1;
+    resetOwnership();
     elements.modal.classList.add('hidden');
     elements.card?.classList.remove('is-detail', 'is-options');
     elements.open?.focus();
@@ -267,10 +341,48 @@ export function createHistoricalLibraryController({
 
   async function addSelected() {
     if (loading || !selectedId) return;
-    setLoadingState(true);
+    const versionOverrides = selectedVersionId ? { [selectedId]: selectedVersionId } : {};
     try {
-      const versionOverrides = selectedVersionId ? { [selectedId]: selectedVersionId } : {};
-      const result = await instantiate([selectedId], elements.year.value, elements.childDepth.value, versionOverrides);
+      const context = ownershipContext([selectedId], elements.year.value, elements.childDepth.value, versionOverrides);
+      if (!ownershipChoices && context.missing.length) {
+        showOwnership(context);
+        return;
+      }
+    } catch (error) {
+      reportError(error, '선택한 항목의 소속과 경계 버전을 확인하세요.', 'PL-LIB-002', 4800);
+      return;
+    }
+    const generation = ++requestGeneration;
+    setLoadingState(true);
+    for (const control of elements.ownership?.querySelectorAll('input, select') || []) control.disabled = true;
+    try {
+      const result = await instantiate([selectedId], elements.year.value, elements.childDepth.value, versionOverrides, {
+        ownership: ownershipChoices || {}, confirmedImpact,
+        isCurrent: () => requestGeneration === generation,
+      });
+      if (requestGeneration !== generation) return;
+      if (result?.confirmationRequired) {
+        const host = elements.ownership;
+        host.classList.remove('hidden');
+        host.querySelector('[data-library-impact]')?.remove();
+        const impact = document.createElement('div');
+        impact.dataset.libraryImpact = '';
+        const title = document.createElement('h3');
+        title.textContent = '영토 변경 확인';
+        const list = document.createElement('ul');
+        for (const message of result.impacts) {
+          const item = document.createElement('li');
+          item.textContent = message;
+          list.append(item);
+        }
+        impact.append(title, list);
+        host.append(impact);
+        confirmedImpact = result.impactKey;
+        setLoadingState(false);
+        elements.add.disabled = false;
+        elements.add.textContent = '확인 후 추가';
+        return;
+      }
       const added = Number(result?.added || 0);
       const deleted = Number(result?.deleted || 0);
       if (!added) setStatus('이미 현재 프로젝트에 있는 항목입니다.', 'success', 2800);
@@ -282,9 +394,14 @@ export function createHistoricalLibraryController({
       }
       close();
     } catch (error) {
+      if (requestGeneration !== generation) return;
       setLoadingState(false);
       renderPreview();
       reportError(error, '라이브러리 항목을 프로젝트에 추가하지 못했습니다.', 'PL-LIB-002', 4800);
+    } finally {
+      if (requestGeneration === generation) {
+        for (const control of elements.ownership?.querySelectorAll('input, select') || []) control.disabled = false;
+      }
     }
   }
 
@@ -323,6 +440,7 @@ export function createHistoricalLibraryController({
   }
 
   function connect() {
+    elements.childDepth?.addEventListener('change', resetOwnership);
     elements.open?.addEventListener('click', open);
     elements.close?.addEventListener('click', close);
     elements.backdrop?.addEventListener('click', close);
@@ -334,6 +452,7 @@ export function createHistoricalLibraryController({
       [elements.geographicRegion, 'change'],
     ]) {
       element?.addEventListener(eventName, () => {
+        resetOwnership();
         renderResults();
         if (element === elements.year) {
           selectedVersionId = '';

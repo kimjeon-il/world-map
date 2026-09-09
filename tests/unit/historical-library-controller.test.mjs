@@ -46,6 +46,46 @@ function fakeElement(ownerDocument) {
   };
 }
 
+test('missing ownership remains in the modal, blocks missing country, resets parent and supports country mode', async () => {
+  const document = { createElement: () => fakeElement(document), createDocumentFragment: () => fakeElement(document) };
+  const elements = Object.fromEntries(['open', 'modal', 'card', 'close', 'backdrop', 'search', 'clearSearch', 'type', 'status', 'year', 'geographicRegion',
+    'results', 'preview', 'snapshot', 'snapshotButton', 'childDepth', 'add', 'addOptions', 'optionsBack', 'ownership'].map(key => [key, fakeElement(document)]));
+  const entity = { libraryId: 'root', canonicalName: 'Root', type: 'subunit', geometryVersions: [{ id: 'v1' }] };
+  const calls = [];
+  const controller = createHistoricalLibraryController({ document, elements,
+    service: { load: async () => {}, list: () => [entity], search: () => [entity], snapshots: () => [], get: () => entity },
+    typeLabels: {}, selectGeometryVersion: () => entity.geometryVersions[0], renderMapPreview: () => fakeElement(document), createEmptyState: () => fakeElement(document),
+    replaceSelectOptions: (select, options, value) => { select.value = options.some(option => option.value === value) ? value : options[0]?.value || ''; },
+    collator: new Intl.Collator('ko'), closeCreateMenu() {}, confirm() {}, setStatus() {}, reportError(error) { throw error; }, requestFrame: fn => fn(),
+    ownershipContext: () => ({ missing: [{ libraryId: 'root', name: 'Root', countryId: '' }], countries: [{ value: 'A', label: 'A' }, { value: 'B', label: 'B' }],
+      parents: id => id ? [{ value: id, label: id }, ...(id === 'A' ? [{ value: 'P', label: 'Parent' }] : [])] : [] }),
+    instantiate: async (...args) => { calls.push(args); return { added: 1 }; },
+  });
+  controller.connect();
+  await controller.open();
+  controller.select('root');
+  elements.add.click();
+  assert.equal(calls.length, 0);
+  assert.equal(elements.add.disabled, true);
+  const [, modeRow, countryRow, parentRow, nameRow] = elements.ownership.children;
+  const [mode, country, parent, name] = [modeRow, countryRow, parentRow, nameRow].map(row => row.children[1]);
+  assert.equal(country.value, '');
+  country.value = 'A'; country.dispatchEvent({ type: 'change' });
+  assert.equal(parentRow.hidden, false);
+  parent.value = 'P'; parent.dispatchEvent({ type: 'change' });
+  country.value = 'B'; country.dispatchEvent({ type: 'change' });
+  assert.equal(parent.value, 'B');
+  assert.equal(parentRow.hidden, true);
+  mode.value = 'country'; mode.dispatchEvent({ type: 'change' });
+  name.value = ''; name.dispatchEvent({ type: 'input' });
+  assert.equal(elements.add.disabled, true);
+  name.value = 'Independent'; name.dispatchEvent({ type: 'input' });
+  elements.add.click();
+  await Promise.resolve();
+  assert.equal(calls[0][4].ownership.root.mode, 'country');
+  assert.equal(calls[0][4].ownership.root.name, 'Independent');
+});
+
 test('library simplifies single versions, preserves explicit versions and resets child scope on selection', async () => {
   const document = {
     createElement() { return fakeElement(document); },
@@ -86,7 +126,9 @@ test('library simplifies single versions, preserves explicit versions and resets
   versionSelect.dispatchEvent({ type: 'change' });
   elements.add.click();
   await Promise.resolve();
-  assert.deepEqual(imports[0], [['parent'], '', 'all', { parent: 'new' }]);
+  assert.deepEqual(imports[0].slice(0, 4), [['parent'], '', 'all', { parent: 'new' }]);
+  assert.deepEqual(imports[0][4].ownership, {});
+  assert.equal(typeof imports[0][4].isCurrent, 'function');
   await controller.open();
   controller.select('child');
   assert.equal(elements.addOptions.classList.contains('hidden'), true);
