@@ -1,4 +1,5 @@
 import { countrySelectionStatus } from './country-display.js';
+import { createSemanticIcon } from './icon-utils.js';
 
 export function createCountryPropertyController({
   window,
@@ -28,19 +29,19 @@ export function createCountryPropertyController({
     if (!preview) return;
     preview.replaceChildren();
     if (!dataUrl) {
-      preview.textContent = '국기 없음';
+      preview.appendChild(createSemanticIcon(document, 'country'));
+      if (elements.flagUpload) elements.flagUpload.textContent = '국기 추가';
       elements.flagRemove?.classList.add('hidden');
       return;
     }
     elements.flagRemove?.classList.remove('hidden');
+    if (elements.flagUpload) elements.flagUpload.textContent = '국기 변경';
     const image = document.createElement('img');
     image.src = dataUrl;
     image.alt = `${displayName || '선택한 국가'} 국기`;
     image.addEventListener('error', () => {
       if (!preview.contains(image)) return;
-      preview.replaceChildren();
-      preview.textContent = '국기 없음';
-      elements.flagRemove?.classList.add('hidden');
+      renderFlag('', displayName);
     }, { once: true });
     preview.appendChild(image);
   };
@@ -69,6 +70,7 @@ export function createCountryPropertyController({
     if (disposed) return false;
     const view = getCountryView(countryRef);
     if (!view?.feature) return false;
+    elements.flagMenu?.hidePopover();
     const token = ++presentationToken;
     const startedAt = globalThis.performance?.now?.() || Date.now();
     showPropertyForm('country', view.displayName, { resetScroll: !refreshOnly });
@@ -99,7 +101,7 @@ export function createCountryPropertyController({
   };
 
   const refresh = countryRef => present(countryRef, { refreshOnly: true });
-  const clear = () => { presentationToken += 1; };
+  const clear = () => { presentationToken += 1; elements.flagMenu?.hidePopover(); };
 
   const bind = () => {
     const bindField = (element, field, transform = value => value) => element?.addEventListener('change', event => {
@@ -107,7 +109,33 @@ export function createCountryPropertyController({
     });
     bindField(elements.name, 'name', value => value.trim());
     bindField(elements.notes, 'notes');
-    elements.flagUpload?.addEventListener('click', () => elements.flagFile?.click());
+    const closeMenu = () => { elements.flagMenu?.hidePopover(); };
+    elements.flagTrigger?.addEventListener('click', () => {
+      const menu = elements.flagMenu, trigger = elements.flagTrigger;
+      if (!menu || trigger.disabled) return;
+      if (menu.matches(':popover-open')) { closeMenu(); return; }
+      menu.showPopover();
+      const rect = trigger.getBoundingClientRect();
+      const edge = parseFloat(window.getComputedStyle(document.documentElement).fontSize) / 2;
+      menu.style.left = `${Math.max(edge, Math.min(rect.left, window.innerWidth - menu.offsetWidth - edge))}px`;
+      menu.style.top = `${Math.max(edge, Math.min(rect.bottom + edge, window.innerHeight - menu.offsetHeight - edge))}px`;
+      menu.querySelector('button:not(:disabled):not(.hidden)')?.focus();
+    });
+    elements.flagMenu?.addEventListener('toggle', () => {
+      elements.flagTrigger?.setAttribute('aria-expanded', String(elements.flagMenu.matches(':popover-open')));
+    });
+    elements.flagMenu?.addEventListener('keydown', event => {
+      const items = [...elements.flagMenu.querySelectorAll('button:not(:disabled):not(.hidden)')];
+      const index = items.indexOf(document.activeElement);
+      if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+        event.preventDefault();
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+        items[next]?.focus();
+      } else if (event.key === 'Escape') {
+        event.preventDefault(); event.stopPropagation(); closeMenu(); elements.flagTrigger?.focus();
+      } else if (event.key === 'Tab') { closeMenu(); }
+    });
+    elements.flagUpload?.addEventListener('click', () => { closeMenu(); elements.flagTrigger?.focus(); elements.flagFile?.click(); });
     elements.flagFile?.addEventListener('change', event => {
       const file = event.target.files?.[0];
       const primary = getPrimaryRef();
@@ -119,13 +147,14 @@ export function createCountryPropertyController({
       reader.readAsDataURL(file);
       event.target.value = '';
     });
-    elements.flagRemove?.addEventListener('click', () => commitField('flagDataUrl', null));
+    elements.flagRemove?.addEventListener('click', () => { closeMenu(); commitField('flagDataUrl', null); elements.flagTrigger?.focus(); });
     return api;
   };
 
   const dispose = () => {
     disposed = true;
     presentationToken += 1;
+    elements.flagMenu?.hidePopover();
   };
 
   const api = Object.freeze({ bind, present, refresh, clear, dispose });

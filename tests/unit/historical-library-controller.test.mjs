@@ -57,6 +57,9 @@ test('library simplifies single versions, preserves explicit versions and resets
   elements.status.value = 'all';
   const versions = [{ id: 'old', validFrom: '1900', validTo: '1940' }, { id: 'new', validFrom: '1941', validTo: '1990' }];
   const parent = { libraryId: 'parent', canonicalName: 'Parent', geometryVersions: versions };
+  parent.sourceInfo = { title: 'Source title', url: 'https://example.org/source', license: 'Public domain' };
+  parent.metadata = { approximateGeometry: true };
+  const originalSource = JSON.stringify(parent.sourceInfo);
   const child = { libraryId: 'child', parentLibraryId: 'parent', canonicalName: 'Child', geometryVersions: [versions[0]] };
   const entities = [parent, child], imports = [];
   const controller = createHistoricalLibraryController({
@@ -71,6 +74,10 @@ test('library simplifies single versions, preserves explicit versions and resets
   controller.connect();
   await controller.open();
   controller.select('parent');
+  const previewText = node => [node.textContent, ...(node.children || []).map(previewText)].join(' ');
+  assert.match(previewText(elements.preview), /근사 경계/);
+  assert.doesNotMatch(previewText(elements.preview), /출처|이용 조건|Source title|Public domain/);
+  assert.equal(JSON.stringify(parent.sourceInfo), originalSource);
   assert.equal(elements.addOptions.classList.contains('hidden'), false);
   assert.equal(elements.addOptions.open, undefined, 'scope is not a disclosure');
   elements.childDepth.value = 'all';

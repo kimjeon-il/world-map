@@ -56,7 +56,7 @@ test('short library viewports allocate remaining height to results and detail, n
     await page.locator('#createMenuBtn').click();
     await page.locator('#addFromLibraryBtn').click();
     await expect(page.locator('#historicalLibraryModal')).toBeVisible();
-    await expect(page.locator('#historicalLibraryResults [role="option"]').first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('#historicalLibraryResults [data-library-entity-id]').first()).toBeVisible({ timeout: 30_000 });
     await expect(page.locator('.historical-library-filters summary')).toHaveCount(0);
     await expect(page.locator('details.historical-library-filters')).toHaveCount(0);
     const search = await page.locator('#historicalLibrarySearchInput').boundingBox();
@@ -69,15 +69,20 @@ test('short library viewports allocate remaining height to results and detail, n
     expect(toolbarHeight).toBeLessThan(width < 800 ? 180 : 160);
     expect(await height(page.locator('#historicalLibraryResults'))).toBeGreaterThan(220);
     await page.locator('#historicalLibrarySearchInput').fill(width === 360 ? '소련' : '유고슬라비아');
-    await page.locator('#historicalLibraryResults [role="option"]').first().click();
+    await page.locator('#historicalLibraryResults [data-library-entity-id]').first().click();
     await expect(page.locator('#historicalLibraryPreview')).toBeVisible();
     if (width === 360) await expect(page.locator('#historicalLibraryAddOptions')).toBeVisible();
     expect(await height(page.locator('.historical-library-footer'))).toBeLessThan(180);
-    if (width < 800) {
-      const back = await page.locator('#historicalLibraryOptionsBackBtn').boundingBox();
-      const add = await page.locator('#historicalLibraryAddBtn').boundingBox();
-      expect(Math.abs(back.y - add.y)).toBeLessThan(1);
-    }
+    await expect(page.locator('#historicalLibraryOptionsBackBtn')).toBeHidden();
+    await expect(page.locator('#historicalLibraryResults #historicalLibraryPreview')).toBeVisible();
+    await expect(page.locator('.historical-library-toolbar')).toBeVisible();
+    const selected = page.locator('#historicalLibraryResults [aria-expanded="true"]');
+    const rowBounds = await selected.boundingBox();
+    const detailBounds = await page.locator('#historicalLibraryPreview').boundingBox();
+    expect(detailBounds.y).toBeGreaterThanOrEqual(rowBounds.y + rowBounds.height);
+    expect(Math.abs(rowBounds.width - detailBounds.width)).toBeLessThan(2);
+    expect(await page.locator('.historical-library-layout').evaluate(el => getComputedStyle(el).borderTopWidth)).toBe('0px');
+    expect(await selected.evaluate(el => parseFloat(getComputedStyle(el).paddingLeft))).toBeGreaterThan(0);
     expect(await page.locator('.historical-library-card').evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
     await page.locator('#historicalLibraryCloseBtn').click();
   }
@@ -134,7 +139,7 @@ test('theme and enlarged text preserve map hit areas, inspector controls and lib
   await openLayers(page);
   await page.locator('#createMenuBtn').click();
   await page.locator('#addFromLibraryBtn').click();
-  await expect(page.locator('#historicalLibraryResults [role="option"]').first()).toBeVisible();
+  await expect(page.locator('#historicalLibraryResults [data-library-entity-id]').first()).toBeVisible();
   expect(await page.locator('.historical-library-card').evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
   const rails = await page.locator('.historical-library-card').evaluate(element => {
     const style = getComputedStyle(element);

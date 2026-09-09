@@ -1599,6 +1599,9 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 }
   .app-root .top-actions { left: auto; right: auto; position: fixed; top: calc(var(--ui-topbar-height) + var(--ui-space-3)); inset-inline-start: var(--ui-space-3);
 }}
+/* Visibility color is independent of row selection and pointer state. */
+.layer-visibility-control { color: var(--text-strong); }
+.layer-visibility-control:has(.layer-visibility-toggle:not(:checked)) { color: var(--muted); }
 .layer-visibility-control .layer-visibility-eye-off { display: none;
 }
 .layer-visibility-control .layer-visibility-toggle:not(:checked) ~ .layer-visibility-eye {
@@ -1702,7 +1705,18 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 
 /* Editor shell, map toolbar, edit-session HUD, and persistent status. */
 
-.editor-flag-actions { min-width: 0; display: flex; align-items: center; gap: var(--ui-v2-button-gap); }
+.editor-object-context-main { display: flex; align-items: center; gap: var(--ui-v2-button-gap); }
+.editor-object-context-main > .editor-object-heading { flex: 1; min-width: 0; }
+.editor-flag-trigger { flex: 0 0 auto; padding: var(--ui-space-1); }
+.editor-flag-thumbnail { display: grid; place-items: center; width: 2.5rem; height: 1.75rem; }
+.editor-flag-thumbnail img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.editor-flag-menu {
+  position: fixed; margin: 0; padding: var(--ui-space-1); min-width: 10rem;
+  border: var(--ui-border-width) solid var(--border); border-radius: var(--ui-radius-control);
+  background: var(--surface-elevated); color: var(--text); box-shadow: var(--control-shadow);
+}
+.editor-flag-menu:popover-open { display: grid; gap: var(--ui-space-1); }
+.editor-flag-menu button { text-align: left; }
 
 .editor-flag-preview {
   width: 100%;
@@ -2382,11 +2396,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
     border-right: 0;
     padding-right: 0;
   }
-
-  .historical-library-card.is-detail .historical-library-results,
-  .historical-library-card.is-detail .historical-library-toolbar { display: none; }
-
-  .historical-library-card:not(.is-detail) .historical-library-preview { display: none; }
 
   .historical-library-footer {
     position: sticky;

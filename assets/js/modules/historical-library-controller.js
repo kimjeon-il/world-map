@@ -1,4 +1,4 @@
-const LISTBOX_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Home', 'End']);
+const RESULT_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Home', 'End']);
 
 export function createHistoricalLibraryController({
   document,
@@ -10,7 +10,6 @@ export function createHistoricalLibraryController({
   createEmptyState,
   replaceSelectOptions,
   collator,
-  isMobile,
   closeCreateMenu,
   instantiate,
   confirm,
@@ -82,10 +81,13 @@ export function createHistoricalLibraryController({
   }
 
   function renderPreview() {
+    const selectedRow = [...elements.results.querySelectorAll('[data-library-entity-id]')].find(row => row.dataset.libraryEntityId === selectedId);
+    selectedRow?.insertAdjacentElement?.('afterend', elements.preview);
     const entity = service.get(selectedId);
     const automaticVersion = entity ? selectGeometryVersion(entity, elements.year.value) : null;
     const version = entity?.geometryVersions?.find(candidate => candidate.id === selectedVersionId) || automaticVersion;
     if (!entity || !version) {
+      elements.preview.hidden = true;
       selectedVersionId = '';
       const help = document.createElement('p');
       help.className = 'editor-help';
@@ -97,6 +99,7 @@ export function createHistoricalLibraryController({
       elements.card?.classList.remove('is-detail', 'is-options');
       return;
     }
+    elements.preview.hidden = false;
     const title = document.createElement('h3');
     title.textContent = entity.displayNames?.ko || entity.canonicalName;
     const versionField = document.createElement('label');
@@ -131,21 +134,6 @@ export function createHistoricalLibraryController({
       version.certainty === 'low' ? '정확도가 낮은 경계' : version.certainty === 'medium' ? '경계 일부 불확실' : '',
       entity.metadata?.approximateGeometry ? '근사 경계' : '',
     ].filter(Boolean).join(' · ');
-    const source = document.createElement('p');
-    source.className = 'editor-help';
-    const sourceEntries = Array.isArray(entity.sourceInfo?.sources) ? entity.sourceInfo.sources : [];
-    const primarySource = sourceEntries[0] || entity.sourceInfo || {};
-    const sourceTitle = primarySource.title || version.sourceId || '미지정';
-    const sourceUrl = primarySource.url || entity.sourceInfo?.url || '';
-    if (/^https?:\/\//i.test(sourceUrl)) {
-      const link = document.createElement('a');
-      link.href = sourceUrl;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.textContent = '출처';
-      link.setAttribute('aria-label', `출처: ${sourceTitle}`);
-      source.append(link);
-    } else source.textContent = `출처: ${sourceTitle}`;
     const heading = document.createElement('div');
     heading.className = 'historical-library-preview-heading';
     const flagPreview = document.createElement('div');
@@ -159,26 +147,8 @@ export function createHistoricalLibraryController({
       heading.append(flagPreview);
     }
     heading.append(title);
-    const advanced = document.createElement('details');
-    advanced.className = 'ui-disclosure editor-disclosure';
-    const summary = document.createElement('summary');
-    summary.textContent = '출처·이용 조건';
-    const body = document.createElement('dl');
-    body.className = 'historical-library-advanced';
-    const addAdvanced = (term, value) => {
-      if (!value) return;
-      const dt = document.createElement('dt');
-      const dd = document.createElement('dd');
-      dt.textContent = term;
-      dd.textContent = String(value || '—');
-      body.append(dt, dd);
-    };
-    addAdvanced('이용 조건', primarySource.license || entity.sourceInfo?.license);
-    for (const item of sourceEntries.slice(1)) addAdvanced(item.title || '출처', [item.url, item.license].filter(Boolean).join(' · '));
-    advanced.append(summary, body);
     elements.preview.replaceChildren(heading, versionField, renderMapPreview(entity, version),
-      ...(meta.textContent ? [meta] : []), ...(versionNotes.textContent ? [versionNotes] : []), source,
-      ...(body.children.length ? [advanced] : []));
+      ...(meta.textContent ? [meta] : []), ...(versionNotes.textContent ? [versionNotes] : []));
     elements.add.disabled = false;
     const hasChildren = service.list().some(candidate => candidate.parentLibraryId === entity.libraryId);
     if (hasChildren) elements.addOptions?.classList.remove('hidden');
@@ -186,8 +156,7 @@ export function createHistoricalLibraryController({
       elements.addOptions?.classList.add('hidden');
       elements.childDepth.value = 'none';
     }
-    if (isMobile()) elements.optionsBack?.classList.remove('hidden');
-    else elements.optionsBack?.classList.add('hidden');
+    elements.optionsBack?.classList.add('hidden');
     elements.add.textContent = '추가';
     elements.add.setAttribute('aria-label', '선택한 항목을 현재 프로젝트에 추가');
     elements.add.dataset.tooltip = '선택한 항목을 현재 프로젝트에 추가';
@@ -202,8 +171,8 @@ export function createHistoricalLibraryController({
       button.type = 'button';
       button.className = `ui-button ui-row ui-card ui-selectable-row historical-library-result${selected ? ' is-selected' : ''}`;
       button.dataset.libraryEntityId = entity.libraryId;
-      button.setAttribute('role', 'option');
-      button.setAttribute('aria-selected', String(selected));
+      button.setAttribute('aria-expanded', String(selected));
+      if (selected) button.setAttribute('aria-controls', elements.preview.id);
       button.tabIndex = selected ? 0 : -1;
       const strong = document.createElement('strong');
       strong.textContent = entity.displayNames?.ko || entity.canonicalName;
@@ -214,12 +183,13 @@ export function createHistoricalLibraryController({
     }
     if (!results.length) fragment.appendChild(createEmptyState('조건에 맞는 항목이 없습니다.', '검색어, 종류, 상태 또는 기준 연도를 바꿔 보세요.', { compact: true }));
     elements.results.replaceChildren(fragment);
-    const options = [...elements.results.querySelectorAll('[role="option"]')];
+    const options = [...elements.results.querySelectorAll('[data-library-entity-id]')];
     if (options.length && !options.some(option => option.tabIndex === 0)) options[0].tabIndex = 0;
     if (selectedId && !results.some(entity => entity.libraryId === selectedId)) {
       selectedId = '';
       renderPreview();
     }
+    if (selectedId) renderPreview();
   }
 
   function select(id) {
@@ -229,9 +199,9 @@ export function createHistoricalLibraryController({
       elements.childDepth.value = 'none';
     }
     selectedId = String(id || '');
+    const restoreFocus = document.activeElement?.hasAttribute?.('data-library-entity-id');
     renderResults();
-    renderPreview();
-    if (isMobile()) elements.card?.classList.add('is-detail');
+    if (restoreFocus) requestFrame(() => elements.results.querySelector('[aria-expanded="true"]')?.focus({ preventScroll: true }));
   }
 
   function close() {
@@ -346,10 +316,10 @@ export function createHistoricalLibraryController({
       if (button) select(button.dataset.libraryEntityId);
     });
     elements.results?.addEventListener('keydown', event => {
-      if (!LISTBOX_KEYS.has(event.key)) return;
-      const options = [...elements.results.querySelectorAll('[role="option"][data-library-entity-id]')];
+      if (!RESULT_KEYS.has(event.key) || !event.target.closest('[data-library-entity-id]')) return;
+      const options = [...elements.results.querySelectorAll('[data-library-entity-id]')];
       if (!options.length) return;
-      const current = event.target.closest('[role="option"]');
+      const current = event.target.closest('[data-library-entity-id]');
       const currentIndex = Math.max(0, options.indexOf(current));
       const nextIndex = event.key === 'Home' ? 0
         : event.key === 'End' ? options.length - 1
@@ -359,12 +329,7 @@ export function createHistoricalLibraryController({
       if (!(next instanceof HTMLElement)) return;
       event.preventDefault();
       options.forEach(option => { option.tabIndex = option === next ? 0 : -1; });
-      if (isMobile()) {
-        next.focus({ preventScroll: true });
-        return;
-      }
-      select(next.dataset.libraryEntityId);
-      requestFrame(() => elements.results.querySelector('[aria-selected="true"]')?.focus({ preventScroll: true }));
+      next.focus();
     });
     elements.add?.addEventListener('click', advanceAdd);
     elements.optionsBack?.addEventListener('click', returnToDetail);
