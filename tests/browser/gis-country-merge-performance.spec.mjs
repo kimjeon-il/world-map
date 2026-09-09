@@ -46,12 +46,10 @@ test('imported-territory priority validates only affected countries and finishes
   });
   await expect(page.locator('#gisImportModal')).toBeVisible();
   await expect(page.locator('#gisImportConfirmBtn')).toBeEnabled({ timeout: 30_000 });
-  await page.locator('#gisImportNextBtn').click();
-  await expect(page.locator('#gisStepIndicator')).toHaveText('2/5 · 가져올 내용');
+  await expect(page.locator('#gisStepIndicator')).toHaveText('1/3 · 가져올 데이터');
   await selectCustomOption(page, 'gisTargetType', '국가');
   await page.locator('#gisImportNextBtn').click();
-  await page.locator('#gisImportNextBtn').click();
-  await expect(page.locator('#gisStepIndicator')).toHaveText('4/5 · 적용 결과');
+  await expect(page.locator('#gisStepIndicator')).toHaveText('2/3 · 적용 결과');
   await page.locator('[data-gis-open-mode="merge"]').click();
   await expect(page.locator('#gisMergeStrategyRow')).toBeVisible();
   await selectCustomOption(page, 'gisMergeStrategy', '가져온 영토 우선');
@@ -65,7 +63,7 @@ test('imported-territory priority validates only affected countries and finishes
     element.dispatchEvent(new BrowserEvent('change', { bubbles: true }));
   });
   await page.locator('#gisImportNextBtn').click();
-  await expect(page.locator('#gisStepIndicator')).toHaveText('5/5 · 최종 확인', { timeout: 90_000 });
+  await expect(page.locator('#gisStepIndicator')).toHaveText('3/3 · 최종 확인', { timeout: 90_000 });
 
   const startedAt = Date.now();
   await page.locator('#gisImportConfirmBtn').click();

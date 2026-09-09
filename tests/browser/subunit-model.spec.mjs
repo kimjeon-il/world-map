@@ -28,10 +28,9 @@ test('Subunit editor and creation use one desktop/mobile surface', async ({ page
   });
   await expect(page.locator('#gisImportModal')).toBeVisible();
   await expect(page.locator('#gisImportConfirmBtn')).toBeEnabled({ timeout: 30_000 });
-  await page.locator('#gisImportNextBtn').click();
   await selectUiOption(page, '#gisTargetType', 'subunit');
   await selectUiOption(page, '#gisTargetCountry', 'DEU');
-  for (const step of ['3/5', '4/5', '5/5']) {
+  for (const step of ['2/3', '3/3']) {
     await page.locator('#gisImportNextBtn').click();
     await expect(page.locator('#gisStepIndicator')).toContainText(step, { timeout: 30_000 });
   }

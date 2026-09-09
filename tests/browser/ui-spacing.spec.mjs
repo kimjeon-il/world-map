@@ -90,7 +90,7 @@ for (const layout of layouts) {
       const searchInputStyle = await computed(librarySearch, ['padding-left', 'padding-right']);
       expect(searchInputStyle).toEqual({ 'padding-left': '0px', 'padding-right': '0px' });
 
-      await page.locator('.historical-library-filters summary').click();
+      await expect(page.locator('.historical-library-filters summary')).toHaveCount(0);
       const typeField = page.locator('#historicalLibraryTypeInput').locator('xpath=..');
       const customSelect = typeField.locator('.ui-select-control');
       const selectStyle = await computed(customSelect, ['padding-left', 'padding-right']);

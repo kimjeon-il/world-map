@@ -58,6 +58,12 @@ const materializedEntities = materializePilotEntities(
 const materializedById = new Map(materializedEntities.map(item => [item.libraryId, item]));
 const supplementalHistoricalChecks = [
   {
+    id: 'historical-country:east-prussia',
+    version: 'ostpreussen-1878-1920-r3',
+    points: [[20.51, 54.71], [21.13, 55.71], [21.48, 55.35], [21.91, 55.14], [21.00, 55.30], [20.18, 53.24]],
+    outside: [[18.65, 54.35], [23.9, 54.9]],
+  },
+  {
     id: 'historical-country:ukraine',
     version: 'historical-country:ukraine:1991-2014-r1',
     points: [[34.1, 44.95], [36.2, 45.3]],
