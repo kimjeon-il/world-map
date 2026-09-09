@@ -255,6 +255,40 @@ html { font-size: 100%; }
   stroke-linejoin: round;
 }
 
+/* Palette buttons preserve their swatch through common button states. */
+.ui-button.preferences-accent-chip {
+  --ui-control-bg: var(--swatch);
+  --ui-control-bg-hover: var(--swatch);
+  --ui-control-bg-pressed: var(--swatch);
+  width: var(--ui-control-height);
+  min-width: var(--ui-control-height);
+  min-height: var(--ui-control-height);
+  height: auto;
+  aspect-ratio: 1;
+  padding: 0;
+  background: var(--swatch);
+  border: 2px solid var(--border);
+  border-radius: var(--ui-v2-radius-pill);
+}
+
+.ui-button.preferences-accent-chip:is(:hover, :focus-visible) {
+  background: var(--swatch);
+  outline: 2px solid var(--text-strong);
+  outline-offset: var(--ui-v2-focus-offset);
+}
+
+.ui-button.preferences-accent-chip[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--text-strong);
+}
+
+@media (max-width: 799px) {
+  .ui-button.preferences-accent-chip {
+    width: var(--ui-touch-height);
+    min-width: var(--ui-touch-height);
+    min-height: var(--ui-touch-height);
+  }
+}
+
 /* Projection glyphs are the only intentionally larger common icons. */
 .projection-btn .ui-icon {
   width: var(--ui-v2-projection-icon-size);
@@ -575,9 +609,11 @@ html { font-size: 100%; }
   flex: 0 0 auto;
   min-height: var(--ui-v2-tab-height);
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 0;
   padding-inline: var(--ui-surface-content-rail-x);
+  border-bottom: var(--ui-border-width) solid var(--border);
 }
 
 .surface-tabs .ui-tab {
@@ -684,6 +720,17 @@ html { font-size: 100%; }
 .ui-content-section {
   display: grid;
   gap: var(--ui-field-gap);
+}
+
+/* Shared flat section grammar, independent of panel width or purpose. */
+.surface-content .editor-section,
+.map-view-settings > .layer-style-editor {
+  display: grid;
+  gap: var(--ui-field-gap);
+  padding: var(--ui-space-4) 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 :where(.ui-content-field, .editor-field) {
@@ -1335,6 +1382,26 @@ html { font-size: 100%; }
   width: var(--ui-shell-left-panel-width);
 }
 
+/* Both desktop surfaces end at the same persistent status boundary. */
+[data-layout="wide"] .workspace-surface,
+[data-layout="compact"] .workspace-surface {
+  bottom: var(--ui-shell-statusbar-height);
+}
+
+[data-layout="wide"] .map-bottom-status,
+[data-layout="compact"] .map-bottom-status {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+[data-layout="wide"] .map-bottom-status .status-inner,
+[data-layout="compact"] .map-bottom-status .status-inner {
+  left: 0;
+  right: 0;
+}
+
 [data-layout="wide"] .surface-editor {
   --ui-surface-border-top: var(--ui-border-width) solid var(--border);
   --ui-surface-border-right: var(--ui-border-width) solid var(--border);
@@ -1354,6 +1421,8 @@ html { font-size: 100%; }
 [data-layout="wide"] .workspace-surface > .surface-header,
 [data-layout="compact"] .workspace-surface > .surface-header {
   display: grid;
+  min-height: var(--ui-v2-surface-header-height-desktop);
+  border-bottom: var(--ui-border-width) solid var(--border);
 }
 
 [data-layout="wide"] .surface-map :is(.sheet-close-btn, .sheet-drag-handle) {
@@ -1364,7 +1433,7 @@ html { font-size: 100%; }
   position: fixed;
   z-index: 36;
   top: calc(var(--ui-shell-topbar-height) + var(--ui-shell-compact-inset));
-  bottom: var(--ui-control-height);
+  bottom: var(--ui-shell-statusbar-height);
   width: var(--compact-drawer-width, var(--ui-shell-compact-drawer-width));
   max-height: none;
   opacity: 0;
@@ -1796,7 +1865,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 [data-layout="wide"] .left-panel {
   top: 0;
   right: auto;
-  bottom: 0;
   left: 0;
   width: var(--ui-shell-left-panel-width);
   border: 0;
@@ -1815,25 +1883,10 @@ body.file-menu-open .app-root .topbar { z-index: 150;
   pointer-events: auto;
 }
 
-[data-layout="wide"] :is(.left-panel, .right-panel) > .surface-header {
-  min-height: var(--ui-v2-surface-header-height-desktop);
-  height: auto;
-  flex-basis: auto;
-  display: grid;
-  padding-inline: var(--ui-surface-content-rail-x);
-  border-bottom: 1px solid var(--border);
-}
-
 [data-layout="wide"] .left-panel > .surface-header .surface-header-actions {
   display: none;
 }
 
-[data-layout="wide"] .surface-tabs {
-  min-height: var(--ui-v2-tab-height);
-  height: auto;
-  flex-basis: auto;
-  border-bottom: 1px solid var(--border);
-}
 
 @media (max-width: 799px) {
 
@@ -2018,26 +2071,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
     background: var(--surface-elevated);
   }
 
-  [data-layout="wide"] .right-panel > .surface-header {
-    background: var(--surface-subtle);
-  }
-
-  [data-layout="wide"] .editor-object-header[data-editor-context] {
-    margin-bottom: var(--ui-space-2);
-    padding: var(--ui-space-4) var(--ui-surface-content-rail-x) var(--ui-space-3);
-    border-bottom: 0;
-  }
-
-  [data-layout="wide"] .editor-empty {
-    padding-inline: var(--ui-space-6);
-  }
-
-  [data-layout="wide"] .editor-section {
-    padding: var(--ui-space-4) 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-  }
 
   [data-layout="wide"] .editor-action-row {
     min-height: var(--ui-content-command-row-min-height);
@@ -2099,11 +2132,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 
 .map-view-settings > .layer-style-editor {
   min-width: 0;
-  display: grid;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-4) 0;
-  border-top: 1px solid var(--border);
-  background: transparent;
 }
 
 .map-view-settings > .layer-style-editor:first-child {
@@ -2299,6 +2327,12 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 
 .layer-inline-style-panel { border-block: 0; }
 
+/* The footer owns the bottom inset; the containing tab must not add another. */
+.left-panel .layer-panel-section {
+  padding-block: var(--ui-space-2) 0;
+  padding-inline: 0;
+}
+
 
 .top-actions .file-menu-icon { color: var(--muted); }
 
@@ -2453,7 +2487,6 @@ body.file-menu-open .mobile-backdrop {
     position: relative;
     z-index: 2;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
     flex: 0 0 auto;
     min-height: var(--ui-touch-height);
     padding-inline: var(--ui-surface-content-rail-x);
