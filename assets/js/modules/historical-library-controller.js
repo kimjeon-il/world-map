@@ -61,6 +61,10 @@ export function createHistoricalLibraryController({
     return `${entity.startDate || '?'}–${entity.endDate || '현재'}`;
   }
 
+  function hasMultipleGeometryVersions(entity) {
+    return (entity?.geometryVersions || []).length > 1;
+  }
+
   function syncFilterOptions() {
     const geographicRegions = [...new Set(service.list().map(entity => String(entity.metadata?.geographicRegion || '')).filter(Boolean))].sort(collator.compare);
     replaceSelectOptions(elements.geographicRegion, [{ value: '', label: '전체' }, ...geographicRegions.map(geographicRegion => ({ value: geographicRegion, label: geographicRegion }))], elements.geographicRegion.value);
@@ -99,16 +103,53 @@ export function createHistoricalLibraryController({
       elements.card?.classList.remove('is-detail', 'is-options');
       return;
     }
+    const hasMultipleVersions = hasMultipleGeometryVersions(entity);
+    if (!hasMultipleVersions) {
+      // A single boundary is already represented by the result row. Keep the
+      // preview surface hidden so selecting an item does not create a second,
+      // mostly empty detail block beneath it.
+      elements.preview.hidden = true;
+      elements.card?.classList.remove('is-detail', 'is-options');
+      const title = document.createElement('h3');
+      title.className = 'historical-library-preview-title';
+      title.textContent = entity.displayNames?.ko || entity.canonicalName;
+      const heading = document.createElement('div');
+      heading.className = 'historical-library-preview-heading';
+      heading.append(title);
+      const versionSummary = document.createElement('div');
+      versionSummary.className = 'ui-field field-group historical-library-version-field';
+      versionSummary.textContent = `경계 · ${version.validFrom || '?'}–${version.validTo || '현재'}`;
+      const metadata = document.createElement('p');
+      metadata.className = 'editor-help';
+      metadata.textContent = [
+        version.certainty === 'low' ? '정확도가 낮은 경계' : version.certainty === 'medium' ? '경계 일부 불확실' : '',
+        entity.metadata?.approximateGeometry ? '근사 경계' : '',
+      ].filter(Boolean).join(' · ');
+      elements.preview.replaceChildren(heading, versionSummary, ...(metadata.textContent ? [metadata] : []));
+      elements.add.disabled = false;
+      const hasChildren = service.list().some(candidate => candidate.parentLibraryId === entity.libraryId);
+      if (hasChildren) elements.addOptions?.classList.remove('hidden');
+      else {
+        elements.addOptions?.classList.add('hidden');
+        elements.childDepth.value = 'none';
+      }
+      elements.optionsBack?.classList.add('hidden');
+      elements.add.textContent = '추가';
+      elements.add.setAttribute('aria-label', '선택한 항목을 현재 프로젝트에 추가');
+      elements.add.dataset.tooltip = '선택한 항목을 현재 프로젝트에 추가';
+      return;
+    }
     elements.preview.hidden = false;
     const title = document.createElement('h3');
+    title.className = 'historical-library-preview-title';
     title.textContent = entity.displayNames?.ko || entity.canonicalName;
     const versionField = document.createElement('label');
     versionField.className = 'ui-field field-group historical-library-version-field';
     const versionLabel = document.createElement('span');
-    versionLabel.textContent = '경계 버전';
+    versionLabel.textContent = '경계';
     const versionSelect = document.createElement('select');
     versionSelect.id = 'historicalLibraryGeometryVersionInput';
-    versionSelect.setAttribute('aria-label', `${entity.displayNames?.ko || entity.canonicalName} 경계 버전`);
+    versionSelect.setAttribute('aria-label', `${entity.displayNames?.ko || entity.canonicalName} 경계`);
     for (const candidate of entity.geometryVersions || []) {
       const option = document.createElement('option');
       option.value = candidate.id;
@@ -116,14 +157,7 @@ export function createHistoricalLibraryController({
       option.selected = candidate.id === version.id;
       versionSelect.appendChild(option);
     }
-    if ((entity.geometryVersions || []).length > 1) {
-      versionField.append(versionLabel, versionSelect);
-    } else {
-      versionField.textContent = `경계 적용 기간 · ${version.validFrom || '?'}–${version.validTo || '현재'}`;
-    }
-    const versionNotes = document.createElement('p');
-    versionNotes.className = 'editor-help historical-library-version-notes';
-    versionNotes.textContent = version.notes || entity.sourceInfo?.notes || '';
+    versionField.append(versionLabel, versionSelect);
     versionSelect.addEventListener('change', () => {
       selectedVersionId = versionSelect.value;
       renderPreview();
@@ -136,19 +170,9 @@ export function createHistoricalLibraryController({
     ].filter(Boolean).join(' · ');
     const heading = document.createElement('div');
     heading.className = 'historical-library-preview-heading';
-    const flagPreview = document.createElement('div');
-    flagPreview.className = 'historical-library-flag';
-    const flagUrl = String(entity.metadata?.defaultFlagDataUrl || '');
-    if (flagUrl) {
-      const image = document.createElement('img');
-      image.src = flagUrl;
-      image.alt = `${entity.displayNames?.ko || entity.canonicalName} 국기`;
-      flagPreview.appendChild(image);
-      heading.append(flagPreview);
-    }
     heading.append(title);
     elements.preview.replaceChildren(heading, versionField, renderMapPreview(entity, version),
-      ...(meta.textContent ? [meta] : []), ...(versionNotes.textContent ? [versionNotes] : []));
+      ...(meta.textContent ? [meta] : []));
     elements.add.disabled = false;
     const hasChildren = service.list().some(candidate => candidate.parentLibraryId === entity.libraryId);
     if (hasChildren) elements.addOptions?.classList.remove('hidden');
@@ -172,13 +196,24 @@ export function createHistoricalLibraryController({
       button.className = `ui-button ui-row ui-card ui-selectable-row historical-library-result${selected ? ' is-selected' : ''}`;
       button.dataset.libraryEntityId = entity.libraryId;
       button.setAttribute('aria-expanded', String(selected));
-      if (selected) button.setAttribute('aria-controls', elements.preview.id);
+      if (selected && hasMultipleGeometryVersions(entity)) button.setAttribute('aria-controls', elements.preview.id);
       button.tabIndex = selected ? 0 : -1;
       const strong = document.createElement('strong');
       strong.textContent = entity.displayNames?.ko || entity.canonicalName;
       const small = document.createElement('small');
       small.textContent = `${typeLabels[entity.type]} · ${period(entity)}`;
-      button.append(strong, small);
+      const flagUrl = String(entity.metadata?.defaultFlagDataUrl || '').trim();
+      if (flagUrl) {
+        const flag = document.createElement('span');
+        flag.className = 'historical-library-result-flag';
+        flag.setAttribute('aria-hidden', 'true');
+        const image = document.createElement('img');
+        image.src = flagUrl;
+        image.alt = '';
+        flag.appendChild(image);
+        button.className += ' historical-library-result--flagged';
+        button.append(flag, strong, small);
+      } else button.append(strong, small);
       fragment.appendChild(button);
     }
     if (!results.length) fragment.appendChild(createEmptyState('조건에 맞는 항목이 없습니다.', '검색어, 종류, 상태 또는 기준 연도를 바꿔 보세요.', { compact: true }));
