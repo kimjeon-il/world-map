@@ -46,6 +46,52 @@ function fakeElement(ownerDocument) {
   };
 }
 
+test('library simplifies single versions, preserves explicit versions and resets child scope on selection', async () => {
+  const document = {
+    createElement() { return fakeElement(document); },
+    createDocumentFragment() { return fakeElement(document); },
+  };
+  const names = ['open', 'modal', 'card', 'close', 'backdrop', 'search', 'clearSearch', 'type', 'status', 'year', 'geographicRegion',
+    'results', 'preview', 'snapshot', 'snapshotButton', 'childDepth', 'add', 'addOptions', 'optionsBack'];
+  const elements = Object.fromEntries(names.map(name => [name, fakeElement(document)]));
+  elements.status.value = 'all';
+  const versions = [{ id: 'old', validFrom: '1900', validTo: '1940' }, { id: 'new', validFrom: '1941', validTo: '1990' }];
+  const parent = { libraryId: 'parent', canonicalName: 'Parent', geometryVersions: versions };
+  const child = { libraryId: 'child', parentLibraryId: 'parent', canonicalName: 'Child', geometryVersions: [versions[0]] };
+  const entities = [parent, child], imports = [];
+  const controller = createHistoricalLibraryController({
+    document, elements,
+    service: { load: async () => {}, list: () => entities, snapshots: () => [], search: () => entities, get: id => entities.find(entity => entity.libraryId === id) },
+    typeLabels: {}, selectGeometryVersion: entity => entity.geometryVersions[0],
+    renderMapPreview: () => fakeElement(document), createEmptyState: () => fakeElement(document),
+    replaceSelectOptions() {}, collator: new Intl.Collator('ko'), isMobile: () => false,
+    closeCreateMenu() {}, instantiate: async (...args) => { imports.push(args); return { added: 1 }; },
+    confirm() {}, setStatus() {}, reportError(error) { throw error; }, requestFrame: fn => fn(),
+  });
+  controller.connect();
+  await controller.open();
+  controller.select('parent');
+  assert.equal(elements.addOptions.classList.contains('hidden'), false);
+  assert.equal(elements.addOptions.open, undefined, 'scope is not a disclosure');
+  elements.childDepth.value = 'all';
+  const versionSelect = elements.preview.children[1].children[1];
+  versionSelect.value = 'new';
+  versionSelect.dispatchEvent({ type: 'change' });
+  elements.add.click();
+  await Promise.resolve();
+  assert.deepEqual(imports[0], [['parent'], '', 'all', { parent: 'new' }]);
+  await controller.open();
+  controller.select('child');
+  assert.equal(elements.addOptions.classList.contains('hidden'), true);
+  assert.equal(elements.childDepth.value, 'none');
+  assert.equal(elements.preview.children[1].children.length, 0);
+  assert.match(elements.preview.children[1].textContent, /1900.*1940/);
+  assert.equal(elements.preview.children[0].children.length, 1, 'no empty flag block');
+  elements.type.value = 'country';
+  elements.type.dispatchEvent({ type: 'change' });
+  assert.equal(elements.results.children[0].children.length, 2, 'changing a visible filter rerenders results');
+});
+
 test('historical library controller owns modal loading and close focus', async () => {
   const document = {
     defaultView: { Event: class { constructor(type) { this.type = type; } } },

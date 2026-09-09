@@ -1,5 +1,32 @@
 # 공통 UI 규칙 적용 감사
 
+## 잔여 Tooltip·스크롤바·Toast·GIS 검사 (2026-09-09)
+
+- 키보드 Tooltip은 mobile/coarse-pointer에서도 표시하며 터치 hover는 제외한다. Escape와 기존 닫힘 조건을 유지하고 기존 `aria-describedby` 연결은 보존한다.
+- dialog 스크롤바를 dialog 직속 비스크롤 overlay로 이동했다. viewport 좌표를 dialog 기준 좌표로 환산하고 최상위 dialog 이외 track은 숨긴다. 확인창의 Tab 처리는 기존 confirmation controller만 담당한다.
+- 시트 dragging/settling 동안에만 frame 추적을 수행한다. 종료·취소·숨김·dispose 시 지속 추적을 중단한다.
+- Toast는 박스를 확대하지 않고 이동/삭제/저장/선택 요청 문구와 긴 국가명 나열을 압축했다. 알려진 오류는 필요한 조치를 남기고 알 수 없는 오류·경고는 일괄 실패/완료 문구로 대체하지 않는다. 원문 ARIA와 기존 진단 경로·timeout은 유지한다. 외부에서 들어오는 임의의 긴 오류까지 말줄임이 없어졌다는 의미는 아니다.
+- 기존 GIS 모바일 검사를 현재 `데이터 선택 → 가져오기 설정 → 확인`과 `subunit` 계약으로 갱신했다. 단계 왕복 시 국가·유형·이름 매핑 유지 검사가 통과했다.
+- 재현용 브라우저 검사 3건은 수정 전 모두 실패했고 수정 후 통과했다. 좁은 폭 Toast 표시 검사까지 새 4건 통과, 실제 짧은 Library 4개 viewport 회귀와 GIS 단계 이동 검사도 통과했다. 실제 앱 Library의 내부 track·좌표 정렬·Home/End·닫힘을 브라우저 스킬로 확인했다.
+- 관련 단위 14건, UI 정적 검사 전체, 변경 JS 문법·ESLint를 통과했다. 확장 실행한 `ui-controllers.test.mjs`의 확인창/레이어 모형은 각각 `HTMLElement` 부재와 tree element 부재로 실패하며 이번 범위에서 수정하지 않았다. Tooltip 모형의 getAttribute 계약은 보완하고 해당 검사를 통과했다.
+- 실제 터치 기기·가상 키보드·전체 테마/확대 조합과 모든 중첩 dialog 조합은 미검증이다. 드래그 위치 회귀는 controller 상태와 transform을 사용하는 격리 검사이며 전체 touch gesture 검증과 구별한다.
+- 앱 버전/schema/build ID 유지, CSS bundle 재생성. 무관한 미커밋 변경 보존. 커밋·푸시·배포하지 않음.
+
+## 공간 배분·가시성 통합 수정 (2026-09-09)
+
+- wide 작업 공간 내비게이션은 `display: none`으로 표시·키보드·접근성 탐색에서 제외했다. compact/mobile 공유 버튼과 모바일 닫기 버튼 숨김은 유지한다. 대체 버튼과 편집창 접기 복구는 추가하지 않았다.
+- Surface 로컬 불투명 배경, 공통 헤더 경계선 소유권, 레이어 primary 막대/secondary 약한 선택, 반복 유형·swatch 제거를 반영했다. 검색 결과 유형과 수계 로딩/오류 안내는 유지한다.
+- Library 필터는 기본 접힘을 폐기했다. 후속 요청에 따라 첫 줄은 이름 검색 + 기준 연도, 다음 줄은 종류·상태·지역의 상시 표시 grid로 구성한다. 범위 선택은 접기 없는 필드이며 footer는 내용 높이만 차지한다.
+- 360×740 로컬 화면: 목록 본문 약 355px, 상세 footer는 범위 없는 경우 약 61px / 범위 있는 경우 약 137px. 제목·본문·액션의 좌우 rail은 1rem이다.
+- GIS export 단일 폼을 유지하고 본문 스크롤과 footer를 분리했다. 정상 선택 중복 요약은 숨기되 빈 선택 안내는 유지한다. GIS 처리 로직은 변경하지 않았다.
+- 모바일 추가 메뉴·투영·토글·슬라이더는 48px 최소 조작 높이, 레이어 visibility는 기존 44px 예외다. 국기·지도에서 보기 버튼의 별도 작은 크기 규칙을 제거하고 공통 버튼을 사용한다.
+- 검증: 관련 단위 29건, `pnpm check:ui` 전체, JS 문법 검사 통과. 새 브라우저 회귀의 폭별 노출/메뉴, 짧은 Library, GIS export, Light/Dark 조작 높이·기본 글자 125% 확대 및 기존 모바일 손잡이 검사가 통과했다.
+- 기존 GIS integration 테스트는 현재 단계명/유형 계약과 다른 기대가 있어 실패했다. 현재 계약을 사용하는 별도 GIS 단계 이동·뒤로가기·취소 smoke는 통과했다. Library 검색·선택·실제 추가·원본 보존·undo와 GIS 선택 항목 내보내기 테스트도 통과했다. Library 테스트의 비동기 get 호출과 처리 대기 시간을 실제 API에 맞췄으며 처리 pipeline은 수정하지 않았다.
+- build ID: `0.33.0-build-ui-space-visibility-20260909`. 앱 버전과 schema는 유지한다. build metadata와 두 CSS bundle은 생성 스크립트로 갱신한다.
+- 최종 생성물 기준: `ui-space-visibility.spec.mjs` 5건 모두 통과(2.6분). 별도 Library 추가/undo·GIS 실제 export·모바일 손잡이 3건 통과. 관련 ESLint·JS 문법·version/bundle 일치·`git diff --check`도 통과했다. 브라우저 자체 zoom 등 미검증 조합은 아래 제한을 그대로 적용한다.
+- 미검증: 브라우저 자체 125% zoom, 모든 테마×폭 조합의 시각 대비, 가상 키보드, 모든 객체 유형·긴 이름 조합. 기본 글자 125% 검사는 브라우저 zoom 검사와 구별한다.
+- 원본 데이터·GIS·렌더러의 기존 무관한 변경과 첨부 파일을 보존했다. 커밋·푸시·배포하지 않는다.
+
 ## 후속 수정: 하단 추가 버튼과 세로 사이드바 제거
 
 - 추가 진입은 모든 폭에서 레이어 하단 `[+] [잠금] [삭제]` 순서다. 검색창은 독립 한 줄이며 추가 버튼은 아이콘만 표시한다.

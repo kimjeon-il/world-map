@@ -523,6 +523,7 @@ html { font-size: 100%; }
   outline-offset: calc(-1 * var(--ui-border-width));
 }
 .ui-overlay-scrollbar[hidden] { display: none; }
+.ui-overlay-scrollbar--dialog { position: absolute; }
 .ui-overlay-scrollbar-thumb {
   display: block;
   margin-inline: auto;
@@ -535,6 +536,7 @@ html { font-size: 100%; }
 .ui-overlay-scrollbar:focus-visible { outline: var(--ui-border-width) solid var(--accent); }
 
 .workspace-surface {
+  --surface-elevated: var(--ui-v2-color-panel);
   --ui-surface-border-top: 0;
   --ui-surface-border-right: 0;
   --ui-surface-border-bottom: 0;
@@ -577,6 +579,7 @@ html { font-size: 100%; }
   column-gap: var(--ui-space-3);
   padding: var(--ui-space-3) var(--ui-surface-content-rail-x);
   border: 0;
+  border-bottom: var(--ui-border-width) solid var(--border);
   background: var(--surface-elevated);
   box-shadow: none;
 }
@@ -830,8 +833,16 @@ html { font-size: 100%; }
 
 
 .layer-child {
+  --selection-strong-bg: transparent;
+  --selection-strong-fg: var(--text-strong);
+  --selection-strong-muted: var(--text-soft);
   position: relative;
 }
+
+/* Preferences is available before lazy workflow styles have loaded. */
+.preferences-accent-swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(var(--ui-touch-height), 1fr)); gap: var(--ui-v2-button-gap); align-items: center; }
+
+.layer-child.ui-selectable-row.is-selected { border-color: transparent; }
 
 .layer-child.is-active {
   background: color-mix(in srgb, var(--accent) 4%, transparent);
@@ -860,15 +871,11 @@ html { font-size: 100%; }
 
 /* Layer row surfaces: feature states do not redefine component skin. */
 
-.layer-panel-footer { border-top: 1px solid var(--border); background: var(--surface-elevated); padding: var(--ui-space-2); padding-bottom: max(var(--ui-space-2), env(safe-area-inset-bottom));
+.layer-panel-footer { border-top: 1px solid var(--border); background: var(--surface-elevated); padding: var(--ui-space-2) var(--ui-surface-content-rail-x); padding-bottom: max(var(--ui-space-2), env(safe-area-inset-bottom));
 }
 .app-root .layer-action-bar > .icon-btn { padding: 0; border: 0; background: transparent; box-shadow: none;
 }
 .app-root .layer-action-bar > .icon-btn:is(:hover, :focus-visible):not(:disabled) { background: var(--surface-hover);
-}
-.layer-color-swatch { border: 1px solid var(--border-strong); border-radius: var(--ui-radius-control);
-}
-.layer-color-swatch.is-type-icon { border: 0;
 }
 @media (max-width: 799px) {
   .app-root .topbar-center { padding: 0;
@@ -1378,9 +1385,18 @@ html { font-size: 100%; }
 
 /* source: assets/css/layout/surfaces.css */
 
+[data-layout="compact"] .topbar,
+[data-layout="mobile"] .topbar {
+  padding-block: var(--ui-space-3);
+  padding-inline: max(var(--ui-surface-content-rail-x), env(safe-area-inset-left)) max(var(--ui-surface-content-rail-x), env(safe-area-inset-right));
+}
+
 [data-layout="wide"] .surface-map {
   width: var(--ui-shell-left-panel-width);
 }
+
+/* The wide dock has no workspace navigation; retain the shared narrow controls. */
+[data-layout="wide"] .adaptive-nav { display: none; }
 
 /* Both desktop surfaces end at the same persistent status boundary. */
 [data-layout="wide"] .workspace-surface,
@@ -1422,7 +1438,6 @@ html { font-size: 100%; }
 [data-layout="compact"] .workspace-surface > .surface-header {
   display: grid;
   min-height: var(--ui-v2-surface-header-height-desktop);
-  border-bottom: var(--ui-border-width) solid var(--border);
 }
 
 [data-layout="wide"] .surface-map :is(.sheet-close-btn, .sheet-drag-handle) {
@@ -1565,12 +1580,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 }
 .app-root .layer-action-bar > .icon-btn:is(:hover, :focus-visible):not(:disabled) { color: var(--text);
 }
-.layer-color-swatch { display: inline-flex; flex: 0 0 var(--ui-icon-size); width: var(--ui-icon-size); height: var(--ui-icon-size);
-}
-.layer-color-swatch.is-type-icon { color: var(--muted);
-}
-.layer-color-swatch .ui-icon { width: var(--ui-icon-size); height: var(--ui-icon-size);
-}
 .layer-search-result > strong { display: flex; align-items: center; gap: var(--ui-space-2);
 }
 .layer-child-name { gap: var(--ui-space-2);
@@ -1580,7 +1589,7 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 @media (max-width: 799px) {
   .app-root .layer-action-bar > .icon-btn { flex-basis: var(--ui-touch-height); width: var(--ui-touch-height); min-height: var(--ui-touch-height); height: auto;
 }
-  .app-root .topbar { gap: var(--ui-space-1);
+  .app-root .topbar { gap: var(--ui-v2-button-gap);
 }
   .app-root .topbar .brand { flex: 0 1 auto;
 }
@@ -1692,6 +1701,22 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 /* source: assets/css/components/editor-shell.css */
 
 /* Editor shell, map toolbar, edit-session HUD, and persistent status. */
+
+.editor-flag-actions { min-width: 0; display: flex; align-items: center; gap: var(--ui-v2-button-gap); }
+
+.editor-flag-preview {
+  width: 100%;
+  min-height: var(--ui-touch-height);
+  max-height: var(--ui-touch-height);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: var(--ui-border-width) dashed var(--ui-control-border);
+  background: var(--surface-subtle);
+  color: var(--muted);
+  text-align: center;
+}
+.editor-flag-preview img { width: auto; max-width: 100%; height: auto; max-height: var(--ui-touch-height); object-fit: contain; }
 
 .surface-header .editor-collapse-icon { display: none; transform: rotate(-90deg); }
 [data-layout="wide"] .surface-header .editor-collapse-icon { display: block; }
@@ -2163,7 +2188,7 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 .map-view-projection-slot .projection-btn {
   min-width: 0;
   min-height: var(--ui-v2-command-row-min-height);
-  height: var(--ui-v2-command-row-min-height);
+  height: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2181,7 +2206,7 @@ body.file-menu-open .app-root .topbar { z-index: 150;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--ui-font-sm);
+  font-size: var(--ui-font-md);
   font-weight: var(--ui-weight-semibold);
 }
 
@@ -2289,11 +2314,13 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 
   .map-view-projection-slot .projection-btn {
     min-height: var(--ui-touch-height);
-    height: var(--ui-touch-height);
+    height: auto;
   }
 
   .map-view-settings .ui-choice-row,
-  .map-view-settings .ui-toggle { min-height: 2.5rem; }
+  .map-view-settings .ui-toggle { min-height: var(--ui-touch-height); }
+
+  .terrain-strength-control input[type="range"] { min-height: var(--ui-touch-height); }
 
   .create-menu-item { min-height: var(--ui-touch-height); }
 }
@@ -2345,8 +2372,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
     max-height: calc(100dvh - var(--ui-space-4));
   }
 
-  .historical-library-toolbar { grid-template-columns: 1fr; }
-  .historical-library-filters { grid-column: 1; }
 
   .historical-library-layout {
     grid-template-columns: 1fr;
@@ -2874,19 +2899,6 @@ body.file-menu-open .mobile-backdrop {
   }
 
   @media (max-width: 360px) {
-    .ui-dialog-actions,
-    .confirm-modal-actions,
-    .workflow-dialog-actions {
-      display: grid;
-      grid-template-columns: 1fr;
-    }
-
-    .ui-dialog-actions > .btn,
-    .confirm-modal-actions > .btn,
-    .workflow-dialog-actions > .btn {
-      width: 100%;
-    }
-
     .mobile-bottom-bar .ui-nav-item strong {
       font-size: max(var(--ui-font-xs), .72rem);
     }

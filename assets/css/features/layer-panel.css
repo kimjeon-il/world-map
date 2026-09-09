@@ -25,12 +25,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 }
 .app-root .layer-action-bar > .icon-btn:is(:hover, :focus-visible):not(:disabled) { color: var(--text);
 }
-.layer-color-swatch { display: inline-flex; flex: 0 0 var(--ui-icon-size); width: var(--ui-icon-size); height: var(--ui-icon-size);
-}
-.layer-color-swatch.is-type-icon { color: var(--muted);
-}
-.layer-color-swatch .ui-icon { width: var(--ui-icon-size); height: var(--ui-icon-size);
-}
 .layer-search-result > strong { display: flex; align-items: center; gap: var(--ui-space-2);
 }
 .layer-child-name { gap: var(--ui-space-2);
@@ -40,7 +34,7 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 @media (max-width: 799px) {
   .app-root .layer-action-bar > .icon-btn { flex-basis: var(--ui-touch-height); width: var(--ui-touch-height); min-height: var(--ui-touch-height); height: auto;
 }
-  .app-root .topbar { gap: var(--ui-space-1);
+  .app-root .topbar { gap: var(--ui-v2-button-gap);
 }
   .app-root .topbar .brand { flex: 0 1 auto;
 }

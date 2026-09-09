@@ -113,7 +113,11 @@ export function createHistoricalLibraryController({
       option.selected = candidate.id === version.id;
       versionSelect.appendChild(option);
     }
-    versionField.append(versionLabel, versionSelect);
+    if ((entity.geometryVersions || []).length > 1) {
+      versionField.append(versionLabel, versionSelect);
+    } else {
+      versionField.textContent = `경계 적용 기간 · ${version.validFrom || '?'}–${version.validTo || '현재'}`;
+    }
     const versionNotes = document.createElement('p');
     versionNotes.className = 'editor-help historical-library-version-notes';
     versionNotes.textContent = version.notes || entity.sourceInfo?.notes || '';
@@ -142,17 +146,19 @@ export function createHistoricalLibraryController({
       link.setAttribute('aria-label', `출처: ${sourceTitle}`);
       source.append(link);
     } else source.textContent = `출처: ${sourceTitle}`;
+    const heading = document.createElement('div');
+    heading.className = 'historical-library-preview-heading';
     const flagPreview = document.createElement('div');
-    flagPreview.className = 'editor-flag-preview';
+    flagPreview.className = 'historical-library-flag';
     const flagUrl = String(entity.metadata?.defaultFlagDataUrl || '');
     if (flagUrl) {
       const image = document.createElement('img');
       image.src = flagUrl;
       image.alt = `${entity.displayNames?.ko || entity.canonicalName} 국기`;
       flagPreview.appendChild(image);
-    } else {
-      flagPreview.textContent = '국기 없음';
+      heading.append(flagPreview);
     }
+    heading.append(title);
     const advanced = document.createElement('details');
     advanced.className = 'ui-disclosure editor-disclosure';
     const summary = document.createElement('summary');
@@ -170,13 +176,18 @@ export function createHistoricalLibraryController({
     addAdvanced('이용 조건', primarySource.license || entity.sourceInfo?.license);
     for (const item of sourceEntries.slice(1)) addAdvanced(item.title || '출처', [item.url, item.license].filter(Boolean).join(' · '));
     advanced.append(summary, body);
-    elements.preview.replaceChildren(title, versionField, flagPreview, renderMapPreview(entity, version),
+    elements.preview.replaceChildren(heading, versionField, renderMapPreview(entity, version),
       ...(meta.textContent ? [meta] : []), ...(versionNotes.textContent ? [versionNotes] : []), source,
       ...(body.children.length ? [advanced] : []));
     elements.add.disabled = false;
-    elements.addOptions?.classList.remove('hidden');
-    if (elements.addOptions) elements.addOptions.open = true;
-    elements.optionsBack?.classList.remove('hidden');
+    const hasChildren = service.list().some(candidate => candidate.parentLibraryId === entity.libraryId);
+    if (hasChildren) elements.addOptions?.classList.remove('hidden');
+    else {
+      elements.addOptions?.classList.add('hidden');
+      elements.childDepth.value = 'none';
+    }
+    if (isMobile()) elements.optionsBack?.classList.remove('hidden');
+    else elements.optionsBack?.classList.add('hidden');
     elements.add.textContent = '추가';
     elements.add.setAttribute('aria-label', '선택한 항목을 현재 프로젝트에 추가');
     elements.add.dataset.tooltip = '선택한 항목을 현재 프로젝트에 추가';
@@ -213,7 +224,10 @@ export function createHistoricalLibraryController({
 
   function select(id) {
     if (loading) return;
-    if (selectedId !== String(id || '')) selectedVersionId = '';
+    if (selectedId !== String(id || '')) {
+      selectedVersionId = '';
+      elements.childDepth.value = 'none';
+    }
     selectedId = String(id || '');
     renderResults();
     renderPreview();
