@@ -4,6 +4,7 @@ import {
   parseTemporal,
   temporalContains,
 } from './temporal.js';
+import { currentCountryFlagUrl } from './country-flags.js';
 
 export const HISTORICAL_LIBRARY_SCHEMA_VERSION = 2;
 
@@ -117,6 +118,7 @@ export function createCurrentCountryLibraryEntities(countriesData, { displayName
     const id = text(feature?.id);
     if (!id || !POLYGON_TYPES.has(feature?.geometry?.type)) return null;
     const canonicalName = text(displayName(feature)) || id;
+    const defaultFlagDataUrl = currentCountryFlagUrl(id);
     return normalizeHistoricalLibraryEntity({
       libraryId: `current-country:${id}`,
       type: LIBRARY_ENTITY_TYPES.COUNTRY,
@@ -132,7 +134,10 @@ export function createCurrentCountryLibraryEntities(countriesData, { displayName
         certainty: 'high',
         sourceId: 'natural-earth-5.1.1',
       }],
-      metadata: { currentCountryId: id },
+      metadata: {
+        currentCountryId: id,
+        ...(defaultFlagDataUrl ? { defaultFlagDataUrl } : {}),
+      },
       sourceInfo: { title: 'Natural Earth 5.1.1 Admin 0 Countries', license: 'Public domain' },
     });
   }).filter(Boolean);
