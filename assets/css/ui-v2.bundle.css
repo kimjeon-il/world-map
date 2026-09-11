@@ -1677,9 +1677,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 .layer-child:hover .layer-child-menu, .layer-child:focus-within .layer-child-menu,
 .layer-child.is-selected .layer-child-menu { opacity: 1;
 }
-.map-object-style-settings > summary { cursor: pointer;
-}
-
 @media (hover: hover) and (pointer: fine) {
   .layer-type-settings-heading:not(:hover):not(:focus-within) .layer-style-toggle[aria-expanded="false"] {
     opacity: 0;

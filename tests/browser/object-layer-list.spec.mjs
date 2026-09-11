@@ -49,9 +49,9 @@ test('object list shares bundles, direct rows and actions on desktop and mobile'
   await page.locator('#undoBtn').click();
   await expect(language).toHaveCount(1);
 
-  // Type style controls now live in Map, with the same presentation fields.
+  // Type style controls are directly available in 지도 표시.
   await page.locator('#mapViewTabBtn').click();
-  await page.locator('.map-object-style-settings > summary').click();
+  await expect(page.locator('.map-object-style-settings')).toHaveCount(0);
   await page.locator('[data-layer-style-toggle="countries"]').click();
   await expect(page.locator('[data-layer-style-opacity="countries"]')).toBeVisible();
   await page.locator('#countriesVisible').uncheck();

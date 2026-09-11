@@ -116,7 +116,7 @@ test('theme and enlarged text preserve map hit areas, inspector controls and lib
     await page.emulateMedia({ colorScheme: theme });
     await openLayers(page);
     await page.locator('[data-surface-tab="view"]').click();
-    const heights = await page.locator('#mapViewSection .projection-btn, #mapViewSection .ui-toggle, #terrainStrengthInput').evaluateAll(elements => elements.filter(element => element.getClientRects().length).map(element => element.getBoundingClientRect().height));
+    const heights = await page.locator('#mapViewSection .projection-btn, #mapViewSection .ui-toggle, .terrain-mode-option').evaluateAll(elements => elements.filter(element => element.getClientRects().length).map(element => element.getBoundingClientRect().height));
     expect(heights.length).toBeGreaterThan(3);
     expect(heights.every(value => value >= 48)).toBe(true);
   }
