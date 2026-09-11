@@ -15,14 +15,14 @@
     "riverWidthFormula": "clamp(0.5 + 0.19*log2(1+DIS_AV_CMS) + 0.06*(ORD_STRA-1), 0.55, 2.6)",
     "riverContinuity": "Natural Earth guided Hydro main-stem path to headwater from selected headward roots; with ORD_STRA >= 5 and DIS_AV_CMS >= 75; importance >= 10.86; all terminal basins >= 2500 km2 preserve one main stem; all selected paths closed downstream to Hydro terminal; added reaches at stage 3",
     "logicalGrouping": "all displayed MAIN_RIV main-stem and tributary chains share one system ID",
-    "mediumMainstemMinBasinKm2": 2500.0,
+    "mediumMainstemMinBasinKm2": 2500,
     "borderAlignment": {
       "revision": 2,
-      "maxDistanceKm": 12.0,
-      "coverageDistanceKm": 5.0,
+      "maxDistanceKm": 12,
+      "coverageDistanceKm": 5,
       "minCoverage": 0.7,
-      "maxDirectionDegrees": 30.0,
-      "minLengthKm": 10.0,
+      "maxDirectionDegrees": 30,
+      "minLengthKm": 10,
       "scope": "built-in Natural Earth shared country borders only"
     },
     "terminalConnectivity": {
@@ -40,16 +40,16 @@
     },
     "lakeSelection": "Natural Earth 5.0.0 1:10m global lakes and reservoirs; no regional supplements",
     "minZoomStages": [
-      6.0,
+      6,
       6.7,
-      7.0,
+      7,
       7.5
     ]
   },
   "stages": [
     {
       "id": 0,
-      "minZoom": 6.0,
+      "minZoom": 6,
       "columns": 8,
       "rows": 4
     },
@@ -61,7 +61,7 @@
     },
     {
       "id": 2,
-      "minZoom": 7.0,
+      "minZoom": 7,
       "columns": 32,
       "rows": 16
     },
@@ -85,7 +85,7 @@
   "index": {
     "url": "index.bin.gz",
     "bytes": 32632,
-    "sha256": "e25a18f1d260e37011ed73ad29fba1e929c9aaa229b0af9a8f0922060d3a6784",
+    "sha256": "a68aff611d2be202dbf31ef1fbce476386e1d49b1619b68e9219279be7896906",
     "tileCount": 953,
     "logicalFeatureCount": 5173
   },
@@ -94,8 +94,8 @@
     "featureCount": 16548,
     "core": {
       "url": "metadata-core.json.gz",
-      "bytes": 747986,
-      "sha256": "4d98916a5ead39910dccfc5ee0e0f64b615427f0b32fcf4d5fd7876b9375cf8f"
+      "bytes": 748376,
+      "sha256": "796ab937222bfa4d123d6fda210f9e96bb90ce9e251c73274dcb0342decc1828"
     },
     "detail": {
       "url": "metadata-detail.json.gz",
@@ -108,27 +108,27 @@
     {
       "id": 0,
       "url": "shards/s0.bin",
-      "bytes": 4169177,
-      "sha256": "fba76e7d2e5e35d778ce6e99738a62a3a9a3856e053796ae8a014337fca75417",
+      "bytes": 4169624,
+      "sha256": "1ae657ac378ae4fb441425a8ce52c38348541717b363b3a8189d3bd7249702a8",
       "packs": 237
     },
     {
       "id": 1,
       "url": "shards/s1.bin",
-      "bytes": 4186667,
-      "sha256": "2927c4f2a37b5a5c87929066e18ced60cc9dbc61ad36bf4856d28ba7f3ace030",
+      "bytes": 4186759,
+      "sha256": "76eb0b3392eb3376d344ebce4cbfdda05de6fee437d25ce5ee7f98e603a28fbf",
       "packs": 512
     },
     {
       "id": 2,
       "url": "shards/s2.bin",
-      "bytes": 1184477,
-      "sha256": "f4bf4de339a481f633068f3d5111308a6aa381761bd997b7b3f054d4a4c81d4e",
+      "bytes": 1184508,
+      "sha256": "f3b651e7a5a1503532701222f3deee658df03757076cd73b62994637fb63e15e",
       "packs": 153
     }
   ],
   "cache": {
-    "name": "pandolab-water-v0.13.0-e25a18f1d260",
+    "name": "pandolab-water-v0.13.0-a68aff611d2b",
     "backgroundDownload": true,
     "rangeRequests": true
   },
@@ -169,8 +169,8 @@
     "shardCount": 3,
     "indexTileCount": 953,
     "logicalFeatureCount": 5173,
-    "compressedBytes": 11991911,
-    "largestPackBytes": 236542,
+    "compressedBytes": 11992871,
+    "largestPackBytes": 236563,
     "seedReachCount": 326261,
     "continuityRootCount": 2285,
     "namedContinuityRootCount": 589,
@@ -299,7 +299,7 @@
         "borderPairLengthsKm": {
           "AGO/COD": 35.2,
           "AGO/NAM": 648.8,
-          "AGO/ZMB": 269.0,
+          "AGO/ZMB": 269,
           "BDI/RWA": 11.8,
           "BDI/TZA": 34.4,
           "BEN/BFA": 195.2,
@@ -313,7 +313,7 @@
           "BWA/ZWE": 12.1,
           "CAF/CMR": 58.6,
           "CAF/SDS": 11.1,
-          "CAF/TCD": 368.0,
+          "CAF/TCD": 368,
           "CIV/GHA": 102.7,
           "CIV/GIN": 55.7,
           "CIV/LBR": 271.5,
@@ -327,10 +327,10 @@
           "DZA/LBY": 23.6,
           "DZA/MAR": 199.8,
           "DZA/NER": 25.7,
-          "DZA/TUN": 36.0,
+          "DZA/TUN": 36,
           "EGY/LBY": 172.4,
           "ERI/ETH": 281.1,
-          "ERI/SDN": 21.0,
+          "ERI/SDN": 21,
           "ETH/KEN": 192.8,
           "ETH/SDS": 444.4,
           "ETH/SOL": 44.1,
@@ -347,14 +347,14 @@
           "LBY/TCD": 38.5,
           "LBY/TUN": 123.4,
           "MLI/MRT": 55.4,
-          "MLI/SEN": 174.0,
+          "MLI/SEN": 174,
           "MOZ/MWI": 261.8,
           "MOZ/TZA": 461.8,
           "MOZ/ZAF": 29.5,
           "MOZ/ZMB": 75.9,
           "MOZ/ZWE": 37.3,
           "MRT/SAH": 19.7,
-          "MRT/SEN": 768.0,
+          "MRT/SEN": 768,
           "NAM/ZAF": 12.4,
           "NAM/ZMB": 155.6,
           "NER/NGA": 193.7,
@@ -364,7 +364,7 @@
           "SWZ/ZAF": 19.7,
           "TZA/UGA": 53.9,
           "ZAF/ZWE": 230.7,
-          "ZMB/ZWE": 715.0
+          "ZMB/ZWE": 715
         },
         "connectionChangedCount": 1336,
         "chainCount": 1090,
@@ -457,7 +457,7 @@
         "excludedTerminalReachCount": 955,
         "borderAlignedReachCount": 0,
         "borderAlignedRiverCount": 0,
-        "borderAlignedLengthKm": 0.0,
+        "borderAlignedLengthKm": 0,
         "borderChangedCoordinateCount": 0,
         "borderPairLengthsKm": {},
         "connectionChangedCount": 0,
@@ -625,7 +625,7 @@
           "AFG/UZB": 124.9,
           "BGD/IND": 269.9,
           "BTN/CHN": 11.7,
-          "BTN/IND": 24.0,
+          "BTN/IND": 24,
           "CHN/IND": 27.2,
           "CHN/KAZ": 18.8,
           "CHN/KGZ": 11.6,
@@ -638,7 +638,7 @@
           "IND/NPL": 180.4,
           "IND/PAK": 262.4,
           "KAB/KAZ": 21.5,
-          "KAZ/KGZ": 153.0,
+          "KAZ/KGZ": 153,
           "KAZ/UZB": 23.7,
           "KGZ/UZB": 57.7,
           "KHM/LAO": 74.1,
@@ -867,7 +867,7 @@
         "borderPairLengthsKm": {
           "BRN/MYS": 27.6,
           "IDN/PNG": 120.5,
-          "IDN/TLS": 13.0
+          "IDN/TLS": 13
         },
         "connectionChangedCount": 28,
         "chainCount": 852,
@@ -1063,7 +1063,7 @@
           "ARE/SAU": 65.3,
           "ARM/IRN": 23.2,
           "ARM/TUR": 245.8,
-          "AUT/CHE": 29.0,
+          "AUT/CHE": 29,
           "AUT/CZE": 14.7,
           "AUT/DEU": 166.3,
           "AUT/SVK": 52.8,
@@ -1073,14 +1073,14 @@
           "AZE/RUS": 86.4,
           "BEL/FRA": 14.2,
           "BGR/ROU": 398.8,
-          "BIH/HRV": 365.0,
+          "BIH/HRV": 365,
           "BIH/MNE": 15.4,
           "BIH/SRB": 237.5,
           "BLR/LVA": 19.7,
           "BLR/POL": 51.3,
           "CHE/DEU": 141.6,
           "CHE/FRA": 82.7,
-          "CHE/LIE": 22.0,
+          "CHE/LIE": 22,
           "DEU/FRA": 166.6,
           "DEU/LUX": 34.8,
           "DEU/NLD": 28.1,
@@ -1089,13 +1089,13 @@
           "EST/LVA": 19.8,
           "EST/RUS": 129.8,
           "FIN/NOR": 178.7,
-          "FIN/RUS": 49.0,
+          "FIN/RUS": 49,
           "FIN/SWE": 177.4,
           "GBR/IRL": 37.3,
           "GEO/TUR": 11.7,
           "GRC/TUR": 170.3,
           "HRV/HUN": 215.1,
-          "HRV/SRB": 134.0,
+          "HRV/SRB": 134,
           "HRV/SVN": 41.7,
           "HUN/ROU": 23.5,
           "HUN/SVK": 151.7,
@@ -1106,7 +1106,7 @@
           "IRQ/KWT": 149.7,
           "IRQ/SAU": 10.8,
           "IRQ/TUR": 22.2,
-          "ISR/JOR": 169.0,
+          "ISR/JOR": 169,
           "JOR/PSX": 100.4,
           "JOR/SAU": 18.1,
           "KAZ/RUS": 80.8,
@@ -1121,7 +1121,7 @@
           "ROU/SRB": 217.3,
           "ROU/UKR": 312.7,
           "RUS/UKR": 102.7,
-          "SAU/YEM": 90.0,
+          "SAU/YEM": 90,
           "SYR/TUR": 54.6,
           "TKM/UZB": 26.8
         },
@@ -1167,7 +1167,7 @@
         "excludedTerminalReachCount": 0,
         "borderAlignedReachCount": 0,
         "borderAlignedRiverCount": 0,
-        "borderAlignedLengthKm": 0.0,
+        "borderAlignedLengthKm": 0,
         "borderChangedCoordinateCount": 0,
         "borderPairLengthsKm": {},
         "connectionChangedCount": 0,
@@ -1270,7 +1270,7 @@
         "excludedTerminalReachCount": 848,
         "borderAlignedReachCount": 1240,
         "borderAlignedRiverCount": 26,
-        "borderAlignedLengthKm": 4463.0,
+        "borderAlignedLengthKm": 4463,
         "borderChangedCoordinateCount": 6759,
         "borderPairLengthsKm": {
           "BLZ/GTM": 40.5,
@@ -1280,7 +1280,7 @@
           "CRI/PAN": 38.5,
           "GTM/HND": 10.2,
           "GTM/MEX": 218.5,
-          "HND/NIC": 322.0,
+          "HND/NIC": 322,
           "HND/SLV": 97.8,
           "MEX/USA": 1633.3
         },
@@ -1428,7 +1428,7 @@
         "excludedTerminalReachCount": 8103,
         "borderAlignedReachCount": 2650,
         "borderAlignedRiverCount": 71,
-        "borderAlignedLengthKm": 7978.0,
+        "borderAlignedLengthKm": 7978,
         "borderChangedCoordinateCount": 11282,
         "borderPairLengthsKm": {
           "ARG/BOL": 100.9,
@@ -1777,7 +1777,7 @@
         "borderChangedCoordinateCount": 294,
         "borderPairLengthsKm": {
           "KAZ/RUS": 135.6,
-          "MNG/RUS": 79.0
+          "MNG/RUS": 79
         },
         "connectionChangedCount": 35,
         "chainCount": 279,
@@ -1806,5 +1806,10 @@
       "unnamedRiverSystems": 3467,
       "osmMatches": 73
     }
+  },
+  "connectivity": {
+    "revision": 1,
+    "repairedConnections": 149,
+    "unresolvedConnections": 2
   }
 }

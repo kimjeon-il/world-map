@@ -354,19 +354,19 @@ def east_germany_entity(recipe: dict[str, Any], geometry) -> dict[str, Any]:
     # places can collapse nearby nodes and reintroduce self-intersections.
     mapped["coordinates"] = round_coordinates(mapped["coordinates"], 12)
     return {
-        "libraryId": "historical-country:east-germany",
+        "libraryId": "historical-country:deutsche-demokratische-republik",
         "type": "country",
         "canonicalName": "German Democratic Republic",
         "displayNames": {
-            "ko": "독일 민주 공화국",
+            "ko": "독일 민주공화국",
             "en": "German Democratic Republic",
             "de": "Deutsche Demokratische Republik",
         },
-        "alternateNames": ["동독", "East Germany", "DDR", "GDR"],
+        "alternateNames": ["동독", "East Germany", "DDR", "GDR", "Ostdeutschland"],
         "startDate": "1949-10-07",
         "endDate": "1990-10-02",
         "instantiation": {
-            "mode": "country-territory-priority",
+            "mode": "territory-replacement",
             "countryUpdates": {"DEU": {"name": "독일 연방공화국"}},
         },
         "geometryVersions": [

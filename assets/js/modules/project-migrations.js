@@ -1,4 +1,6 @@
 import { normalizeCountryFeature } from './country-feature.js';
+import { migrateProjectV4ToV5 } from './subunit-migration.js';
+export { migrateProjectV4ToV5 } from './subunit-migration.js';
 import {
   GENERIC_FEATURE_CANONICAL_PROPERTY_KEYS,
   normalizeGenericFeatureCollection,
@@ -126,6 +128,7 @@ export function migrateProjectV3ToV4(input) {
 
 export const PROJECT_MIGRATIONS = Object.freeze({
   3: migrateProjectV3ToV4,
+  4: migrateProjectV4ToV5,
 });
 
 export function migrationPath(fromVersion, toVersion = PROJECT_SCHEMA_VERSION) {

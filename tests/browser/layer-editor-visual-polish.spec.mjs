@@ -54,39 +54,8 @@ async function openCountryEditor(page) {
 }
 
 async function expectFlatIdentificationDisclosure(page) {
-  const country = page.locator('#countryProperties');
-  const identification = country.locator(':scope > .editor-disclosure');
-  await expect(identification.locator(':scope > summary')).toContainText('식별 정보');
-  await expect(country).not.toContainText('추가 정보');
-  await expect(identification.locator('#countryCodeInput')).toBeAttached();
-  await expect(identification.locator('#originalNameValue')).toBeAttached();
-  const styles = await identification.evaluate(element => {
-    const style = getComputedStyle(element);
-    const summary = element.querySelector(':scope > summary');
-    const body = element.querySelector(':scope > .editor-disclosure-body');
-    return {
-      background: style.backgroundColor,
-      borderTop: style.borderTopWidth,
-      borderRight: style.borderRightWidth,
-      borderBottom: style.borderBottomWidth,
-      borderLeft: style.borderLeftWidth,
-      radius: style.borderRadius,
-      shadow: style.boxShadow,
-      summaryPaddingLeft: getComputedStyle(summary).paddingLeft,
-      bodyPaddingLeft: getComputedStyle(body).paddingLeft,
-    };
-  });
-  expect(styles).toMatchObject({
-    background: 'rgba(0, 0, 0, 0)',
-    borderTop: '0px',
-    borderRight: '0px',
-    borderBottom: '0px',
-    borderLeft: '0px',
-    radius: '0px',
-    shadow: 'none',
-    summaryPaddingLeft: '0px',
-    bodyPaddingLeft: '0px',
-  });
+  await expect(page.locator('#countryCodeInput, #originalNameValue, #capitalInput')).toHaveCount(0);
+  await expect(page.locator('#countryProperties')).not.toContainText('식별 정보');
 }
 
 for (const layout of layouts) {
@@ -181,11 +150,11 @@ for (const layout of layouts) {
     await expect(page.locator('label:has(#basemapLabelsVisible)')).toContainText('국가명 표시');
     await expect(page.locator('label:has(#labelsVisible)')).toContainText('지명 표시');
     await expect(page.locator('#distributionLayerModeInput option')).toHaveText([
-      '영역별 대표 분포',
-      '선택 분포 비율',
+      '가장 많은 분포만 표시',
+      '비율을 색 농도로 표시',
     ]);
     await page.locator('#distributionLayerModeInput').selectOption('intensity');
-    await expect(page.locator('#distributionLayerModeHint')).toHaveText('선택한 분포를 비율이 높을수록 진하게 표시합니다.');
+    await expect(page.locator('#distributionLayerModeHint')).toHaveText('선택한 분포가 많을수록 색이 진해집니다.');
     await expect(page.locator('label:has(#distributionBoundaryVisibleInput)')).toContainText('분포 경계 표시');
     await expect(page.locator('[data-layer-style-toggle="distribution"]')).toHaveCount(0);
     await page.locator('#mapViewTabBtn').focus();

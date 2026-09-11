@@ -68,23 +68,54 @@ test('pilot geometry is materialized from member countries and instances retain 
   assert.deepEqual(instance.instantiation, { mode: 'independent', countryUpdates: {} });
 });
 
-test('pilot geometry accepts immutable inline polygons and territory-priority metadata', () => {
+test('pilot geometry accepts immutable inline polygons and territory-replacement metadata', () => {
   const inline = square(10, 11);
   const [entity] = materializePilotEntities([{
     libraryId: 'historical-country:inline', type: 'country', canonicalName: 'Inline',
     alternateNames: ['Alias'],
-    instantiation: { mode: 'country-territory-priority', countryUpdates: { DEU: { name: 'Federal Republic' } } },
+    instantiation: { mode: 'territory-replacement', countryUpdates: { DEU: { name: 'Federal Republic' } } },
     geometryVersions: [{ id: 'inline-v1', geometry: inline, certainty: 'medium' }],
   }], { type: 'FeatureCollection', features: [] }, () => null);
   inline.coordinates[0][0][0] = 999;
   assert.equal(entity.geometryVersions[0].geometry.coordinates[0][0][0], 10);
   assert.deepEqual(entity.instantiation, {
-    mode: 'country-territory-priority',
+    mode: 'territory-replacement',
     countryUpdates: { DEU: { name: 'Federal Republic' } },
   });
   const instance = instantiateLibraryEntity(entity);
   instance.geometry.coordinates[0][0][0] = 888;
   assert.equal(entity.geometryVersions[0].geometry.coordinates[0][0][0], 10);
+});
+
+test('pilot geometry can add and subtract explicit adjustment masks from canonical members', () => {
+  const calls = [];
+  const [entity] = materializePilotEntities([{
+    libraryId: 'historical-subunit:adjusted', type: 'subunit', canonicalName: 'Adjusted',
+    parentLibraryId: 'historical-country:parent', sovereignLibraryId: 'historical-country:parent', adminLevel: 1,
+    geometryVersions: [{
+      id: 'adjusted-v1', memberCountryIds: ['BASE'], includeGeometry: square(2, 3), excludeGeometry: square(0, 1),
+    }],
+  }], {
+    type: 'FeatureCollection',
+    features: [{ type: 'Feature', id: 'BASE', properties: { name: 'Base' }, geometry: square(0, 2) }],
+  }, geometries => {
+    calls.push(['union', geometries.length]);
+    return square(0, 3);
+  }, (geometry, excluded) => {
+    calls.push(['difference', geometry.coordinates[0][0][0], excluded.coordinates[0][0][0]]);
+    return square(1, 3);
+  });
+  assert.deepEqual(calls, [['union', 2], ['difference', 0, 0]]);
+  assert.deepEqual(entity.geometryVersions[0].geometry, square(1, 3));
+});
+
+test('legacy territory-priority metadata normalizes to the unified replacement mode', () => {
+  const entity = normalizeHistoricalLibraryEntity({
+    libraryId: 'historical-country:legacy', type: 'country', canonicalName: 'Legacy',
+    instantiation: { mode: 'country-territory-priority' },
+    geometryVersions: [{ id: 'legacy-v1', geometry: square() }],
+  });
+  assert.equal(entity.instantiation.mode, 'territory-replacement');
 });
 
 const historicalData = JSON.parse(readFileSync(new URL('../../assets/data/historical-library-pilot.json', import.meta.url), 'utf8'));
@@ -100,20 +131,40 @@ test('historical library preserves embedded polygon geometry without a modern-co
   assert.notEqual(entity.geometryVersions[0].geometry, embedded);
 });
 
-test('East Prussia r2 library geometry and production metadata remain exact', () => {
+test('East Prussia r3 library preserves the reviewed geometry and reports its limitations', () => {
   const entity = historicalData.entities.find(item => item.libraryId === 'historical-country:east-prussia');
   const version = entity.geometryVersions[0];
   const coordinates = version.geometry.coordinates.flat(2);
   const coordinateKeys = new Set(coordinates.map(coordinate => coordinate.join(',')));
   const geometrySha256 = createHash('sha256').update(JSON.stringify(version.geometry)).digest('hex');
-  assert.equal(geometrySha256, 'ee2f1f2d2ca285adeddd787f1243fc34ac49945ea4bb100b1a74651f84e8ef3e');
-  assert.equal(version.geometry.coordinates.length, 2);
-  assert.equal(coordinates.length, 862);
-  assert.ok(coordinateKeys.has('19.789943299809654,54.43327152291397'));
-  assert.ok(coordinateKeys.has('22.788853193618436,54.36826840398982'));
-  assert.ok(!coordinateKeys.has('21.119884,55.493415'));
-  assert.ok(!coordinateKeys.has('21.119884,55.506196'));
-  assert.equal(entity.metadata.artifactSha256, '93786f2dbcdfd31539890cba070ed09a47d5818a08c49b4638ce7c5db03d0f65');
+  assert.equal(geometrySha256, '54c45d4de9f5f16e9dffb06eec24aeaef8f89b82aa455fd7c26b1064fe716237');
+  assert.equal(entity.metadata.geometrySha256, geometrySha256);
+  assert.equal(version.id, 'ostpreussen-1878-1920-r3');
+  assert.equal(version.geometry.coordinates.length, 1);
+  assert.equal(coordinates.length, 6766);
+  assert.ok(coordinateKeys.has('22.76722,54.35627'));
+  assert.ok(coordinateKeys.has('22.580668,55.057622'));
+  assert.equal(version.certainty, 'medium');
+  assert.equal(entity.metadata.approximateGeometry, true);
+  assert.equal(entity.metadata.production, false);
+  assert.equal(entity.metadata.validation.statisticalAreaWithinOnePercent, false);
+  assert.equal(entity.metadata.validation.modernEastUnmatchedLengthM, 0);
+  assert.equal(entity.metadata.validation.redistributionPermission, 'unconfirmed');
+  assert.equal(entity.metadata.artifactSha256, 'f058012d42205bb02705c8017fba2e3c0e920b2a9f8a9eb21b312b9f7bfbdc0b');
+});
+
+test('Prussian province library entries carry their historical province flags', () => {
+  for (const [libraryId, marker] of [
+    ['historical-country:east-prussia', 'id="Oben"'],
+    ['historical-country:west-prussia', 'id="Mitte"'],
+  ]) {
+    const entity = historicalData.entities.find(item => item.libraryId === libraryId);
+    const dataUrl = entity.metadata.defaultFlagDataUrl;
+    assert.match(dataUrl, /^data:image\/svg\+xml;base64,/);
+    const svg = Buffer.from(dataUrl.slice('data:image/svg+xml;base64,'.length), 'base64').toString('utf8');
+    assert.match(svg, /viewBox="0 0 600 400"/);
+    assert.match(svg, new RegExp(marker));
+  }
 });
 
 test('world snapshots remain templates with independent reference lists', () => {

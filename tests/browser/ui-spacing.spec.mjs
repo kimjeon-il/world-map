@@ -37,9 +37,9 @@ async function openLayers(page, layout) {
 }
 
 async function openLibrary(page, layout) {
-  if (layout === 'wide') await page.locator('#createMenuBtn').click();
-  else await page.locator('#mobileCreateBtn').click();
-  await page.locator('#createLibraryTabBtn').click();
+  if (layout !== 'wide' && await page.locator('#mobileMapBtn').getAttribute('aria-expanded') !== 'true') await page.locator('#mobileMapBtn').click();
+  await page.locator('#mapLayersTabBtn').click();
+  await page.locator('#createMenuBtn').click();
   await page.locator('#addFromLibraryBtn').click();
   await expect(page.locator('#historicalLibraryModal')).toBeVisible();
 }
@@ -90,7 +90,7 @@ for (const layout of layouts) {
       const searchInputStyle = await computed(librarySearch, ['padding-left', 'padding-right']);
       expect(searchInputStyle).toEqual({ 'padding-left': '0px', 'padding-right': '0px' });
 
-      await page.locator('.historical-library-filters summary').click();
+      await expect(page.locator('.historical-library-filters summary')).toHaveCount(0);
       const typeField = page.locator('#historicalLibraryTypeInput').locator('xpath=..');
       const customSelect = typeField.locator('.ui-select-control');
       const selectStyle = await computed(customSelect, ['padding-left', 'padding-right']);

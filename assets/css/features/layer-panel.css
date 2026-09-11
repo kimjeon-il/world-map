@@ -1,6 +1,54 @@
 /* Layer feature states are loaded after primitives so stateful SVGs win the
  * generic icon defaults without changing the shared icon primitive. */
-.layer-visibility-control .layer-visibility-eye-off { display: none; }
+
+/* Document commands live in the header; only viewport controls float on the map. */
+.app-root .topbar { display: flex; justify-content: flex-start;
+}
+/* The menu shares the header's stacking context; lift it above workspace panels. */
+body.file-menu-open .app-root .topbar { z-index: 150;
+}
+.app-root .topbar-file-actions { position: relative; flex: 0 0 auto;
+}
+.app-root .topbar-history { display: flex; align-items: center; gap: var(--ui-space-1); flex: 0 0 auto;
+}
+.app-root .topbar-center { flex: 1 1 auto;
+}
+.app-root .top-actions { position: absolute; top: calc(100% + var(--ui-space-2)); left: 0; right: auto; max-width: calc(100vw - var(--ui-space-6));
+}
+.layer-panel-footer { flex: 0 0 auto;
+}
+.layer-action-bar { display: flex; align-items: center; justify-content: flex-start; gap: var(--ui-v2-button-gap);
+}
+.app-root .layer-action-bar > .icon-btn { flex: 0 0 var(--ui-control-height); width: var(--ui-control-height); min-width: var(--ui-control-height); min-height: var(--ui-control-height); height: auto; color: var(--text-soft);
+}
+.app-root:not([data-layout="mobile"]) .layer-action-bar > .icon-btn { flex-basis: var(--ui-layer-action-size); width: var(--ui-layer-action-size); min-height: var(--ui-layer-action-size); height: auto;
+}
+.app-root .layer-action-bar > .icon-btn:is(:hover, :focus-visible):not(:disabled) { color: var(--text);
+}
+.layer-search-result > strong { display: flex; align-items: center; gap: var(--ui-space-2);
+}
+.layer-child-name { gap: var(--ui-space-2);
+}
+.layer-child-name-label { flex: 1 1 auto; text-align: left;
+}
+@media (max-width: 799px) {
+  .app-root .layer-action-bar > .icon-btn { flex-basis: var(--ui-touch-height); width: var(--ui-touch-height); min-height: var(--ui-touch-height); height: auto;
+}
+  .app-root .topbar { gap: var(--ui-v2-button-gap);
+}
+  .app-root .topbar .brand { flex: 0 1 auto;
+}
+  .app-root .topbar .brand strong { font-size: var(--ui-font-md);
+}
+  .app-root .adaptive-nav { grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+  .app-root .top-actions { left: auto; right: auto; position: fixed; top: calc(var(--ui-topbar-height) + var(--ui-space-3)); inset-inline-start: var(--ui-space-3);
+}}
+/* Visibility color is independent of row selection and pointer state. */
+.layer-visibility-control { color: var(--text-strong); }
+.layer-visibility-control:has(.layer-visibility-toggle:not(:checked)) { color: var(--muted); }
+.layer-visibility-control .layer-visibility-eye-off { display: none;
+}
 .layer-visibility-control .layer-visibility-toggle:not(:checked) ~ .layer-visibility-eye {
   display: none;
 }
@@ -14,110 +62,86 @@
   display: none;
 }
 
-/* The row keeps the visibility/name pair as its primary reading order. */
-.layer-folder-row,
-.layer-child,
-.layer-subfolder-row,
-.layer-skeleton-row,
-.layer-child-skeleton {
-  min-height: var(--ui-v2-layer-row-height);
-  height: var(--ui-v2-layer-row-height);
+/* One scroll surface for bundles, objects and virtualized rows. */
+.app-root .layer-list, .app-root .layer-search-results { display: block;
+}
+.app-root .layer-list.hidden, .app-root .layer-search-results.hidden { display: none;
+}
+.app-root .layer-child, .app-root .layer-bundle-row {
+  height: var(--ui-v2-layer-row-height); min-height: var(--ui-v2-layer-row-height);
+  box-sizing: border-box; margin: 0; flex-shrink: 0;
+}
+.app-root .layer-bundle-row {
+  display: grid; grid-template-columns: var(--ui-icon-size) var(--ui-tree-action-size) minmax(0, 1fr);
+  align-items: center; gap: var(--ui-space-1);
+}
+.app-root .layer-bundle-row > .layer-child-name { grid-column: 3;
+}
+.layer-bundle-row { cursor: pointer;
+}
+.layer-bundle-toggle { color: var(--muted); display: grid; place-items: center;
+}
+.layer-bundle-toggle .disclosure-icon { width: var(--ui-icon-size); height: var(--ui-icon-size);
+}
+.layer-bundle-toggle[aria-expanded="false"] .disclosure-icon { transform: rotate(-90deg);
+}
+.layer-item-type { flex: 0 0 auto; color: var(--muted); font-size: var(--ui-font-caption); font-weight: normal; margin-left: auto;
+}
+.app-root .layer-child-name { color: inherit;
+}
+.layer-child.is-selected .layer-item-type { color: inherit; opacity: .75;
+}
+.app-root .layer-child.layer-hierarchy-row {
+  --layer-action-size: var(--ui-tree-action-size);
+  grid-template-columns: var(--ui-icon-size) var(--layer-action-size) minmax(0, 1fr) var(--layer-action-size);
+}
+.app-root .layer-hierarchy-row.has-no-menu { grid-template-columns: var(--ui-icon-size) var(--layer-action-size) minmax(0, 1fr);
+}
+.app-root .layer-hierarchy-row > .layer-visibility-control { grid-column: 2;
+}
+.app-root .layer-hierarchy-row > .layer-child-name { grid-column: 3;
+}
+.app-root .layer-hierarchy-row > .layer-child-menu { grid-column: 4;
+}
+.app-root .layer-parent-toggle { min-width: 0; min-height: 0; width: var(--ui-icon-size); height: 100%;
+}
+.app-root .layer-child.layer-search-result {
+  width: 100%; grid-template-columns: var(--ui-tree-action-size) minmax(0, 1fr) var(--ui-tree-action-size);
+  gap: var(--ui-space-1); text-align: left;
+}
+.app-root .layer-child.layer-search-result.has-no-menu { grid-template-columns: var(--ui-tree-action-size) minmax(0, 1fr);
+}
+.layer-bundle-row[data-load-state="loading"] .layer-item-type::after { content: " · 로딩";
+}
+.layer-bundle-row[data-load-state="error"] .layer-item-type::after { content: " · 오류";
+}
+.layer-child-menu { opacity: 0;
+}
+.layer-child:hover .layer-child-menu, .layer-child:focus-within .layer-child-menu,
+.layer-child.is-selected .layer-child-menu { opacity: 1;
+}
+.map-object-style-settings > summary { cursor: pointer;
 }
 
-.layer-folder-row {
-  grid-template-columns: var(--ui-tree-action-size) minmax(0, 1fr);
+@media (hover: hover) and (pointer: fine) {
+  .layer-type-settings-heading:not(:hover):not(:focus-within) .layer-style-toggle[aria-expanded="false"] {
+    opacity: 0;
+}}
+.layer-type-settings-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-1);
 }
-.layer-folder-row.has-layer-style {
-  grid-template-columns: var(--ui-tree-action-size) minmax(0, 1fr);
+.layer-type-settings-heading > label { flex: 1;
 }
-.layer-folder-row > .layer-visibility-control {
-  grid-column: 1;
+.app-root .layer-type-settings .layer-inline-style-panel { margin: 0;
 }
-.layer-folder-row > .layer-folder-name {
-  grid-column: 2;
-}
-.layer-folder-row > .layer-folder-toggle,
-.layer-folder-row > .layer-style-toggle {
-  position: absolute;
-  inset-block-start: 50%;
-  transform: translateY(-50%);
-}
-.layer-folder-row > .layer-folder-toggle {
-  inset-inline-end: calc(var(--ui-tree-action-size) + var(--ui-space-1));
-}
-.layer-folder-row > .layer-style-toggle {
-  inset-inline-end: 0;
-}
-
-.layer-folder-row .layer-folder-toggle,
-.layer-folder-row .layer-style-toggle {
-  opacity: 0;
-  pointer-events: none;
-}
-.layer-folder-row:hover .layer-folder-toggle,
-.layer-folder-row:focus-within .layer-folder-toggle,
-.layer-folder-row:hover .layer-style-toggle,
-.layer-folder-row:focus-within .layer-style-toggle,
-.layer-folder-row .layer-folder-toggle:focus-visible,
-.layer-folder-row .layer-style-toggle:focus-visible,
-.layer-folder-row .layer-folder-toggle[aria-expanded="true"],
-.layer-folder-row .layer-style-toggle:is(.active, [aria-expanded="true"]),
-.layer-folder-row:has(.layer-folder-name:focus-visible) .layer-folder-toggle,
-.layer-folder-row:has(.layer-folder-name:focus-visible) .layer-style-toggle {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.layer-child-menu { opacity: 0; }
-.layer-child:hover .layer-child-menu,
-.layer-child:focus-within .layer-child-menu,
-.layer-child.is-selected .layer-child-menu,
-.layer-child.is-primary-selected .layer-child-menu {
-  opacity: 1;
-}
-
-.layer-folder-row .disclosure-icon,
-.layer-subfolder-row .disclosure-icon {
-  transform: rotate(0deg);
-}
-.layer-folder-row[aria-expanded="false"] .disclosure-icon,
-.layer-subfolder-row[aria-expanded="false"] .disclosure-icon {
-  transform: rotate(-90deg);
-}
-
 @media (max-width: 799px) {
-  .layer-folder-row,
-  .layer-child,
-  .layer-subfolder-row,
-  .layer-skeleton-row,
-  .layer-child-skeleton {
-    min-height: var(--ui-v2-layer-row-height-mobile);
-    height: var(--ui-v2-layer-row-height-mobile);
-  }
-
+  .app-root .layer-child.layer-hierarchy-row { --layer-action-size: var(--ui-v2-layer-visibility-size-mobile);
+}
+  .app-root .layer-child, .app-root .layer-bundle-row {
+    height: var(--ui-v2-layer-row-height-mobile); min-height: var(--ui-v2-layer-row-height-mobile);
+}
+  .app-root .layer-bundle-row { grid-template-columns: var(--ui-icon-size) var(--ui-v2-layer-visibility-size-mobile) minmax(0, 1fr);
+}
   .layer-visibility-control {
-    width: var(--ui-tree-action-size-touch);
-    min-width: var(--ui-tree-action-size-touch);
-    height: var(--ui-tree-action-size-touch);
-  }
-
-  .layer-folder-row {
-    grid-template-columns: var(--ui-tree-action-size-touch) minmax(0, 1fr);
-  }
-  .layer-folder-row > .layer-folder-toggle,
-  .layer-folder-row > .layer-style-toggle {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .layer-folder-row > .layer-folder-toggle {
-    inset-inline-end: calc(var(--ui-tree-action-size-touch) + var(--ui-space-1));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .layer-folder-row .layer-folder-toggle,
-  .layer-folder-row .layer-style-toggle,
-  .layer-child-menu {
-    transition: none;
-  }
-}
+    width: var(--ui-v2-layer-visibility-size-mobile); min-width: var(--ui-v2-layer-visibility-size-mobile);
+    height: var(--ui-v2-layer-visibility-size-mobile);
+}}

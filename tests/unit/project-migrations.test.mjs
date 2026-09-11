@@ -54,7 +54,7 @@ test('v3 -> v4 migration preserves legacy country and Generic data', () => {
   const migrated = migrateProjectV3ToV4(input);
 
   assert.deepEqual(input, before);
-  assert.equal(migrated.schemaVersion, PROJECT_SCHEMA_VERSION);
+  assert.equal(migrated.schemaVersion, 4);
   assert.deepEqual(migrated.countriesData.features[0].properties, { name: '독일', validFrom: '1949' });
   assert.deepEqual(migrated.countryOverrides.DEU, { name: '독일', color: '#123456' });
   assert.equal(migrated.genericFeatures.length, 2);
@@ -73,7 +73,7 @@ test('v3 -> v4 migration preserves legacy country and Generic data', () => {
 });
 
 test('migration chain is sequential and rejects unsupported schema ranges', () => {
-  assert.deepEqual(migrationPath(3), [{ from: 3, to: 4 }]);
+  assert.deepEqual(migrationPath(3), [{ from: 3, to: 4 }, { from: 4, to: 5 }]);
   assert.equal(migrateProjectToCurrent(projectV3()).schemaVersion, PROJECT_SCHEMA_VERSION);
   assert.throws(() => migrateProjectToCurrent({ schemaVersion: 2 }), /지원 범위/);
   assert.throws(() => migrateProjectToCurrent({ schemaVersion: PROJECT_SCHEMA_VERSION + 1 }), /새롭습니다/);

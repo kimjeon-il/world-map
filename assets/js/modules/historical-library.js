@@ -4,19 +4,19 @@ import {
   parseTemporal,
   temporalContains,
 } from './temporal.js';
+import { currentCountryFlagUrl } from './country-flags.js';
 
 export const HISTORICAL_LIBRARY_SCHEMA_VERSION = 2;
 
 export const LIBRARY_ENTITY_TYPES = Object.freeze({
   COUNTRY: 'country',
-  TERRITORY: 'territory',
-  ADMIN: 'admin',
+  SUBUNIT: 'subunit',
   REGION: 'region',
 });
 
 const TYPES = new Set(Object.values(LIBRARY_ENTITY_TYPES));
 const POLYGON_TYPES = new Set(['Polygon', 'MultiPolygon']);
-const INSTANTIATION_MODES = new Set(['independent', 'country-territory-priority']);
+const INSTANTIATION_MODES = new Set(['independent', 'territory-replacement']);
 const text = value => String(value ?? '').trim();
 const clone = value => structuredClone(value);
 function dateContains(version, referenceDate) {
@@ -27,7 +27,10 @@ function dateContains(version, referenceDate) {
 const startYear = value => parseTemporal(value)?.year ?? null;
 
 function normalizeInstantiation(raw) {
-  const mode = text(raw?.mode) || 'independent';
+  const requestedMode = text(raw?.mode) || 'independent';
+  const mode = requestedMode === 'country-territory-priority'
+    ? 'territory-replacement'
+    : requestedMode;
   if (!INSTANTIATION_MODES.has(mode)) throw new Error(`지원하지 않는 라이브러리 추가 방식입니다: ${mode}`);
   const countryUpdates = {};
   for (const [countryId, update] of Object.entries(raw?.countryUpdates || {})) {
@@ -40,7 +43,7 @@ function normalizeInstantiation(raw) {
   return { mode, countryUpdates };
 }
 
-export function normalizeGeometryVersion(raw) {
+function normalizeGeometryVersion(raw) {
   const geometry = POLYGON_TYPES.has(raw?.geometry?.type)
     && Array.isArray(raw.geometry.coordinates)
     && raw.geometry.coordinates.length
@@ -63,7 +66,8 @@ export function normalizeGeometryVersion(raw) {
 }
 
 export function normalizeHistoricalLibraryEntity(raw) {
-  const type = text(raw?.type).toLowerCase();
+  const inputType = text(raw?.type).toLowerCase();
+  const type = ['territory', 'admin'].includes(inputType) ? 'subunit' : inputType;
   const libraryId = text(raw?.libraryId);
   if (!libraryId || !TYPES.has(type)) return null;
   const interval = normalizeTemporalInterval(raw.startDate, raw.endDate);
@@ -87,7 +91,7 @@ export function normalizeHistoricalLibraryEntity(raw) {
     endDate: interval.validTo,
     parentLibraryId: text(raw.parentLibraryId),
     sovereignLibraryId: text(raw.sovereignLibraryId),
-    adminLevel: type === LIBRARY_ENTITY_TYPES.ADMIN ? Math.max(1, Number(raw.adminLevel || 1)) : null,
+    adminLevel: type === LIBRARY_ENTITY_TYPES.SUBUNIT && (Number(raw.adminLevel) > 0 || inputType === 'admin') ? Math.max(1, Number(raw.adminLevel) || 1) : null,
     geometryVersions,
     instantiation: normalizeInstantiation(raw.instantiation),
     metadata: raw.metadata && typeof raw.metadata === 'object' ? clone(raw.metadata) : {},
@@ -114,6 +118,7 @@ export function createCurrentCountryLibraryEntities(countriesData, { displayName
     const id = text(feature?.id);
     if (!id || !POLYGON_TYPES.has(feature?.geometry?.type)) return null;
     const canonicalName = text(displayName(feature)) || id;
+    const defaultFlagDataUrl = currentCountryFlagUrl(id);
     return normalizeHistoricalLibraryEntity({
       libraryId: `current-country:${id}`,
       type: LIBRARY_ENTITY_TYPES.COUNTRY,
@@ -129,34 +134,50 @@ export function createCurrentCountryLibraryEntities(countriesData, { displayName
         certainty: 'high',
         sourceId: 'natural-earth-5.1.1',
       }],
-      metadata: { currentCountryId: id },
+      metadata: {
+        currentCountryId: id,
+        ...(defaultFlagDataUrl ? { defaultFlagDataUrl } : {}),
+      },
       sourceInfo: { title: 'Natural Earth 5.1.1 Admin 0 Countries', license: 'Public domain' },
     });
   }).filter(Boolean);
 }
 
-export function materializePilotEntities(definitions, countriesData, combineGeometries) {
+export function materializePilotEntities(definitions, countriesData, combineGeometries, subtractGeometries = null) {
   const countryGeometry = new Map((countriesData?.features || []).map(feature => [
     text(feature?.id),
     feature.geometry,
   ]));
   return (definitions || []).map(definition => {
     const versions = (definition.geometryVersions || []).map(version => {
-      if (POLYGON_TYPES.has(version?.geometry?.type)
+      let geometry = POLYGON_TYPES.has(version?.geometry?.type)
         && Array.isArray(version.geometry.coordinates)
-        && version.geometry.coordinates.length) {
-        return { ...version, geometry: clone(version.geometry) };
+        && version.geometry.coordinates.length
+        ? clone(version.geometry)
+        : null;
+      if (!geometry) {
+        const memberGeometries = (version.memberCountryIds || []).map(id => countryGeometry.get(text(id))).filter(Boolean);
+        if (!memberGeometries.length) return null;
+        geometry = memberGeometries.length === 1
+          ? clone(memberGeometries[0])
+          : (typeof combineGeometries === 'function' ? combineGeometries(memberGeometries) : memberGeometries[0]);
       }
-      const memberGeometries = (version.memberCountryIds || []).map(id => countryGeometry.get(text(id))).filter(Boolean);
-      if (!memberGeometries.length) return null;
-      const geometry = typeof combineGeometries === 'function' ? combineGeometries(memberGeometries) : memberGeometries[0];
+      if (POLYGON_TYPES.has(version?.includeGeometry?.type) && Array.isArray(version.includeGeometry.coordinates)) {
+        geometry = typeof combineGeometries === 'function'
+          ? combineGeometries([geometry, clone(version.includeGeometry)])
+          : geometry;
+      }
+      if (POLYGON_TYPES.has(version?.excludeGeometry?.type) && Array.isArray(version.excludeGeometry.coordinates)) {
+        if (typeof subtractGeometries !== 'function') throw new Error(`${definition.libraryId}의 제외 경계를 처리할 수 없습니다.`);
+        geometry = subtractGeometries(geometry, clone(version.excludeGeometry));
+      }
       return geometry ? { ...version, geometry } : null;
     }).filter(Boolean);
     return normalizeHistoricalLibraryEntity({ ...definition, geometryVersions: versions });
   }).filter(entity => entity?.geometryVersions?.length);
 }
 
-export function normalizeWorldSnapshot(raw) {
+function normalizeWorldSnapshot(raw) {
   const id = text(raw?.id);
   if (!id) return null;
   return {
@@ -207,8 +228,11 @@ export function createHistoricalLibrary({ schemaVersion, entities = [], snapshot
   });
 }
 
-export function instantiateLibraryEntity(entity, referenceDate = null) {
-  const version = selectGeometryVersion(entity, referenceDate);
+export function instantiateLibraryEntity(entity, referenceDate = null, geometryVersionId = '') {
+  const requestedVersionId = text(geometryVersionId);
+  const version = requestedVersionId
+    ? (entity?.geometryVersions || []).find(candidate => candidate.id === requestedVersionId)
+    : selectGeometryVersion(entity, referenceDate);
   if (!entity || !version) throw new Error('선택한 시점에 사용할 경계 버전이 없습니다.');
   return {
     libraryId: entity.libraryId,
