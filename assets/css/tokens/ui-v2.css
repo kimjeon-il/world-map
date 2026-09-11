@@ -171,6 +171,14 @@
   --ui-radius-pill: var(--ui-v2-radius-pill);
 }
 
+:root[data-status-bar-visible="false"] {
+  --ui-shell-statusbar-height: 0px;
+}
+
+:root[data-status-bar-visible="false"] .map-bottom-status {
+  display: none;
+}
+
 :root[data-theme="light"] {
   --ui-v2-color-bg: oklch(0.9702 0 89.88);
   --ui-v2-color-panel: oklch(1 0 89.88);

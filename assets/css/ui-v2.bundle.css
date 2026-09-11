@@ -177,6 +177,14 @@
   --ui-radius-pill: var(--ui-v2-radius-pill);
 }
 
+:root[data-status-bar-visible="false"] {
+  --ui-shell-statusbar-height: 0px;
+}
+
+:root[data-status-bar-visible="false"] .map-bottom-status {
+  display: none;
+}
+
 :root[data-theme="light"] {
   --ui-v2-color-bg: oklch(0.9702 0 89.88);
   --ui-v2-color-panel: oklch(1 0 89.88);
@@ -1855,11 +1863,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 .surface-header .editor-collapse-icon { display: none; transform: rotate(-90deg); }
 [data-layout="wide"] .surface-header .editor-collapse-icon { display: block; }
 [data-layout="wide"] .surface-header .editor-close-icon { display: none; }
-
-.app-root[data-layout="mobile"] .workspace:has(.right-panel.mobile-open) .status-selection,
-.workspace:has(.mode-action-bar:not(.hidden)) .status-primary {
-  display: none;
-}
 
 @media (max-width: 799px) {
   .editor-focus-action {

@@ -49,7 +49,11 @@ export function createCountryLabels() {
     const previousAccent = dependencies.resolvedAccentColor;
     dependencies.userPreferences = persist ? (0, dependencies.saveUserPreferences)(nextPreferences) : nextPreferences;
     const resolvedTheme = (0, dependencies.effectiveTheme)(dependencies.userPreferences, dependencies.systemTheme === 'dark');
+    const statusBarVisible = dependencies.userPreferences.appearance?.statusBarVisible !== false;
     document.documentElement.dataset.theme = resolvedTheme;
+    document.documentElement.dataset.statusBarVisible = String(statusBarVisible);
+    const statusBar = (0, dependencies.$)('mapBottomStatus');
+    if (statusBar) statusBar.hidden = !statusBarVisible;
     dependencies.resolvedAccentColor = (0, dependencies.applyAppAccent)(document, dependencies.userPreferences.appearance.accentColor);
     (0, dependencies.applyMapLabelPreferences)();
     window.__PANDOLAB_THEME__ = resolvedTheme;
