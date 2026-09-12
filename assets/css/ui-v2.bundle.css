@@ -1170,7 +1170,7 @@ html { font-size: 100%; }
   font-weight: var(--ui-weight-medium);
 }
 
-.workflow-map-session .annex-drawn-actions {
+.workflow-map-session .multi-drawn-actions {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
@@ -1178,16 +1178,16 @@ html { font-size: 100%; }
   min-width: 0;
 }
 
-.workflow-map-session .annex-drawn-actions.hidden { display: none; }
+.workflow-map-session .multi-drawn-actions.hidden { display: none; }
 
-.workflow-map-session .annex-drawn-count {
+.workflow-map-session .multi-drawn-count {
   flex: 1 0 auto;
   color: var(--text-soft);
   font-size: var(--ui-font-sm);
   white-space: nowrap;
 }
 
-.workflow-map-session .annex-drawn-buttons {
+.workflow-map-session .multi-drawn-buttons {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--ui-space-1);
@@ -1195,7 +1195,7 @@ html { font-size: 100%; }
   max-width: 100%;
 }
 
-.workflow-map-session .annex-drawn-buttons .ui-button {
+.workflow-map-session .multi-drawn-buttons .ui-button {
   min-width: 0;
   padding-inline: var(--ui-space-2);
   white-space: nowrap;

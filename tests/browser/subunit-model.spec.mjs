@@ -15,9 +15,10 @@ test('Subunit editor and creation use one desktop/mobile surface', async ({ page
   await expect(page.locator('#addTerritoryBtn, #addAdministrativeBtn, #territoryProperties, #administrativeProperties')).toHaveCount(0);
   await page.evaluate(() => window.PANDOLAB_TERRITORIAL.select('country', 'DEU'));
   await page.locator('#addSubunitBtn').evaluate(button => button.click());
-  await expect(page.locator('#territorialCreateModal')).toBeVisible();
-  await expect(page.locator('#territorialCreateTitle')).toContainText('하위단위');
-  await page.locator('#territorialCreateCancelBtn').click();
+  await expect(page.locator('#editorTaskSlot #territorialCreateSetup')).toBeVisible();
+  await expect(page.locator('#modeTaskName')).toContainText('하위단위 추가 1단계');
+  await expect(page.locator('#territorialCreateNameInput')).toHaveValue('새 하위단위');
+  await page.locator('#modeCancelBtn').click();
   const chooserPromise = page.waitForEvent('filechooser');
   await page.locator('#openGisBtn').evaluate(button => button.click());
   const chooser = await chooserPromise;
@@ -68,6 +69,6 @@ test('Subunit editor and creation use one desktop/mobile surface', async ({ page
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('#addSubunitBtn')).toHaveCount(1);
   await page.locator('#addSubunitBtn').evaluate(button => button.click());
-  await expect(page.locator('#territorialCreateModal')).toBeVisible();
+  await expect(page.locator('#editorTaskSlot #territorialCreateSetup')).toBeVisible();
   expect(errors).toEqual([]);
 });
