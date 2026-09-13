@@ -1,4 +1,4 @@
-# UI Components v2
+# UI Components
 
 ## 공간 배분·가시성 계약
 
@@ -12,7 +12,7 @@
 - 기본 레이어 행에는 색상 도형·반복 유형을 넣지 않는다. 혼합 검색의 유형과 로딩/오류 상태는 유지한다. primary는 세로 막대, secondary는 약한 선택 배경을 사용한다.
 - `tests/browser/ui-space-visibility.spec.mjs`에서 실제 치수·스크롤 영역·폭별 노출을 검사한다. 정적 클래스 검사만으로 준수 여부를 판정하지 않는다.
 
-이 문서는 컴포넌트별 계약과 명시적 예외만 정의한다. 글자·컨트롤 수치, 반응형 허용 범위, 정렬·상태·CSS 소유권은 [UI Architecture v2](ui-architecture-v2.md)가 단일 원본이다. 수치를 이 문서에 복제하지 않는다.
+이 문서는 컴포넌트별 계약과 명시적 예외만 정의한다. 글자·컨트롤 수치, 반응형 허용 범위, 정렬·상태·CSS 소유권은 [UI Architecture](ui-architecture.md)가 단일 원본이다. 수치를 이 문서에 복제하지 않는다.
 
 아래 계약은 후속 개편의 목표이며 현재 DOM·CSS의 준수 여부를 보증하지 않는다. 이번 단계는 문서만 정리하고 기능·DOM·버튼 ID·ARIA·controller를 변경하지 않는다.
 
@@ -20,7 +20,7 @@
 
 주요 컴포넌트의 담당 원본은 다음과 같다. 기존 파일 안의 모든 override를 승인하는 목록은 아니며, 다른 소유자의 속성을 덮어쓰는 규칙은 후속 이관 대상이다.
 
-- `assets/css/tokens/ui-v2.css`: Surface와 콘텐츠 component가 공유하는 의미 토큰
+- `assets/css/tokens/design-tokens.css`: Surface와 콘텐츠 component가 공유하는 의미 토큰
 - `assets/css/primitives/controls.css`: Button/Field/Icon의 외형과 상태
 - `assets/css/components/surface.css`: Surface/Header/Tabs/Body/Content
 - `assets/css/components/content.css`: Section/Field/ActionList/PropertyList/ObjectContext 호환 계약
@@ -33,6 +33,8 @@
 - `assets/css/components/mobile-sheets.css`: 공통 handle·sheet 조작 계약
 - `assets/css/features/layer-panel.css`: 레이어 트리·가상화 콘텐츠 표현
 - `assets/css/components/feedback.css`: 지속 상태·toast·empty/loading/error 표현
+
+표시 창의 `이름과 기호`와 `객체`는 같은 `map-display-list` 및 `map-display-row`를 사용한다. 행 높이, 행 사이 간격과 좌우 여백은 `components/panels.css`가 소유하며 섹션 이름별로 덮어쓰지 않는다. 행 높이는 기존 데스크톱·모바일 조작 영역 토큰을 공통으로 사용하고, 상세 설정이 있는 행만 기존 펼침 버튼과 본문을 함께 둔다.
 
 생성 bundle은 원본이 아니며 직접 편집하지 않는다.
 

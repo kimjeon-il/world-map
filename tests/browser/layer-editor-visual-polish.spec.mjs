@@ -147,7 +147,7 @@ for (const layout of layouts) {
     await expect(page.locator('#projectionControl')).toContainText('평면');
     await page.locator('#mapLayersTabBtn').click();
     await page.locator('#mapViewTabBtn').click();
-    await expect(page.locator('label:has(#basemapLabelsVisible)')).toContainText('국가명 표시');
+    await expect(page.locator('label:has(#basemapLabelsVisible)')).toContainText('객체명');
     await expect(page.locator('label:has(#labelsVisible)')).toContainText('지명 표시');
     await expect(page.locator('#distributionLayerModeInput option')).toHaveText([
       '가장 많은 분포만 표시',
