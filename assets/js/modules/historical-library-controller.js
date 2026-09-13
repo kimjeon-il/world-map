@@ -9,8 +9,10 @@ export function createHistoricalLibraryController({
   renderMapPreview,
   createEmptyState,
   replaceSelectOptions,
+  shouldShowTerritorialParentChoice,
   collator,
-  closeCreateMenu,
+  closeSurface,
+  focusSurfaceTrigger,
   instantiate,
   ownershipContext = () => ({ missing: [], countries: [], parents: () => [] }),
   confirm,
@@ -61,7 +63,11 @@ export function createHistoricalLibraryController({
       ], 'subunit');
       field(`${item.name} · 추가 방식`, mode);
       const country = document.createElement('select');
-      replaceSelectOptions(country, [{ value: '', label: '소속 국가 선택' }, ...context.countries], choice.countryId);
+      const countryChoice = replaceSelectOptions(country, [
+        { value: '', label: '소속 국가 선택', placeholder: true },
+        ...context.countries,
+      ], choice.countryId, { autoSelectSingle: true }) || { single: false, value: country.value };
+      choice.countryId = countryChoice.value;
       const countryRow = field('소속 국가', country);
       const parent = document.createElement('select');
       const parentRow = field('상위 소속', parent);
@@ -72,11 +78,18 @@ export function createHistoricalLibraryController({
         choice.mode = mode.value;
         choice.name = name.value;
         choice.countryId = country.value;
-        const options = context.parents(country.value);
-        replaceSelectOptions(parent, options, choice.parentId);
-        choice.parentId = parent.value;
-        countryRow.hidden = mode.value === 'country';
-        parentRow.hidden = mode.value === 'country' || options.length < 2;
+        const candidates = context.parents(country.value);
+        const options = candidates.length
+          ? candidates
+          : [{ value: '', label: '상위 소속 선택', placeholder: true }];
+        const parentChoice = replaceSelectOptions(parent, options, choice.parentId, { autoSelectSingle: true }) || { value: parent.value };
+        choice.parentId = parentChoice.value;
+        countryRow.hidden = mode.value === 'country' || countryChoice.single;
+        parentRow.hidden = mode.value === 'country' || !shouldShowTerritorialParentChoice({
+          sovereignId: choice.countryId,
+          parentId: choice.parentId,
+          options,
+        });
         nameRow.hidden = mode.value !== 'country';
         elements.add.disabled = Object.values(ownershipChoices).some(value => value.mode === 'country' ? !value.name.trim() : !value.countryId);
         confirmedImpact = '';
@@ -137,11 +150,13 @@ export function createHistoricalLibraryController({
 
   function syncFilterOptions() {
     const geographicRegions = [...new Set(service.list().map(entity => String(entity.metadata?.geographicRegion || '')).filter(Boolean))].sort(collator.compare);
-    replaceSelectOptions(elements.geographicRegion, [{ value: '', label: '전체' }, ...geographicRegions.map(geographicRegion => ({ value: geographicRegion, label: geographicRegion }))], elements.geographicRegion.value);
+    const geographicChoice = replaceSelectOptions(elements.geographicRegion, [{ value: '', label: '전체' }, ...geographicRegions.map(geographicRegion => ({ value: geographicRegion, label: geographicRegion }))], elements.geographicRegion.value, { autoSelectSingle: true });
+    elements.geographicRegion.closest?.('.field-group')?.classList.toggle('hidden', geographicChoice?.single === true);
     replaceSelectOptions(elements.snapshot, [
-      { value: '', label: '스냅샷 선택' },
+      { value: '', label: '스냅샷 선택', placeholder: true },
       ...service.snapshots().map(snapshot => ({ value: snapshot.id, label: `${snapshot.name}${snapshot.metadata?.partial ? ' · 부분' : ''}` })),
-    ], elements.snapshot.value);
+    ], elements.snapshot.value, { autoSelectSingle: true });
+    if (elements.snapshotButton) elements.snapshotButton.disabled = !elements.snapshot.value;
   }
 
   function searchResults() {
@@ -316,11 +331,11 @@ export function createHistoricalLibraryController({
     resetOwnership();
     elements.modal.classList.add('hidden');
     elements.card?.classList.remove('is-detail', 'is-options');
-    elements.open?.focus();
+    focusSurfaceTrigger('create');
   }
 
   async function open() {
-    closeCreateMenu();
+    closeSurface('create');
     elements.modal.classList.remove('hidden');
     setLoadingState(true);
     renderLoadingResults();

@@ -20,8 +20,6 @@
 @media (max-width: 799px) {
   .app-root .layer-action-bar > .icon-btn { flex-basis: var(--ui-touch-height); width: var(--ui-touch-height); min-height: var(--ui-touch-height); height: auto;
 }
-  .app-root .adaptive-nav { grid-template-columns: repeat(2, minmax(0, 1fr));
-}
 }
 
 /* Visibility color is independent of row selection and pointer state. */
