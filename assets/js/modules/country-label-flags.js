@@ -1,7 +1,7 @@
 const overlaps = (a, b) => !(a.right + 3 < b.left || b.right + 3 < a.left || a.bottom + 3 < b.top || b.bottom + 3 < a.top);
 
-export function countryLabelFlag(feature, { zoom, enabled, flagUrl, isCountry }) {
-  if (!enabled || zoom < 1.8 || !isCountry(feature)) return null;
+export function countryLabelFlag(feature, { zoom, enabled, flagUrl, isVisible }) {
+  if (!enabled || zoom < 1.8 || !isVisible(feature)) return null;
   const url = flagUrl(feature);
   return url ? { url, width: 18, height: 12, gap: 5 } : null;
 }
