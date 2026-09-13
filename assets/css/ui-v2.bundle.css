@@ -326,7 +326,7 @@ html { font-size: 100%; }
 :where(.ui-button):active:not(:disabled) { transform: none; }
 :where(.ui-button):disabled { cursor: not-allowed; opacity: .48; }
 
-.ui-button:is(.btn, .file-menu-btn, .create-menu-btn, .mode-primary-btn) {
+.ui-button:is(.btn, .create-menu-btn, .mode-primary-btn) {
   min-height: var(--ui-v2-control-md);
   height: auto;
   padding-block: var(--ui-space-1);
@@ -363,14 +363,14 @@ html { font-size: 100%; }
 
 :where(.ui-button):active:not(:disabled) { background: var(--ui-control-bg-pressed); }
 
-.ui-button:is(.btn:not(.ghost), .file-menu-btn, .create-menu-btn, .mode-primary-btn) {
+.ui-button:is(.btn:not(.ghost), .create-menu-btn, .mode-primary-btn) {
   border-color: var(--accent-border);
   background: var(--accent-surface);
   color: var(--accent-text);
 }
 
-.ui-button:is(.btn:not(.ghost), .file-menu-btn, .create-menu-btn, .mode-primary-btn):hover:not(:disabled),
-.ui-button:is(.btn:not(.ghost), .file-menu-btn, .create-menu-btn, .mode-primary-btn):active:not(:disabled) {
+.ui-button:is(.btn:not(.ghost), .create-menu-btn, .mode-primary-btn):hover:not(:disabled),
+.ui-button:is(.btn:not(.ghost), .create-menu-btn, .mode-primary-btn):active:not(:disabled) {
   border-color: var(--accent-border);
   background: var(--accent-surface-hover);
   color: var(--accent-text);
@@ -508,7 +508,7 @@ html { font-size: 100%; }
     height: auto;
   }
 
-  .ui-button:is(.btn, .file-menu-btn, .create-menu-btn, .mode-primary-btn),
+  .ui-button:is(.btn, .create-menu-btn, .mode-primary-btn),
   .ui-toggle { min-height: var(--ui-touch-height); }
 }
 
@@ -1688,6 +1688,105 @@ html { font-size: 100%; }
   display: grid;
 }
 
+/* Map commands own transient surfaces; there is no persistent layer drawer. */
+.surface-search,
+.surface-display {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surface-elevated);
+  border: var(--ui-border-width) solid var(--border);
+  border-radius: var(--ui-radius-panel);
+  box-shadow: var(--control-shadow);
+  transition: transform 170ms ease, opacity 170ms ease, visibility 170ms;
+}
+
+.surface-search > .surface-body,
+.surface-display > .surface-body {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+[data-layout="wide"] :is(.surface-search, .surface-display) {
+  position: fixed;
+  z-index: 36;
+  /* Keep the transient surface below the map command bar rather than covering it. */
+  top: calc(var(--ui-shell-topbar-height) + var(--ui-map-edge) + var(--ui-control-height) + var(--ui-space-6) + var(--ui-space-2));
+  left: calc(var(--ui-map-edge) + var(--ui-popover-screen-edge));
+  width: min(340px, calc(100vw - var(--ui-popover-screen-edge) * 2));
+  max-height: min(680px, calc(100dvh - var(--ui-shell-topbar-height) - var(--ui-shell-statusbar-height) - var(--ui-space-6)));
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(calc(-1 * var(--ui-space-2)));
+}
+
+[data-layout="wide"] :is(.surface-search, .surface-display).surface-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+[data-layout="compact"] :is(.surface-search, .surface-display) {
+  position: fixed;
+  z-index: 36;
+  top: calc(var(--ui-shell-topbar-height) + var(--ui-map-edge) + var(--ui-control-height) + var(--ui-space-6) + var(--ui-space-2));
+  bottom: var(--ui-shell-statusbar-height);
+  width: var(--compact-drawer-width, var(--ui-shell-compact-drawer-width));
+  max-height: none;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+[data-layout="compact"] .surface-search {
+  left: var(--ui-shell-compact-inset);
+  transform: translateX(calc(-100% - var(--ui-surface-offscreen-gap)));
+}
+
+[data-layout="compact"] .surface-display {
+  right: var(--ui-shell-compact-inset);
+  transform: translateX(calc(100% + var(--ui-surface-offscreen-gap)));
+}
+
+[data-layout="compact"] :is(.surface-search, .surface-display).mobile-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+[data-layout="mobile"] :is(.surface-search, .surface-display) {
+  position: fixed;
+  z-index: 100;
+  right: 0;
+  bottom: var(--mobile-nav-height);
+  left: 0;
+  width: 100%;
+  height: var(--sheet-height, var(--ui-v2-sheet-snap-half));
+  min-height: min(calc(100dvh - var(--ui-shell-topbar-height) - var(--mobile-nav-height)), max(var(--ui-v2-sheet-snap-collapsed), var(--ui-sheet-header-measured, var(--ui-surface-header-height-mobile))));
+  max-height: calc(100dvh - var(--ui-shell-topbar-height) - var(--mobile-nav-height));
+  border-radius: var(--ui-radius-sheet) var(--ui-radius-sheet) 0 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(calc(100% + var(--ui-surface-mobile-hidden-offset)));
+}
+
+[data-layout="mobile"] :is(.surface-search, .surface-display).mobile-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+[data-layout="mobile"] :is(.surface-search, .surface-display).mobile-open:is(.is-sheet-dragging, .is-sheet-settling) {
+  height: var(--sheet-drag-height, var(--sheet-height));
+  transform: translate3d(0, var(--sheet-drag-offset, 0px), 0);
+}
+
 /* source: assets/css/features/layer-panel.css */
 
 /* Layer feature states are loaded after primitives so stateful SVGs win the
@@ -1736,6 +1835,57 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 }
   .app-root .top-actions { left: auto; right: auto; position: fixed; top: calc(var(--ui-topbar-height) + var(--ui-space-3)); inset-inline-start: var(--ui-space-3);
 }}
+
+/* Search is a quick picker, not a second card list. */
+.object-search-section .layer-search-results {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+}
+
+.object-search-section .layer-search-result {
+  min-height: var(--ui-v2-control-md);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ui-space-2);
+  padding: 0 var(--ui-space-2);
+  border-color: transparent;
+  border-radius: var(--ui-radius-control);
+  background: transparent;
+}
+
+.object-search-section .layer-search-result > strong {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.object-search-section .layer-search-result > span {
+  grid-row: auto;
+  color: var(--muted);
+  font-size: var(--ui-font-caption);
+  white-space: nowrap;
+}
+
+.object-search-section .layer-search-result-icon {
+  width: var(--ui-icon-size);
+  height: var(--ui-icon-size);
+  color: var(--muted);
+}
+
+.object-search-section .layer-search-result:is(:hover, :focus-visible) {
+  border-color: transparent;
+  background: var(--surface-hover);
+}
+
+@media (max-width: 799px) {
+  .object-search-section .layer-search-result { min-height: var(--ui-touch-height); }
+}
 /* Visibility color is independent of row selection and pointer state. */
 .layer-visibility-control { color: var(--text-strong); }
 .layer-visibility-control:has(.layer-visibility-toggle:not(:checked)) { color: var(--muted); }
@@ -1812,10 +1962,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 .layer-child:hover .layer-child-menu, .layer-child:focus-within .layer-child-menu,
 .layer-child.is-selected .layer-child-menu { opacity: 1;
 }
-@media (hover: hover) and (pointer: fine) {
-  .layer-type-settings-heading:not(:hover):not(:focus-within) .layer-style-toggle[aria-expanded="false"] {
-    opacity: 0;
-}}
 .layer-type-settings-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-1);
 }
 .layer-type-settings-heading > label { flex: 1;
@@ -2088,10 +2234,10 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 .project-save-status:is(.dirty, .unsaved, [data-save-state="dirty"], [data-save-state="unsaved"]) .project-save-status-dot { background: var(--ui-v2-status-neutral-dot); }
 .project-save-status:is(.error, [data-save-state="error"]) .project-save-status-dot { background: var(--ui-v2-status-error-dot); }
 
-/* Persistent left layer dock; editor overlays the map independently. */
+/* The command surfaces float over a map-first workspace; there is no left dock. */
 [data-layout="wide"] .workspace {
-  --projection-safe-left: var(--ui-shell-left-panel-width);
-  --map-safe-left: var(--ui-shell-left-panel-width);
+  --projection-safe-left: 0px;
+  --map-safe-left: 0px;
   --map-safe-right: 0px;
 }
 
@@ -2389,6 +2535,57 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 
 .historical-library-ownership h3 {
   margin: 0;
+}
+
+/* The inspector presents object actions by intent, rather than treating
+   destructive, contextual, and dismissal controls as one icon cluster. */
+.editor-empty {
+  flex: 0 0 auto;
+  min-height: 0;
+  place-items: start;
+  padding: var(--ui-space-4) var(--ui-surface-content-rail-x);
+  text-align: left;
+}
+
+.editor-empty p { max-width: 34ch; }
+
+.surface-editor .surface-header-actions {
+  gap: var(--ui-space-1);
+}
+
+.surface-editor #objectLockBtn { color: var(--text-soft); }
+
+.surface-editor #objectDeleteBtn:not(:disabled) {
+  border-color: var(--danger-border);
+  background: var(--danger-surface);
+  color: var(--danger-text);
+}
+
+.surface-editor #mobileCloseRightBtn { margin-inline-start: var(--ui-space-1); }
+
+.editor-country-header-fields .editor-country-color-trigger {
+  width: auto;
+  min-width: var(--ui-control-height);
+  padding-inline: var(--ui-space-2);
+  gap: var(--ui-space-1);
+}
+
+.editor-country-header-fields .editor-country-color-trigger .ui-color-value {
+  display: inline;
+  max-width: 6.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-soft);
+  font-size: var(--ui-font-caption);
+}
+
+.editor-action-row > span { min-width: 0; }
+.editor-action-row > span > :is(strong, small) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 799px) {
+  .editor-country-header-fields .editor-country-color-trigger .ui-color-value { display: none; }
+  .editor-action-row > span > small { display: none; }
 }
 
 /* source: assets/css/components/panels.css */
@@ -2741,12 +2938,133 @@ body.file-menu-open .mobile-backdrop {
   pointer-events: none;
 }
 
+/* Surface controls use the same quiet hierarchy: neutral navigation, one
+   compact settings row, and only the primary workflow buttons use blue. */
+.topbar .file-menu-btn {
+  border-color: var(--ui-control-border);
+  background: var(--ui-control-bg);
+  color: var(--ui-control-text);
+}
+
+.topbar .file-menu-btn:is(:hover, .sheet-open) {
+  border-color: var(--ui-control-border-hover);
+  background: var(--ui-control-bg-hover);
+  color: var(--text-strong);
+}
+
+.map-command-toolbar {
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-1);
+  border: 1px solid var(--toolbar-border);
+  border-radius: var(--ui-radius-panel);
+  background: var(--toolbar-bg);
+  box-shadow: var(--control-shadow);
+}
+
+.map-command-toolbar .map-command-divider {
+  margin-inline: var(--ui-space-1);
+  background: var(--ui-control-border);
+}
+
+.surface-display .map-name-settings { gap: var(--ui-space-1); }
+
+.surface-display .layer-type-settings {
+  display: grid;
+  gap: var(--ui-space-1);
+}
+
+.surface-display .map-display-row {
+  position: relative;
+  min-height: var(--ui-v2-control-md);
+  display: flex;
+  align-items: center;
+  padding-inline: var(--ui-space-2);
+  border-radius: var(--ui-radius-control);
+  cursor: pointer;
+  transition: background-color .14s ease, color .14s ease;
+}
+
+.surface-display .map-display-row > label { position: relative; z-index: 1; flex: 0 1 auto; min-width: 0; }
+
+.surface-display .map-display-detail-trigger {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.surface-display .map-display-detail-trigger:focus-visible {
+  outline: 2px solid var(--ui-focus-ring);
+  outline-offset: -2px;
+}
+
+.surface-display .map-display-row:has(.map-display-detail-trigger:is(:hover, :focus-visible)):not(.is-disabled) {
+  background: var(--surface-hover);
+}
+
+.surface-display .map-display-row:has(.map-display-detail-trigger[aria-expanded="true"]) {
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-subtle));
+}
+
+.surface-display .map-display-row.is-disabled { opacity: .58; cursor: default; }
+
+.surface-display .map-display-details {
+  margin: 0;
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border: 1px solid var(--ui-control-border);
+  border-radius: var(--ui-radius-control);
+  background: var(--surface-subtle);
+}
+
+.create-menu-category {
+  display: grid;
+  gap: 2px;
+  padding-block: var(--ui-space-2);
+}
+
+.create-menu-category + .create-menu-category,
+.create-library-actions {
+  border-top: 1px solid var(--ui-control-border);
+}
+
+.create-menu-group-title {
+  padding: 0 var(--ui-space-2) var(--ui-space-1);
+  color: var(--muted);
+  font-size: var(--ui-font-caption);
+  font-weight: var(--ui-weight-semibold);
+  letter-spacing: .02em;
+}
+
+.create-menu-item {
+  min-height: var(--ui-v2-control-md);
+  border-color: transparent;
+  border-radius: var(--ui-radius-control);
+  background: transparent;
+}
+
+.create-menu-item:is(:hover, :focus-visible) {
+  border-color: transparent;
+  background: var(--surface-hover);
+}
+
+@media (max-width: 799px) {
+  .surface-display .map-display-row { min-height: var(--ui-touch-height); }
+}
+
 /* source: assets/css/components/mobile-sheets.css */
 
 /* Mobile bottom-sheet chrome and task-surface presentation. */
 
+.mobile-bottom-bar { display: none; }
+
 @media (max-width: 799px) {
   .mobile-bottom-bar {
+    display: grid;
     min-height: calc(var(--ui-mobile-bottom-nav-height) + env(safe-area-inset-bottom));
     padding-bottom: env(safe-area-inset-bottom);
     border-top: 1px solid var(--border);
@@ -2783,6 +3101,7 @@ body.file-menu-open .mobile-backdrop {
   }
 
   .workspace-surface.ui-sheet {
+    --ui-sheet-handle-visual-offset: var(--ui-space-1);
     --surface-elevated: var(--ui-v2-color-panel);
     border-top: 1px solid var(--border);
     border-radius: var(--ui-radius-sheet) var(--ui-radius-sheet) 0 0;
@@ -2809,7 +3128,7 @@ body.file-menu-open .mobile-backdrop {
     height: auto;
     display: grid;
     place-items: start center;
-    padding: var(--ui-space-2) 0 0;
+    padding: calc(var(--ui-space-2) + var(--ui-space-1)) 0 0;
     border: 0;
     background: transparent;
     box-shadow: none;
@@ -2833,6 +3152,7 @@ body.file-menu-open .mobile-backdrop {
     height: var(--ui-space-1);
     border-radius: var(--ui-radius-pill);
     background: color-mix(in srgb, var(--muted) 54%, transparent);
+    transform: translateY(var(--ui-sheet-handle-visual-offset));
     pointer-events: none;
   }
 

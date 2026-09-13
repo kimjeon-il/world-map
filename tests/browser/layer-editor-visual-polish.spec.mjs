@@ -156,7 +156,7 @@ for (const layout of layouts) {
     await page.locator('#distributionLayerModeInput').selectOption('intensity');
     await expect(page.locator('#distributionLayerModeHint')).toHaveText('선택한 분포가 많을수록 색이 진해집니다.');
     await expect(page.locator('label:has(#distributionBoundaryVisibleInput)')).toContainText('분포 경계 표시');
-    await expect(page.locator('[data-layer-style-toggle="distribution"]')).toHaveCount(0);
+    await expect(page.locator('[data-map-display-disclosure="distribution"]')).toHaveCount(0);
     await page.locator('#mapViewTabBtn').focus();
     await page.keyboard.press('ArrowLeft');
     await expect(page.locator('#mapLayersTabBtn')).toBeFocused();
