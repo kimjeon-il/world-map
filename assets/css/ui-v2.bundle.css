@@ -33,6 +33,11 @@
   --ui-v2-color-surface-elevated: #171b20;
   --ui-v2-color-surface-hover: #222931;
   --ui-v2-color-surface-hover-border: #394550;
+  --ui-v2-color-button-subtle: color-mix(in srgb, var(--ui-v2-color-text) 5%, var(--ui-v2-color-panel));
+  --ui-v2-color-button-subtle-hover: color-mix(in srgb, var(--ui-v2-color-text) 8%, var(--ui-v2-color-panel));
+  --ui-v2-color-button-subtle-pressed: color-mix(in srgb, var(--ui-v2-color-text) 12%, var(--ui-v2-color-panel));
+  --ui-v2-color-button-selected: color-mix(in srgb, var(--ui-v2-color-accent) 12%, var(--ui-v2-color-panel));
+  --ui-v2-color-button-selected-hover: color-mix(in srgb, var(--ui-v2-color-accent) 18%, var(--ui-v2-color-panel));
   --ui-v2-color-status-border: #29313a;
   --ui-v2-color-status-bg: #1d2329;
   --ui-v2-color-status-text: #c4cdd6;
@@ -146,6 +151,7 @@
   --ui-v2-radius-pill: 999px;
   --ui-v2-shadow: 0 16px 42px rgba(0, 0, 0, .28);
   --ui-v2-control-shadow: 0 16px 42px rgba(0, 0, 0, .28);
+  --ui-v2-toolbar-shadow: 0 4px 14px rgba(0, 0, 0, .18);
   --ui-v2-overlay-blur: 8px;
 
   /* Existing surface/component aliases are resolved from this token layer. */
@@ -310,9 +316,9 @@ html { font-size: 100%; }
   min-height: var(--ui-v2-control-md);
   margin: 0;
   padding: 0 var(--ui-v2-control-padding-x);
-  border: 1px solid var(--ui-control-border);
+  border: 1px solid transparent;
   border-radius: var(--ui-v2-radius-md);
-  background: var(--ui-control-bg);
+  background: var(--ui-button-subtle);
   color: var(--ui-control-text);
   font: var(--ui-v2-weight-semibold) var(--ui-v2-font-md) / var(--ui-v2-line-normal) var(--ui-v2-font-family);
   -webkit-tap-highlight-color: transparent;
@@ -342,6 +348,8 @@ html { font-size: 100%; }
   padding: 0;
   display: inline-grid;
   place-items: center;
+  border-color: transparent;
+  background: transparent;
 }
 
 .ui-button:is(.icon-btn, .ui-icon-button, .sheet-close-btn) .ui-icon {
@@ -358,12 +366,33 @@ html { font-size: 100%; }
 }
 
 :where(.ui-button):hover:not(:disabled) {
-  border-color: var(--ui-control-border-hover);
-  background: var(--ui-control-bg-hover);
+  border-color: transparent;
+  background: var(--ui-button-subtle-hover);
   color: var(--text-strong);
 }
 
-:where(.ui-button):active:not(:disabled) { background: var(--ui-control-bg-pressed); }
+:where(.ui-button):active:not(:disabled) { background: var(--ui-button-subtle-pressed); }
+
+.ui-button:is(.icon-btn, .ui-icon-button, .sheet-close-btn):is(
+  [aria-pressed="true"],
+  [aria-expanded="true"],
+  .active,
+  .sheet-open
+) {
+  border-color: transparent;
+  background: var(--ui-button-selected);
+  color: var(--accent);
+}
+
+.ui-button:is(.icon-btn, .ui-icon-button, .sheet-close-btn):is(
+  [aria-pressed="true"],
+  [aria-expanded="true"],
+  .active,
+  .sheet-open
+):hover:not(:disabled) {
+  background: var(--ui-button-selected-hover);
+  color: var(--accent);
+}
 
 .ui-button:is(.btn:not(.ghost), .create-menu-btn, .mode-primary-btn) {
   border-color: var(--accent-border);
@@ -454,24 +483,24 @@ html { font-size: 100%; }
 .danger-btn,
 .danger-ghost,
 .mode-draft-action-btn.danger {
-  border-color: var(--ui-control-border);
-  background: var(--ui-control-bg);
+  border-color: transparent;
+  background: var(--ui-button-subtle);
   color: var(--ui-control-text);
 }
 
 .danger-btn:hover:not(:disabled),
 .danger-ghost:hover:not(:disabled),
 .mode-draft-action-btn.danger:hover:not(:disabled) {
-  border-color: var(--ui-control-border-hover);
-  background: var(--ui-control-bg-hover);
-  color: var(--text-strong);
+  border-color: transparent;
+  background: color-mix(in srgb, var(--danger) 8%, var(--panel));
+  color: var(--danger-text);
 }
 .danger-btn:active:not(:disabled),
 .danger-ghost:active:not(:disabled),
 .mode-draft-action-btn.danger:active:not(:disabled) {
-  border-color: var(--ui-control-border);
-  background: var(--ui-control-bg-pressed);
-  color: var(--ui-control-text);
+  border-color: transparent;
+  background: color-mix(in srgb, var(--danger) 14%, var(--panel));
+  color: var(--danger-text);
 }
 
 .confirm-modal-actions .danger-confirm,
@@ -1260,9 +1289,9 @@ html { font-size: 100%; }
   height: var(--ui-v2-control-md);
   min-height: var(--ui-v2-control-md);
   padding: 0 var(--ui-space-2);
-  border: 1px solid var(--ui-control-border);
+  border: 1px solid transparent;
   border-radius: var(--ui-radius-control);
-  background: var(--ui-control-bg);
+  background: var(--ui-button-subtle);
   color: var(--ui-control-text);
   font-size: var(--ui-font-sm);
   font-weight: var(--ui-weight-medium);
@@ -1272,18 +1301,18 @@ html { font-size: 100%; }
 }
 
 .workflow-map-session .mode-aux-control:where(:hover:not(:disabled):not(:has(input:disabled))) {
-  border-color: var(--ui-control-border-hover);
-  background: var(--ui-control-bg-hover);
+  border-color: transparent;
+  background: var(--ui-button-subtle-hover);
 }
 
 .workflow-map-session .mode-aux-control:where(:active:not(:disabled):not(:has(input:disabled))) {
-  background: var(--ui-control-bg-pressed);
+  background: var(--ui-button-subtle-pressed);
 }
 
 .workflow-map-session .mode-aux-control:is([aria-pressed="true"], :has(input:checked)) {
-  border-color: var(--accent-border);
-  background: var(--accent-surface);
-  color: var(--accent-text);
+  border-color: transparent;
+  background: var(--ui-button-selected);
+  color: var(--accent);
 }
 
 .workflow-map-session .mode-aux-control:is(:focus-visible, :has(input:focus-visible)) {
@@ -1344,8 +1373,8 @@ html { font-size: 100%; }
 .workflow-map-session .mode-button-label { white-space: nowrap; }
 
 .workflow-map-session .mode-cancel-btn {
-  border-color: var(--ui-control-border);
-  background: var(--ui-control-bg);
+  border-color: transparent;
+  background: var(--ui-button-subtle);
   color: var(--ui-control-text);
 }
 
@@ -1455,16 +1484,16 @@ html { font-size: 100%; }
   justify-items: start;
   gap: var(--ui-space-0-5);
   padding: var(--ui-space-2) var(--ui-space-3);
-  border-color: var(--ui-control-border);
-  background: var(--ui-control-bg);
+  border-color: transparent;
+  background: var(--ui-button-subtle);
   color: var(--text-strong);
   text-align: left;
 }
 
 .workflow-dialog--decision .workflow-decision-option:hover,
 .workflow-dialog--decision .workflow-decision-option:focus-visible {
-  border-color: var(--ui-control-border-hover);
-  background: var(--ui-control-bg-hover);
+  border-color: transparent;
+  background: var(--ui-button-subtle-hover);
   color: var(--text-strong);
 }
 
@@ -2454,7 +2483,7 @@ body.file-menu-open .app-root .topbar { z-index: 150;
     border: 1px solid var(--toolbar-border);
     border-radius: var(--ui-v2-radius-lg);
     background: var(--toolbar-bg);
-    box-shadow: var(--control-shadow);
+    box-shadow: var(--ui-v2-toolbar-shadow);
   }
 
   [data-layout="wide"] .map-view-toolbar .icon-btn {
@@ -2502,9 +2531,29 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 
 .surface-editor .editor-object-command--lock { color: var(--text-soft); }
 
+.surface-editor .editor-object-command--lock[aria-pressed="true"] {
+  background: var(--ui-button-selected);
+  color: var(--accent);
+}
+
 .surface-editor .editor-object-command--delete:not(:disabled) {
-  border-color: var(--danger-border);
-  background: var(--danger-surface);
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-soft);
+}
+
+.surface-editor .editor-object-command--delete:is(:hover, :focus-visible):not(:disabled) {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--danger) 8%, var(--panel));
+  color: var(--danger-text);
+}
+
+.surface-editor .distribution-entry-delete:not(:disabled) {
+  color: var(--text-soft);
+}
+
+.surface-editor .distribution-entry-delete:is(:hover, :focus-visible):not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 8%, var(--panel));
   color: var(--danger-text);
 }
 
@@ -2609,9 +2658,9 @@ body.file-menu-open .app-root .topbar { z-index: 150;
   justify-content: center;
   gap: var(--ui-space-2);
   padding-inline: var(--ui-space-3);
-  border: 1px solid var(--ui-control-border);
+  border: 1px solid transparent;
   border-radius: var(--ui-radius-control);
-  background: var(--ui-control-bg);
+  background: var(--ui-button-subtle);
   color: var(--muted);
 }
 
@@ -2632,16 +2681,16 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 }
 
 .map-view-projection-slot .projection-btn:is(.active, [aria-pressed="true"]) {
-  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
-  background: color-mix(in srgb, var(--accent) 10%, var(--ui-control-bg));
+  border-color: transparent;
+  background: var(--ui-button-selected);
   color: var(--text-strong);
 }
 
 .map-view-projection-slot .projection-btn:is(.active, [aria-pressed="true"]) .ui-icon { color: var(--accent); }
 
 .map-view-projection-slot .projection-btn:is(.active, [aria-pressed="true"]):hover {
-  border-color: color-mix(in srgb, var(--accent) 36%, var(--border));
-  background: color-mix(in srgb, var(--accent) 13%, var(--ui-control-bg));
+  border-color: transparent;
+  background: var(--ui-button-selected-hover);
   color: var(--text-strong);
 }
 
@@ -2888,14 +2937,14 @@ body.file-menu-open .mobile-backdrop {
 /* Surface controls use the same quiet hierarchy: neutral navigation, one
    compact settings row, and only the primary workflow buttons use blue. */
 .topbar .file-menu-btn {
-  border-color: var(--ui-control-border);
-  background: var(--ui-control-bg);
+  border-color: transparent;
+  background: var(--ui-button-subtle);
   color: var(--ui-control-text);
 }
 
 .topbar .file-menu-btn:is(:hover, .sheet-open) {
-  border-color: var(--ui-control-border-hover);
-  background: var(--ui-control-bg-hover);
+  border-color: transparent;
+  background: var(--ui-button-subtle-hover);
   color: var(--text-strong);
 }
 
@@ -2905,7 +2954,7 @@ body.file-menu-open .mobile-backdrop {
   border: 1px solid var(--toolbar-border);
   border-radius: var(--ui-radius-panel);
   background: var(--toolbar-bg);
-  box-shadow: var(--control-shadow);
+  box-shadow: var(--ui-v2-toolbar-shadow);
 }
 
 .map-command-toolbar .map-command-divider {
@@ -3507,6 +3556,15 @@ body.file-menu-open .mobile-backdrop {
 }
 
 @media (forced-colors: active) {
+  :where(.ui-button) {
+    border-color: ButtonText;
+  }
+
+  :where(.ui-button):is([aria-pressed="true"], [aria-expanded="true"], .active, .sheet-open) {
+    border-color: Highlight;
+    color: Highlight;
+  }
+
   :where(.ui-button):focus-visible,
   [role="option"]:focus-visible,
   [role="menuitem"]:focus-visible,

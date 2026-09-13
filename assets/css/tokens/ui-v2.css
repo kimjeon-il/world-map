@@ -27,6 +27,11 @@
   --ui-v2-color-surface-elevated: #171b20;
   --ui-v2-color-surface-hover: #222931;
   --ui-v2-color-surface-hover-border: #394550;
+  --ui-v2-color-button-subtle: color-mix(in srgb, var(--ui-v2-color-text) 5%, var(--ui-v2-color-panel));
+  --ui-v2-color-button-subtle-hover: color-mix(in srgb, var(--ui-v2-color-text) 8%, var(--ui-v2-color-panel));
+  --ui-v2-color-button-subtle-pressed: color-mix(in srgb, var(--ui-v2-color-text) 12%, var(--ui-v2-color-panel));
+  --ui-v2-color-button-selected: color-mix(in srgb, var(--ui-v2-color-accent) 12%, var(--ui-v2-color-panel));
+  --ui-v2-color-button-selected-hover: color-mix(in srgb, var(--ui-v2-color-accent) 18%, var(--ui-v2-color-panel));
   --ui-v2-color-status-border: #29313a;
   --ui-v2-color-status-bg: #1d2329;
   --ui-v2-color-status-text: #c4cdd6;
@@ -140,6 +145,7 @@
   --ui-v2-radius-pill: 999px;
   --ui-v2-shadow: 0 16px 42px rgba(0, 0, 0, .28);
   --ui-v2-control-shadow: 0 16px 42px rgba(0, 0, 0, .28);
+  --ui-v2-toolbar-shadow: 0 4px 14px rgba(0, 0, 0, .18);
   --ui-v2-overlay-blur: 8px;
 
   /* Existing surface/component aliases are resolved from this token layer. */
