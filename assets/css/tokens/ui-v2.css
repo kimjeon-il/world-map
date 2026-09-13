@@ -154,6 +154,8 @@
   --ui-surface-compact-drawer-width: min(20rem, calc(100vw - 1rem));
   --ui-shell-compact-drawer-width: var(--ui-surface-compact-drawer-width);
   --ui-shell-compact-inset: 0.5rem;
+  --ui-transient-surface-width: 21.25rem;
+  --ui-transient-surface-max-height: 42.5rem;
   --ui-surface-motion-duration: 170ms;
   --ui-surface-offscreen-gap: var(--ui-v2-space-5);
   --ui-surface-mobile-hidden-offset: 2px;

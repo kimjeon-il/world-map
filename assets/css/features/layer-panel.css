@@ -45,56 +45,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
   .app-root .top-actions { left: auto; right: auto; position: fixed; top: calc(var(--ui-topbar-height) + var(--ui-space-3)); inset-inline-start: var(--ui-space-3);
 }}
 
-/* Search is a quick picker, not a second card list. */
-.object-search-section .layer-search-results {
-  display: grid;
-  align-content: start;
-  gap: 2px;
-}
-
-.object-search-section .layer-search-result {
-  min-height: var(--ui-v2-control-md);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--ui-space-2);
-  padding: 0 var(--ui-space-2);
-  border-color: transparent;
-  border-radius: var(--ui-radius-control);
-  background: transparent;
-}
-
-.object-search-section .layer-search-result > strong {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.object-search-section .layer-search-result > span {
-  grid-row: auto;
-  color: var(--muted);
-  font-size: var(--ui-font-caption);
-  white-space: nowrap;
-}
-
-.object-search-section .layer-search-result-icon {
-  width: var(--ui-icon-size);
-  height: var(--ui-icon-size);
-  color: var(--muted);
-}
-
-.object-search-section .layer-search-result:is(:hover, :focus-visible) {
-  border-color: transparent;
-  background: var(--surface-hover);
-}
-
-@media (max-width: 799px) {
-  .object-search-section .layer-search-result { min-height: var(--ui-touch-height); }
-}
 /* Visibility color is independent of row selection and pointer state. */
 .layer-visibility-control { color: var(--text-strong); }
 .layer-visibility-control:has(.layer-visibility-toggle:not(:checked)) { color: var(--muted); }

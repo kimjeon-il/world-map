@@ -160,6 +160,8 @@
   --ui-surface-compact-drawer-width: min(20rem, calc(100vw - 1rem));
   --ui-shell-compact-drawer-width: var(--ui-surface-compact-drawer-width);
   --ui-shell-compact-inset: 0.5rem;
+  --ui-transient-surface-width: 21.25rem;
+  --ui-transient-surface-max-height: 42.5rem;
   --ui-surface-motion-duration: 170ms;
   --ui-surface-offscreen-gap: var(--ui-v2-space-5);
   --ui-surface-mobile-hidden-offset: 2px;
@@ -1695,10 +1697,6 @@ html { font-size: 100%; }
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
-  background: var(--surface-elevated);
-  border: var(--ui-border-width) solid var(--border);
-  border-radius: var(--ui-radius-panel);
-  box-shadow: var(--control-shadow);
   transition: transform 170ms ease, opacity 170ms ease, visibility 170ms;
 }
 
@@ -1714,8 +1712,8 @@ html { font-size: 100%; }
   /* Keep the transient surface below the map command bar rather than covering it. */
   top: calc(var(--ui-shell-topbar-height) + var(--ui-map-edge) + var(--ui-control-height) + var(--ui-space-6) + var(--ui-space-2));
   left: calc(var(--ui-map-edge) + var(--ui-popover-screen-edge));
-  width: min(340px, calc(100vw - var(--ui-popover-screen-edge) * 2));
-  max-height: min(680px, calc(100dvh - var(--ui-shell-topbar-height) - var(--ui-shell-statusbar-height) - var(--ui-space-6)));
+  width: min(var(--ui-transient-surface-width), calc(100vw - var(--ui-popover-screen-edge) * 2));
+  max-height: min(var(--ui-transient-surface-max-height), calc(100dvh - var(--ui-shell-topbar-height) - var(--ui-shell-statusbar-height) - var(--ui-space-6)));
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -1768,7 +1766,6 @@ html { font-size: 100%; }
   height: var(--sheet-height, var(--ui-v2-sheet-snap-half));
   min-height: min(calc(100dvh - var(--ui-shell-topbar-height) - var(--mobile-nav-height)), max(var(--ui-v2-sheet-snap-collapsed), var(--ui-sheet-header-measured, var(--ui-surface-header-height-mobile))));
   max-height: calc(100dvh - var(--ui-shell-topbar-height) - var(--mobile-nav-height));
-  border-radius: var(--ui-radius-sheet) var(--ui-radius-sheet) 0 0;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -1836,56 +1833,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
   .app-root .top-actions { left: auto; right: auto; position: fixed; top: calc(var(--ui-topbar-height) + var(--ui-space-3)); inset-inline-start: var(--ui-space-3);
 }}
 
-/* Search is a quick picker, not a second card list. */
-.object-search-section .layer-search-results {
-  display: grid;
-  align-content: start;
-  gap: 2px;
-}
-
-.object-search-section .layer-search-result {
-  min-height: var(--ui-v2-control-md);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--ui-space-2);
-  padding: 0 var(--ui-space-2);
-  border-color: transparent;
-  border-radius: var(--ui-radius-control);
-  background: transparent;
-}
-
-.object-search-section .layer-search-result > strong {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.object-search-section .layer-search-result > span {
-  grid-row: auto;
-  color: var(--muted);
-  font-size: var(--ui-font-caption);
-  white-space: nowrap;
-}
-
-.object-search-section .layer-search-result-icon {
-  width: var(--ui-icon-size);
-  height: var(--ui-icon-size);
-  color: var(--muted);
-}
-
-.object-search-section .layer-search-result:is(:hover, :focus-visible) {
-  border-color: transparent;
-  background: var(--surface-hover);
-}
-
-@media (max-width: 799px) {
-  .object-search-section .layer-search-result { min-height: var(--ui-touch-height); }
-}
 /* Visibility color is independent of row selection and pointer state. */
 .layer-visibility-control { color: var(--text-strong); }
 .layer-visibility-control:has(.layer-visibility-toggle:not(:checked)) { color: var(--muted); }
@@ -2522,10 +2469,10 @@ body.file-menu-open .app-root .topbar { z-index: 150;
   min-height: 0;
   max-height: 45dvh;
   overflow-y: auto;
-  padding: 12px;
+  padding: var(--ui-space-5);
   border-top: 1px solid var(--border);
   display: grid;
-  gap: 12px;
+  gap: var(--ui-space-5);
   flex-shrink: 0;
 }
 
@@ -2553,15 +2500,15 @@ body.file-menu-open .app-root .topbar { z-index: 150;
   gap: var(--ui-space-1);
 }
 
-.surface-editor #objectLockBtn { color: var(--text-soft); }
+.surface-editor .editor-object-command--lock { color: var(--text-soft); }
 
-.surface-editor #objectDeleteBtn:not(:disabled) {
+.surface-editor .editor-object-command--delete:not(:disabled) {
   border-color: var(--danger-border);
   background: var(--danger-surface);
   color: var(--danger-text);
 }
 
-.surface-editor #mobileCloseRightBtn { margin-inline-start: var(--ui-space-1); }
+.surface-editor .editor-surface-close { margin-inline-start: var(--ui-space-1); }
 
 .editor-country-header-fields .editor-country-color-trigger {
   width: auto;
@@ -2731,7 +2678,7 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 }
 .map-name-settings .layer-type-settings .ui-radio-toggle > input[type="checkbox"]:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: var(--ui-v2-focus-offset);
 }
 
 .map-view-settings .ui-choice-copy {
@@ -3000,7 +2947,7 @@ body.file-menu-open .mobile-backdrop {
 
 .surface-display .map-display-detail-trigger:focus-visible {
   outline: 2px solid var(--ui-focus-ring);
-  outline-offset: -2px;
+  outline-offset: calc(-1 * var(--ui-v2-focus-offset));
 }
 
 .surface-display .map-display-row:has(.map-display-detail-trigger:is(:hover, :focus-visible)):not(.is-disabled) {
@@ -3023,7 +2970,7 @@ body.file-menu-open .mobile-backdrop {
 
 .create-menu-category {
   display: grid;
-  gap: 2px;
+  gap: var(--ui-space-0-5);
   padding-block: var(--ui-space-2);
 }
 
@@ -3052,8 +2999,67 @@ body.file-menu-open .mobile-backdrop {
   background: var(--surface-hover);
 }
 
+.surface-search,
+.surface-display {
+  background: var(--surface-elevated);
+  border: var(--ui-border-width) solid var(--border);
+  border-radius: var(--ui-radius-panel);
+  box-shadow: var(--control-shadow);
+}
+
+/* Search is a quick picker, not a second card list. */
+.object-search-section .layer-search-results {
+  display: grid;
+  align-content: start;
+  gap: var(--ui-space-0-5);
+}
+
+.object-search-section .layer-search-result {
+  min-height: var(--ui-v2-control-md);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ui-space-2);
+  padding: 0 var(--ui-space-2);
+  border-color: transparent;
+  border-radius: var(--ui-radius-control);
+  background: transparent;
+}
+
+.object-search-section .layer-search-result > strong {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.object-search-section .layer-search-result > span {
+  grid-row: auto;
+  color: var(--muted);
+  font-size: var(--ui-font-caption);
+  white-space: nowrap;
+}
+
+.object-search-section .layer-search-result-icon {
+  width: var(--ui-icon-size);
+  height: var(--ui-icon-size);
+  color: var(--muted);
+}
+
+.object-search-section .layer-search-result:is(:hover, :focus-visible) {
+  border-color: transparent;
+  background: var(--surface-hover);
+}
+
 @media (max-width: 799px) {
   .surface-display .map-display-row { min-height: var(--ui-touch-height); }
+  [data-layout="mobile"] :is(.surface-search, .surface-display) {
+    border-radius: var(--ui-radius-sheet) var(--ui-radius-sheet) 0 0;
+  }
+  .object-search-section .layer-search-result { min-height: var(--ui-touch-height); }
 }
 
 /* source: assets/css/components/mobile-sheets.css */
