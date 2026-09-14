@@ -26,6 +26,7 @@ export function createHistoricalLibraryController({
   let requestGeneration = 0;
   let ownershipChoices = null;
   let confirmedImpact = '';
+  let flagPicker = null;
 
   function resetOwnership() {
     ownershipChoices = null;
@@ -173,6 +174,30 @@ export function createHistoricalLibraryController({
     const selectedRow = [...elements.results.querySelectorAll('[data-library-entity-id]')].find(row => row.dataset.libraryEntityId === selectedId);
     selectedRow?.insertAdjacentElement?.('afterend', elements.preview);
     const entity = service.get(selectedId);
+    if (flagPicker) {
+      const flagUrl = String(entity?.metadata?.defaultFlagDataUrl || '').trim();
+      if (!entity) {
+        elements.preview.hidden = true;
+        elements.add.disabled = true;
+        return;
+      }
+      elements.preview.hidden = false;
+      const title = document.createElement('h3');
+      title.className = 'historical-library-preview-title';
+      title.textContent = entity.displayNames?.ko || entity.canonicalName;
+      const help = document.createElement('p');
+      help.className = 'editor-help';
+      help.textContent = flagUrl ? '이 항목의 기본 국기를 적용합니다.' : '이 항목에는 기본 국기가 없습니다.';
+      elements.preview.replaceChildren(title, help);
+      elements.add.disabled = !flagUrl;
+      elements.addOptions?.classList.add('hidden');
+      elements.optionsBack?.classList.add('hidden');
+      elements.card?.classList.remove('is-detail', 'is-options');
+      elements.add.textContent = '적용';
+      elements.add.setAttribute('aria-label', '선택한 라이브러리 국기 적용');
+      elements.add.dataset.tooltip = '선택한 라이브러리 국기 적용';
+      return;
+    }
     const automaticVersion = entity ? selectGeometryVersion(entity, elements.year.value) : null;
     const version = entity?.geometryVersions?.find(candidate => candidate.id === selectedVersionId) || automaticVersion;
     if (!entity || !version) {
@@ -273,7 +298,7 @@ export function createHistoricalLibraryController({
   }
 
   function renderResults() {
-    const results = searchResults();
+    const results = searchResults().filter(entity => !flagPicker || String(entity.metadata?.defaultFlagDataUrl || '').trim());
     const fragment = document.createDocumentFragment();
     for (const entity of results) {
       const button = document.createElement('button');
@@ -302,7 +327,11 @@ export function createHistoricalLibraryController({
       } else button.append(strong, small);
       fragment.appendChild(button);
     }
-    if (!results.length) fragment.appendChild(createEmptyState('조건에 맞는 항목이 없습니다.', '검색어, 종류, 상태 또는 기준 연도를 바꿔 보세요.', { compact: true }));
+    if (!results.length) fragment.appendChild(createEmptyState(
+      flagPicker ? '국기가 있는 항목이 없습니다.' : '조건에 맞는 항목이 없습니다.',
+      flagPicker ? '검색어, 종류, 상태 또는 기준 연도를 바꿔 보세요.' : '검색어, 종류, 상태 또는 기준 연도를 바꿔 보세요.',
+      { compact: true },
+    ));
     elements.results.replaceChildren(fragment);
     const options = [...elements.results.querySelectorAll('[data-library-entity-id]')];
     if (options.length && !options.some(option => option.tabIndex === 0)) options[0].tabIndex = 0;
@@ -331,10 +360,14 @@ export function createHistoricalLibraryController({
     resetOwnership();
     elements.modal.classList.add('hidden');
     elements.card?.classList.remove('is-detail', 'is-options');
-    focusSurfaceTrigger('create');
+    const restoreFocus = flagPicker?.restoreFocus;
+    flagPicker = null;
+    if (restoreFocus?.focus) restoreFocus.focus({ preventScroll: true });
+    else focusSurfaceTrigger('create');
   }
 
-  async function open() {
+  async function open({ onPickFlag = null, restoreFocus = null } = {}) {
+    flagPicker = typeof onPickFlag === 'function' ? { onPickFlag, restoreFocus } : null;
     closeSurface('create');
     elements.modal.classList.remove('hidden');
     setLoadingState(true);
@@ -420,8 +453,20 @@ export function createHistoricalLibraryController({
     }
   }
 
+  function applySelectedFlag() {
+    const selected = flagPicker;
+    const flagUrl = String(service.get(selectedId)?.metadata?.defaultFlagDataUrl || '').trim();
+    if (!selected?.onPickFlag || !flagUrl) return;
+    close();
+    selected.onPickFlag(flagUrl);
+  }
+
   function advanceAdd() {
     if (!selectedId) return;
+    if (flagPicker) {
+      applySelectedFlag();
+      return;
+    }
     void addSelected();
   }
 

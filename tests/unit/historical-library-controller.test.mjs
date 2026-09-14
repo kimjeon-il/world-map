@@ -210,6 +210,39 @@ test('historical library controller owns modal loading and close focus', async (
   assert.equal(reportedErrors, 1);
 });
 
+test('historical library can apply a selected default flag without importing its geometry', async () => {
+  const document = {
+    defaultView: { Event: class { constructor(type) { this.type = type; } } },
+    createElement() { return fakeElement(document); },
+    createDocumentFragment() { return fakeElement(document); },
+  };
+  const names = [
+    'open', 'modal', 'card', 'close', 'backdrop', 'search', 'clearSearch', 'type', 'status', 'year', 'geographicRegion',
+    'results', 'preview', 'snapshot', 'snapshotButton', 'childDepth', 'add', 'addOptions', 'optionsBack',
+  ];
+  const elements = Object.fromEntries(names.map(name => [name, fakeElement(document)]));
+  const entity = {
+    libraryId: 'flagged', canonicalName: 'Flagged', displayNames: { ko: '국기 항목' },
+    metadata: { defaultFlagDataUrl: 'data:image/svg+xml;base64,flag' }, geometryVersions: [],
+  };
+  const applied = [];
+  const restoreFocus = fakeElement(document);
+  const controller = createHistoricalLibraryController({
+    document, elements,
+    service: { load: async () => {}, list: () => [entity], search: () => [entity], snapshots: () => [], get: id => id === entity.libraryId ? entity : null },
+    typeLabels: {}, selectGeometryVersion: () => null, renderMapPreview: () => fakeElement(document), createEmptyState: () => fakeElement(document),
+    replaceSelectOptions() {}, collator: new Intl.Collator('ko'), shouldShowTerritorialParentChoice,
+    closeSurface() {}, focusSurfaceTrigger() {}, instantiate() { throw new Error('geometry import must not run'); }, confirm() {}, setStatus() {}, reportError(error) { throw error; }, requestFrame: fn => fn(),
+  });
+  controller.connect();
+  await controller.open({ onPickFlag: value => applied.push(value), restoreFocus });
+  controller.select(entity.libraryId);
+  assert.equal(elements.add.textContent, '적용');
+  elements.add.click();
+  assert.deepEqual(applied, ['data:image/svg+xml;base64,flag']);
+  assert.equal(restoreFocus.focused, true);
+});
+
 test('historical library controller locks controls while async instantiation runs and keeps modal open on failure', async () => {
   const document = {
     defaultView: { Event: class { constructor(type) { this.type = type; } } },
