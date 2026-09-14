@@ -34,7 +34,8 @@
       "metadata": {
         "geographicRegion": "Europe",
         "pilot": true,
-        "approximateGeometry": true
+        "approximateGeometry": true,
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzIDIiIGlkPSJmbGFnLWN6ZWNob3Nsb3Zha2lhIj48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMCAwaDN2MUgweiIvPjxwYXRoIGZpbGw9IiNkNzE0MWEiIGQ9Ik0wIDFoM3YxSDB6Ii8+PHBhdGggZmlsbD0iIzExNDU3ZSIgZD0iTTAgMHYybDEuNS0xeiIvPjwvc3ZnPg=="
       },
       "sourceInfo": {
         "title": "판도연구소 pilot derived from Natural Earth 5.1.1 successor states",
@@ -163000,7 +163001,8 @@
         "geographicRegion": "Europe",
         "pilot": true,
         "approximateGeometry": true,
-        "referenceDate": "2014-03-17"
+        "referenceDate": "2014-03-17",
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzIDIiIGlkPSJmbGFnLXVrcmFpbmUiPjxwYXRoIGZpbGw9IiMwMDU3YjciIGQ9Ik0wIDBoM3YxSDB6Ii8+PHBhdGggZmlsbD0iI2ZmZDcwMCIgZD0iTTAgMWgzdjFIMHoiLz48L3N2Zz4="
       },
       "sourceInfo": {
         "title": "Natural Earth 5.1.1 Admin 0 with historical territory adjustment",
@@ -163096,7 +163098,8 @@
       "metadata": {
         "geographicRegion": "Europe",
         "pilot": true,
-        "approximateGeometry": true
+        "approximateGeometry": true,
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyIDEiIGlkPSJmbGFnLXl1Z29zbGF2aWEiPjxwYXRoIGZpbGw9IiMwMDM4OTMiIGQ9Ik0wIDBoMnYuMzMzSDB6Ii8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgLjMzM2gydi4zMzRIMHoiLz48cGF0aCBmaWxsPSIjZGQwMDAwIiBkPSJNMCAuNjY3aDJ2LjMzM0gweiIvPjxwYXRoIGZpbGw9IiNkZDAwMDAiIHN0cm9rZT0iI2Y1YmYyMiIgc3Ryb2tlLXdpZHRoPSIuMDI1IiBkPSJtMSAuMjM1LjA2LjE4aC4xOWwtLjE1NS4xMS4wNi4xOEwxIC41OTUuODQ1LjcwNWwuMDYtLjE4TC43NS40MTVoLjE5eiIvPjwvc3ZnPg=="
       },
       "sourceInfo": {
         "title": "Natural Earth 5.1.1 Admin 0 with historical Yugoslav state versions",
@@ -163150,7 +163153,8 @@
         "geographicRegion": "Africa",
         "pilot": true,
         "approximateGeometry": true,
-        "referenceDate": "2010"
+        "referenceDate": "2010",
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyIDEiIGlkPSJmbGFnLXN1ZGFuIj48cGF0aCBmaWxsPSIjZDIxMDM0IiBkPSJNMCAwaDJ2LjMzM0gweiIvPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0wIC4zMzNoMnYuMzM0SDB6Ii8+PHBhdGggZD0iTTAgLjY2N2gyVjFIMHoiLz48cGF0aCBmaWxsPSIjMDA3MjI5IiBkPSJNMCAwdjFsLjctLjV6Ii8+PC9zdmc+"
       },
       "sourceInfo": {
         "title": "Natural Earth 5.1.1 Admin 0 with historical territory adjustment",
@@ -163203,7 +163207,8 @@
         "geographicRegion": "Asia",
         "pilot": true,
         "approximateGeometry": true,
-        "referenceDate": "2001"
+        "referenceDate": "2001",
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzIDIiIGlkPSJmbGFnLWluZG9uZXNpYSI+PHBhdGggZmlsbD0iI2NlMTEyNiIgZD0iTTAgMGgzdjFIMHoiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMCAxaDN2MUgweiIvPjwvc3ZnPg=="
       },
       "sourceInfo": {
         "title": "Natural Earth 5.1.1 Admin 0 with historical territory adjustment",
@@ -211126,7 +211131,8 @@
         "pilot": true,
         "approximateGeometry": true,
         "referenceDate": "1989-04-25",
-        "dissolutionDate": "1990-10-03"
+        "dissolutionDate": "1990-10-03",
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1IDMiIGlkPSJmbGFnLWdkciI+PHBhdGggZD0iTTAgMGg1djFIMHoiLz48cGF0aCBmaWxsPSIjZGQwMDAwIiBkPSJNMCAxaDV2MUgweiIvPjxwYXRoIGZpbGw9IiNmZmNlMDAiIGQ9Ik0wIDJoNXYxSDB6Ii8+PGcgc3Ryb2tlPSIjZmZjZTAwIiBzdHJva2Utd2lkdGg9Ii4wNTUiIGZpbGw9Im5vbmUiPjxjaXJjbGUgY3g9IjIuNSIgY3k9IjEuNSIgcj0iLjQ2Ii8+PHBhdGggZD0iTTIuNSAxLjA0di43Mm0tLjI4LS4yOC41Ni0uMTZNMi4xOCAxLjQ4bC42NC4xOCIvPjwvZz48cGF0aCBmaWxsPSIjZmZjZTAwIiBkPSJNMi4zNSAxLjU1aC4zdi4zMmgtLjN6Ii8+PC9zdmc+"
       },
       "sourceInfo": {
         "title": "Natural Earth Admin 1 v5.1.1, BKG VG250, Berlin Open Data Wall 1989",
@@ -213283,7 +213289,7 @@
         "geographicRegion": "Asia",
         "pilot": true,
         "approximateGeometry": true,
-        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5MDAgNjAwIj48cmVjdCB3aWR0aD0iOTAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Q5MDAwMCIvPjxyZWN0IHk9IjIwMCIgd2lkdGg9IjkwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMwMDMzYTAiLz48cmVjdCB5PSI0MDAiIHdpZHRoPSI5MDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZjJhODAwIi8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgMjAwaDM5MHYzNGgtNzB2MzJoNzB2MzRoLTcwdjMyaDcwdjM0aC03MHYzMmg3MHYzNGgtNzB2MzRoNzB2MzRIMHoiLz48L3N2Zz4="
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDM2IDE4Ij4KPHBhdGggZmlsbD0iI0YyQTgwMCIgZD0iTTAgMGgzNnYxOEgweiIvPgo8cGF0aCBmaWxsPSIjRDkwMDEyIiBkPSJNMCAwaDM2djlIMHoiLz4KPHBhdGggZmlsbD0iIzAwMzNBMCIgZD0iTTAgNmgyMWwyLjIgMi4yIDQuNS00LjUgMi4zIDIuM2g2djZoLTZsLTIuMyAyLjMtNC41LTQuNS0yLjIgMi4ySDB6Ii8+CjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik0zNiAwaC02djJoLTN2MmgtM3YyaC0zdjJoLTN2MmgzdjJoM3YyaDN2MmgzdjJoNnYtMmgtM3YtMmgtM3YtMmgtM3YtMmgtM1Y4aDNWNmgzVjRoM1YyaDN6Ii8+Cjwvc3ZnPg=="
       },
       "sourceInfo": {
         "title": "Natural Earth Admin 0 – Breakaway, Disputed Areas v4.1.0/v5.1.1",
