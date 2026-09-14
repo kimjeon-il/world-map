@@ -70,7 +70,7 @@ export function createHistoricalLibraryController({
       choice.countryId = countryChoice.value;
       const countryRow = field('소속 국가', country);
       const parent = document.createElement('select');
-      const parentRow = field('상위 소속', parent);
+      const parentRow = field('상위 단위', parent);
       const name = document.createElement('input');
       name.value = item.name;
       const nameRow = field('국가 이름', name);
@@ -81,7 +81,7 @@ export function createHistoricalLibraryController({
         const candidates = context.parents(country.value);
         const options = candidates.length
           ? candidates
-          : [{ value: '', label: '상위 소속 선택', placeholder: true }];
+          : [{ value: '', label: '상위 단위 선택', placeholder: true }];
         const parentChoice = replaceSelectOptions(parent, options, choice.parentId, { autoSelectSingle: true }) || { value: parent.value };
         choice.parentId = parentChoice.value;
         countryRow.hidden = mode.value === 'country' || countryChoice.single;

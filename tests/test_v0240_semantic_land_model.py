@@ -47,7 +47,7 @@ class V0240TerritorialUnitModelTests(unittest.TestCase):
             "runTerritorialTransaction", "parentCreatesCycle",
         ):
             self.assertIn(f"function {symbol}", MODEL)
-        self.assertIn("isRemainder", MODEL)
+        self.assertNotIn("isRemainder", MODEL)
         for operation in ("transferGeometry", "mergeUnits", "splitUnit", "editBoundary"):
             self.assertIn(f"function {operation}", GEOMETRY)
 

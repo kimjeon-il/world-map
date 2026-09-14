@@ -14,7 +14,7 @@ test('Subunit editor and creation use one desktop/mobile surface', async ({ page
   await expect(page.locator('#addSubunitBtn')).toHaveCount(1);
   await expect(page.locator('#addTerritoryBtn, #addAdministrativeBtn, #territoryProperties, #administrativeProperties')).toHaveCount(0);
   await page.evaluate(() => window.PANDOLAB_TERRITORIAL.select('country', 'DEU'));
-  await page.locator('#addSubunitBtn').evaluate(button => button.click());
+  await page.locator('#addCountrySubunitBtn').evaluate(button => button.click());
   await expect(page.locator('#editorTaskSlot #territorialCreateSetup')).toBeVisible();
   await expect(page.locator('#modeTaskName')).toContainText('하위단위 추가 1단계');
   await expect(page.locator('#territorialCreateNameLabel')).toHaveText('하위단위명');
@@ -45,9 +45,8 @@ test('Subunit editor and creation use one desktop/mobile surface', async ({ page
   });
   await expect(page.locator('#subunitProperties')).toBeVisible();
   await expect(page.locator('#subunitNameInput')).toHaveValue('하위단위 검증');
-  await page.locator('#subunitLevelInput').fill('2');
-  await page.locator('#subunitLevelInput').press('Tab');
-  await expect.poll(() => page.evaluate(key => window.PANDOLAB_TERRITORIAL.get(key).properties.adminLevel, id)).toBe(2);
+  await expect(page.locator('#subunitLevelInput')).toHaveCount(0);
+  expect(await page.evaluate(key => Object.hasOwn(window.PANDOLAB_TERRITORIAL.get(key).properties, 'adminLevel'), id)).toBe(false);
   const originalColor = await page.locator('#subunitColorInput').inputValue();
   await page.evaluate(key => window.PANDOLAB_TERRITORIAL.setColor('subunit', key, '#ff9900'), id);
   await expect(page.locator('#subunitColorInput')).toHaveValue('#ff9900');

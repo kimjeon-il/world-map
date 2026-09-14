@@ -38,7 +38,7 @@ test('public territorial types and creation registry contain exactly Country/Sub
   for (const type of ['territory', 'admin']) assert.throws(() => createTerritorialFeature({ id: type, unitType: type, geometry: geometry() }));
 });
 
-test('v4 conversion preserves identity, coordinates, independent remainder families and country policy', () => {
+test('v4 conversion preserves identity, coordinates, parent relationships and country policy', () => {
   const input = oldProject(), before = structuredClone(input);
   const output = migrateProjectV4ToV5(input);
   assert.deepEqual(input, before);
@@ -66,18 +66,18 @@ test('arbitrary user metadata strings are not rewritten', () => {
   assert.equal(migrateProjectV4ToV5(input).territorialUnits[0].properties.metadata.notes, 'territorial:admin:my-notes');
 });
 
-test('new parent relations reject Region, unchanged legacy parent is preserved', () => {
+test('Region parents are invalid even when the relation was already stored', () => {
   const region = createTerritorialFeature({ id: 'r', unitType: 'region', geometry: geometry() });
   const subunit = unit('s', 'r');
   assert.equal(validateSubunitParentChanges([], [region, subunit], id => id === 'DNK').ok, false);
-  assert.equal(validateSubunitParentChanges([region, subunit], [region, subunit], id => id === 'DNK').ok, true);
+  assert.equal(validateSubunitParentChanges([region, subunit], [region, subunit], id => id === 'DNK').ok, false);
   assert.equal(validateSubunitParentChanges([], [unit('s')], id => id === 'DNK').ok, true);
 });
 
-test('rank is optional, nested subunits and cycle checks remain available', () => {
+test('rank is discarded while nested subunits and cycle checks remain available', () => {
   const parent = unit('p'), child = unit('c', 'p', { adminLevel: 8 });
-  assert.equal(parent.properties.adminLevel, null);
-  assert.equal(normalizeTerritorialUnits([parent, child])[1].properties.adminLevel, 8);
+  assert.equal(parent.properties.adminLevel, undefined);
+  assert.equal(normalizeTerritorialUnits([parent, child])[1].properties.adminLevel, undefined);
   parent.properties.parentId = 'c';
   assert.throws(() => normalizeTerritorialUnits([parent, child]), /순환/);
 });
