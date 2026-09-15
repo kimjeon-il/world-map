@@ -124,7 +124,7 @@ test('theme and enlarged text preserve map hit areas, inspector controls and lib
   await page.locator('[data-surface-tab="layers"]').click();
   await page.locator('#layerSearchInput').fill('폴란드');
   const row = page.locator('.layer-search-result').filter({ hasText: '폴란드' }).first();
-  await row.locator('.layer-child-name').click();
+  await row.locator('.layer-search-result-select').click();
   await expect(page.locator('#rightPanel')).toBeVisible();
   await expect(row.locator('.layer-color-swatch')).toHaveCount(0);
   expect(await row.evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
