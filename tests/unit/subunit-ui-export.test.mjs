@@ -15,7 +15,7 @@ test('export choices use unique current categories and UI has no merged duplicat
   assert.doesNotMatch(html, /하위단위(?:·| 또는 )하위단위/);
 });
 
-test('subunit-only GeoJSON export writes one layer and preserves an unspecified administrative level', async () => {
+test('subunit-only GeoJSON export writes one layer and omits administrative fields', async () => {
   const context = vm.createContext({ URL, Blob, structuredClone, TextEncoder, TextDecoder,
     document: { currentScript: { src: 'https://example.test/assets/js/gis-io.js' } },
     location: { href: 'https://example.test/' } });
@@ -32,7 +32,8 @@ test('subunit-only GeoJSON export writes one layer and preserves an unspecified 
   assert.equal(result.manifest.layers[0].targetType, 'subunit');
   const files = context.fflate.unzipSync(new Uint8Array(await result.blob.arrayBuffer()));
   const feature = JSON.parse(new TextDecoder().decode(files['subunits.geojson'])).features[0];
-  assert.equal(feature.properties.admin_level, null);
+  assert.equal('admin_level' in feature.properties, false);
+  assert.equal('is_remainder' in feature.properties, false);
   assert.equal(feature.properties.parent_id, 'C');
   assert.deepEqual(feature.geometry, geometry);
   await assert.rejects(context.PandoLabGIS.exportGeoJsonBundle(project, ['countries']), /내보낼 데이터가 없습니다/);

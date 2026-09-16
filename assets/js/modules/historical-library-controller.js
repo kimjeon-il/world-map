@@ -9,8 +9,10 @@ export function createHistoricalLibraryController({
   renderMapPreview,
   createEmptyState,
   replaceSelectOptions,
+  shouldShowTerritorialParentChoice,
   collator,
-  closeCreateMenu,
+  closeSurface,
+  focusSurfaceTrigger,
   instantiate,
   ownershipContext = () => ({ missing: [], countries: [], parents: () => [] }),
   confirm,
@@ -24,6 +26,7 @@ export function createHistoricalLibraryController({
   let requestGeneration = 0;
   let ownershipChoices = null;
   let confirmedImpact = '';
+  let flagPicker = null;
 
   function resetOwnership() {
     ownershipChoices = null;
@@ -61,10 +64,14 @@ export function createHistoricalLibraryController({
       ], 'subunit');
       field(`${item.name} · 추가 방식`, mode);
       const country = document.createElement('select');
-      replaceSelectOptions(country, [{ value: '', label: '소속 국가 선택' }, ...context.countries], choice.countryId);
+      const countryChoice = replaceSelectOptions(country, [
+        { value: '', label: '소속 국가 선택', placeholder: true },
+        ...context.countries,
+      ], choice.countryId, { autoSelectSingle: true }) || { single: false, value: country.value };
+      choice.countryId = countryChoice.value;
       const countryRow = field('소속 국가', country);
       const parent = document.createElement('select');
-      const parentRow = field('상위 소속', parent);
+      const parentRow = field('상위 단위', parent);
       const name = document.createElement('input');
       name.value = item.name;
       const nameRow = field('국가 이름', name);
@@ -72,11 +79,18 @@ export function createHistoricalLibraryController({
         choice.mode = mode.value;
         choice.name = name.value;
         choice.countryId = country.value;
-        const options = context.parents(country.value);
-        replaceSelectOptions(parent, options, choice.parentId);
-        choice.parentId = parent.value;
-        countryRow.hidden = mode.value === 'country';
-        parentRow.hidden = mode.value === 'country' || options.length < 2;
+        const candidates = context.parents(country.value);
+        const options = candidates.length
+          ? candidates
+          : [{ value: '', label: '상위 단위 선택', placeholder: true }];
+        const parentChoice = replaceSelectOptions(parent, options, choice.parentId, { autoSelectSingle: true }) || { value: parent.value };
+        choice.parentId = parentChoice.value;
+        countryRow.hidden = mode.value === 'country' || countryChoice.single;
+        parentRow.hidden = mode.value === 'country' || !shouldShowTerritorialParentChoice({
+          sovereignId: choice.countryId,
+          parentId: choice.parentId,
+          options,
+        });
         nameRow.hidden = mode.value !== 'country';
         elements.add.disabled = Object.values(ownershipChoices).some(value => value.mode === 'country' ? !value.name.trim() : !value.countryId);
         confirmedImpact = '';
@@ -137,11 +151,13 @@ export function createHistoricalLibraryController({
 
   function syncFilterOptions() {
     const geographicRegions = [...new Set(service.list().map(entity => String(entity.metadata?.geographicRegion || '')).filter(Boolean))].sort(collator.compare);
-    replaceSelectOptions(elements.geographicRegion, [{ value: '', label: '전체' }, ...geographicRegions.map(geographicRegion => ({ value: geographicRegion, label: geographicRegion }))], elements.geographicRegion.value);
+    const geographicChoice = replaceSelectOptions(elements.geographicRegion, [{ value: '', label: '전체' }, ...geographicRegions.map(geographicRegion => ({ value: geographicRegion, label: geographicRegion }))], elements.geographicRegion.value, { autoSelectSingle: true });
+    elements.geographicRegion.closest?.('.field-group')?.classList.toggle('hidden', geographicChoice?.single === true);
     replaceSelectOptions(elements.snapshot, [
-      { value: '', label: '스냅샷 선택' },
+      { value: '', label: '스냅샷 선택', placeholder: true },
       ...service.snapshots().map(snapshot => ({ value: snapshot.id, label: `${snapshot.name}${snapshot.metadata?.partial ? ' · 부분' : ''}` })),
-    ], elements.snapshot.value);
+    ], elements.snapshot.value, { autoSelectSingle: true });
+    if (elements.snapshotButton) elements.snapshotButton.disabled = !elements.snapshot.value;
   }
 
   function searchResults() {
@@ -158,6 +174,30 @@ export function createHistoricalLibraryController({
     const selectedRow = [...elements.results.querySelectorAll('[data-library-entity-id]')].find(row => row.dataset.libraryEntityId === selectedId);
     selectedRow?.insertAdjacentElement?.('afterend', elements.preview);
     const entity = service.get(selectedId);
+    if (flagPicker) {
+      const flagUrl = String(entity?.metadata?.defaultFlagDataUrl || '').trim();
+      if (!entity) {
+        elements.preview.hidden = true;
+        elements.add.disabled = true;
+        return;
+      }
+      elements.preview.hidden = false;
+      const title = document.createElement('h3');
+      title.className = 'historical-library-preview-title';
+      title.textContent = entity.displayNames?.ko || entity.canonicalName;
+      const help = document.createElement('p');
+      help.className = 'editor-help';
+      help.textContent = flagUrl ? '이 항목의 기본 국기를 적용합니다.' : '이 항목에는 기본 국기가 없습니다.';
+      elements.preview.replaceChildren(title, help);
+      elements.add.disabled = !flagUrl;
+      elements.addOptions?.classList.add('hidden');
+      elements.optionsBack?.classList.add('hidden');
+      elements.card?.classList.remove('is-detail', 'is-options');
+      elements.add.textContent = '적용';
+      elements.add.setAttribute('aria-label', '선택한 라이브러리 국기 적용');
+      elements.add.dataset.tooltip = '선택한 라이브러리 국기 적용';
+      return;
+    }
     const automaticVersion = entity ? selectGeometryVersion(entity, elements.year.value) : null;
     const version = entity?.geometryVersions?.find(candidate => candidate.id === selectedVersionId) || automaticVersion;
     if (!entity || !version) {
@@ -258,7 +298,7 @@ export function createHistoricalLibraryController({
   }
 
   function renderResults() {
-    const results = searchResults();
+    const results = searchResults().filter(entity => !flagPicker || String(entity.metadata?.defaultFlagDataUrl || '').trim());
     const fragment = document.createDocumentFragment();
     for (const entity of results) {
       const button = document.createElement('button');
@@ -287,7 +327,11 @@ export function createHistoricalLibraryController({
       } else button.append(strong, small);
       fragment.appendChild(button);
     }
-    if (!results.length) fragment.appendChild(createEmptyState('조건에 맞는 항목이 없습니다.', '검색어, 종류, 상태 또는 기준 연도를 바꿔 보세요.', { compact: true }));
+    if (!results.length) fragment.appendChild(createEmptyState(
+      flagPicker ? '국기가 있는 항목이 없습니다.' : '조건에 맞는 항목이 없습니다.',
+      flagPicker ? '검색어, 종류, 상태 또는 기준 연도를 바꿔 보세요.' : '검색어, 종류, 상태 또는 기준 연도를 바꿔 보세요.',
+      { compact: true },
+    ));
     elements.results.replaceChildren(fragment);
     const options = [...elements.results.querySelectorAll('[data-library-entity-id]')];
     if (options.length && !options.some(option => option.tabIndex === 0)) options[0].tabIndex = 0;
@@ -316,11 +360,15 @@ export function createHistoricalLibraryController({
     resetOwnership();
     elements.modal.classList.add('hidden');
     elements.card?.classList.remove('is-detail', 'is-options');
-    elements.open?.focus();
+    const restoreFocus = flagPicker?.restoreFocus;
+    flagPicker = null;
+    if (restoreFocus?.focus) restoreFocus.focus({ preventScroll: true });
+    else focusSurfaceTrigger('create');
   }
 
-  async function open() {
-    closeCreateMenu();
+  async function open({ onPickFlag = null, restoreFocus = null } = {}) {
+    flagPicker = typeof onPickFlag === 'function' ? { onPickFlag, restoreFocus } : null;
+    closeSurface('create');
     elements.modal.classList.remove('hidden');
     setLoadingState(true);
     renderLoadingResults();
@@ -405,8 +453,20 @@ export function createHistoricalLibraryController({
     }
   }
 
+  function applySelectedFlag() {
+    const selected = flagPicker;
+    const flagUrl = String(service.get(selectedId)?.metadata?.defaultFlagDataUrl || '').trim();
+    if (!selected?.onPickFlag || !flagUrl) return;
+    close();
+    selected.onPickFlag(flagUrl);
+  }
+
   function advanceAdd() {
     if (!selectedId) return;
+    if (flagPicker) {
+      applySelectedFlag();
+      return;
+    }
     void addSelected();
   }
 

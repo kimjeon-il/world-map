@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createHistoricalLibraryController } from '../../assets/js/modules/historical-library-controller.js';
+import { shouldShowTerritorialParentChoice } from '../../assets/js/modules/library-ownership.js';
 
 function fakeElement(ownerDocument) {
   const classes = new Set(['hidden']);
@@ -56,7 +57,7 @@ test('missing ownership remains in the modal, blocks missing country, resets par
     service: { load: async () => {}, list: () => [entity], search: () => [entity], snapshots: () => [], get: () => entity },
     typeLabels: {}, selectGeometryVersion: () => entity.geometryVersions[0], renderMapPreview: () => fakeElement(document), createEmptyState: () => fakeElement(document),
     replaceSelectOptions: (select, options, value) => { select.value = options.some(option => option.value === value) ? value : options[0]?.value || ''; },
-    collator: new Intl.Collator('ko'), closeCreateMenu() {}, confirm() {}, setStatus() {}, reportError(error) { throw error; }, requestFrame: fn => fn(),
+    collator: new Intl.Collator('ko'), shouldShowTerritorialParentChoice, closeSurface() {}, focusSurfaceTrigger() { elements.open?.focus(); }, confirm() {}, setStatus() {}, reportError(error) { throw error; }, requestFrame: fn => fn(),
     ownershipContext: () => ({ missing: [{ libraryId: 'root', name: 'Root', countryId: '' }], countries: [{ value: 'A', label: 'A' }, { value: 'B', label: 'B' }],
       parents: id => id ? [{ value: id, label: id }, ...(id === 'A' ? [{ value: 'P', label: 'Parent' }] : [])] : [] }),
     instantiate: async (...args) => { calls.push(args); return { added: 1 }; },
@@ -108,7 +109,7 @@ test('library simplifies single versions, preserves explicit versions and resets
     typeLabels: {}, selectGeometryVersion: entity => entity.geometryVersions[0],
     renderMapPreview: () => fakeElement(document), createEmptyState: () => fakeElement(document),
     replaceSelectOptions() {}, collator: new Intl.Collator('ko'), isMobile: () => false,
-    closeCreateMenu() {}, instantiate: async (...args) => { imports.push(args); return { added: 1 }; },
+    shouldShowTerritorialParentChoice, closeSurface() {}, focusSurfaceTrigger() { elements.open?.focus(); }, instantiate: async (...args) => { imports.push(args); return { added: 1 }; },
     confirm() {}, setStatus() {}, reportError(error) { throw error; }, requestFrame: fn => fn(),
   });
   controller.connect();
@@ -175,7 +176,9 @@ test('historical library controller owns modal loading and close focus', async (
     replaceSelectOptions() {},
     collator: new Intl.Collator('ko'),
     isMobile: () => false,
-    closeCreateMenu() {},
+    shouldShowTerritorialParentChoice,
+    closeSurface() {},
+    focusSurfaceTrigger() { elements.open?.focus(); },
     instantiate: () => 0,
     confirm() {},
     setStatus() {},
@@ -205,6 +208,39 @@ test('historical library controller owns modal loading and close focus', async (
   assert.equal(elements.results.getAttribute('aria-busy'), 'false');
   assert.equal(elements.search.disabled, true);
   assert.equal(reportedErrors, 1);
+});
+
+test('historical library can apply a selected default flag without importing its geometry', async () => {
+  const document = {
+    defaultView: { Event: class { constructor(type) { this.type = type; } } },
+    createElement() { return fakeElement(document); },
+    createDocumentFragment() { return fakeElement(document); },
+  };
+  const names = [
+    'open', 'modal', 'card', 'close', 'backdrop', 'search', 'clearSearch', 'type', 'status', 'year', 'geographicRegion',
+    'results', 'preview', 'snapshot', 'snapshotButton', 'childDepth', 'add', 'addOptions', 'optionsBack',
+  ];
+  const elements = Object.fromEntries(names.map(name => [name, fakeElement(document)]));
+  const entity = {
+    libraryId: 'flagged', canonicalName: 'Flagged', displayNames: { ko: '국기 항목' },
+    metadata: { defaultFlagDataUrl: 'data:image/svg+xml;base64,flag' }, geometryVersions: [],
+  };
+  const applied = [];
+  const restoreFocus = fakeElement(document);
+  const controller = createHistoricalLibraryController({
+    document, elements,
+    service: { load: async () => {}, list: () => [entity], search: () => [entity], snapshots: () => [], get: id => id === entity.libraryId ? entity : null },
+    typeLabels: {}, selectGeometryVersion: () => null, renderMapPreview: () => fakeElement(document), createEmptyState: () => fakeElement(document),
+    replaceSelectOptions() {}, collator: new Intl.Collator('ko'), shouldShowTerritorialParentChoice,
+    closeSurface() {}, focusSurfaceTrigger() {}, instantiate() { throw new Error('geometry import must not run'); }, confirm() {}, setStatus() {}, reportError(error) { throw error; }, requestFrame: fn => fn(),
+  });
+  controller.connect();
+  await controller.open({ onPickFlag: value => applied.push(value), restoreFocus });
+  controller.select(entity.libraryId);
+  assert.equal(elements.add.textContent, '적용');
+  elements.add.click();
+  assert.deepEqual(applied, ['data:image/svg+xml;base64,flag']);
+  assert.equal(restoreFocus.focused, true);
 });
 
 test('historical library controller locks controls while async instantiation runs and keeps modal open on failure', async () => {
@@ -241,7 +277,9 @@ test('historical library controller locks controls while async instantiation run
     replaceSelectOptions() {},
     collator: new Intl.Collator('ko'),
     isMobile: () => false,
-    closeCreateMenu() {},
+    shouldShowTerritorialParentChoice,
+    closeSurface() {},
+    focusSurfaceTrigger() { elements.open?.focus(); },
     instantiate: () => gate,
     confirm() {},
     setStatus() {},
@@ -294,7 +332,9 @@ test('historical library hides the pilot badge while retaining pilot metadata', 
     replaceSelectOptions() {},
     collator: new Intl.Collator('ko'),
     isMobile: () => false,
-    closeCreateMenu() {},
+    shouldShowTerritorialParentChoice,
+    closeSurface() {},
+    focusSurfaceTrigger() { elements.open?.focus(); },
     instantiate: async () => ({ added: 0 }),
     confirm() {},
     setStatus() {},

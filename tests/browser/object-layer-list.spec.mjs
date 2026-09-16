@@ -8,7 +8,7 @@ test('object list shares bundles, direct rows and actions on desktop and mobile'
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/?debug=1');
   await expect(page.locator('#app')).toHaveAttribute('data-readiness', 'enhanced', { timeout: 90_000 });
-  await expect(page.locator('#layerSection .layer-category,#layerSection .layer-folder,#layerSection [data-layer-style-toggle]')).toHaveCount(0);
+  await expect(page.locator('#layerSection .layer-category,#layerSection .layer-folder,#layerSection [data-map-display-row]')).toHaveCount(0);
   await expect(page.locator('.layer-bundle-row .layer-child-name-label')).toHaveText(['정치체', '지형지물']);
   await expect(page.locator('.layer-bundle-row .layer-item-type')).toHaveCount(0);
   const footerY = (await page.locator('.layer-panel-footer').boundingBox()).y;
@@ -49,10 +49,10 @@ test('object list shares bundles, direct rows and actions on desktop and mobile'
   await page.locator('#undoBtn').click();
   await expect(language).toHaveCount(1);
 
-  // Type style controls now live in Map, with the same presentation fields.
+  // Type style controls are directly available in 지도 표시.
   await page.locator('#mapViewTabBtn').click();
-  await page.locator('.map-object-style-settings > summary').click();
-  await page.locator('[data-layer-style-toggle="countries"]').click();
+  await expect(page.locator('.map-object-style-settings')).toHaveCount(0);
+  await page.locator('[data-map-display-row="countries"]').click();
   await expect(page.locator('[data-layer-style-opacity="countries"]')).toBeVisible();
   await page.locator('#countriesVisible').uncheck();
   await page.locator('#mapLayersTabBtn').click();

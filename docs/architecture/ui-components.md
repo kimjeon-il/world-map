@@ -1,4 +1,4 @@
-# UI Components v2
+# UI Components
 
 ## 공간 배분·가시성 계약
 
@@ -12,7 +12,7 @@
 - 기본 레이어 행에는 색상 도형·반복 유형을 넣지 않는다. 혼합 검색의 유형과 로딩/오류 상태는 유지한다. primary는 세로 막대, secondary는 약한 선택 배경을 사용한다.
 - `tests/browser/ui-space-visibility.spec.mjs`에서 실제 치수·스크롤 영역·폭별 노출을 검사한다. 정적 클래스 검사만으로 준수 여부를 판정하지 않는다.
 
-이 문서는 컴포넌트별 계약과 명시적 예외만 정의한다. 글자·컨트롤 수치, 반응형 허용 범위, 정렬·상태·CSS 소유권은 [UI Architecture v2](ui-architecture-v2.md)가 단일 원본이다. 수치를 이 문서에 복제하지 않는다.
+이 문서는 컴포넌트별 계약과 명시적 예외만 정의한다. 글자·컨트롤 수치, 반응형 허용 범위, 정렬·상태·CSS 소유권은 [UI Architecture](ui-architecture.md)가 단일 원본이다. 수치를 이 문서에 복제하지 않는다.
 
 아래 계약은 후속 개편의 목표이며 현재 DOM·CSS의 준수 여부를 보증하지 않는다. 이번 단계는 문서만 정리하고 기능·DOM·버튼 ID·ARIA·controller를 변경하지 않는다.
 
@@ -20,19 +20,23 @@
 
 주요 컴포넌트의 담당 원본은 다음과 같다. 기존 파일 안의 모든 override를 승인하는 목록은 아니며, 다른 소유자의 속성을 덮어쓰는 규칙은 후속 이관 대상이다.
 
-- `assets/css/tokens/ui-v2.css`: Surface와 콘텐츠 component가 공유하는 의미 토큰
+- `assets/css/tokens/design-tokens.css`: Surface와 콘텐츠 component가 공유하는 의미 토큰
 - `assets/css/primitives/controls.css`: Button/Field/Icon의 외형과 상태
 - `assets/css/components/surface.css`: Surface/Header/Tabs/Body/Content
 - `assets/css/components/content.css`: Section/Field/ActionList/PropertyList/ObjectContext 호환 계약
 - `assets/css/components/command-row.css`: 작업 행의 아이콘·제목·설명·chevron 배열
 - `assets/css/components/editor-shell.css`: 편집 컨텍스트·toolbar·작업 HUD의 조합
 - `assets/css/components/workflows.css`: 편집 작업창·dialog·wizard 공통 표현
+- `assets/css/components/topbar.css`: 상단 문서 명령의 배치·반응형 표현과 파일 메뉴 위치
 - `assets/css/components/panels.css`: 지도·추가·Library/GIS 패널 표현
+- `assets/css/components/view-menu.css`: 넓음·중간 폭의 상단 `보기` 계층형 메뉴 표현
 - `assets/css/layout/surfaces.css`: wide/compact/mobile의 Surface 배치와 표시 상태
 - `assets/css/components/modals.css`: Dialog/Wizard shell
 - `assets/css/components/mobile-sheets.css`: 공통 handle·sheet 조작 계약
 - `assets/css/features/layer-panel.css`: 레이어 트리·가상화 콘텐츠 표현
 - `assets/css/components/feedback.css`: 지속 상태·toast·empty/loading/error 표현
+
+표시 설정은 한 DOM을 공유한다. 넓음·중간 폭에서는 `components/view-menu.css`가 상단 `보기`의 계층형 메뉴와 옆 하위 메뉴를 표현하고, 모바일에서는 기존 sheet의 `map-display-list`와 `map-display-row`를 유지한다. 언어·민족·종교는 데스크톱 메뉴에서 `분포`의 하위 항목으로 이동하지만, 실제 input과 상태는 복제하지 않는다.
 
 생성 bundle은 원본이 아니며 직접 편집하지 않는다.
 
@@ -101,6 +105,8 @@ Surface 내부 구조와 기본 chrome은 `components/surface.css`가 소유한�
 추가 예외는 공통 규칙 문서의 등록 조건을 따른다. 기존 override가 있다는 이유만으로 예외로 인정하지 않는다.
 
 ## Migration rule
+
+사용자 지정 색상은 `custom-color-control.js`의 공통 컨트롤을 사용한다. HSV 면·색조, HEX/RGB/HSL, 선택적 스포이트의 임시값은 이 컨트롤에만 두며, 적용 시 `app-color-picker.js`가 기존 input 이벤트와 객체별 commit 경로로 전달한다. 취소·닫기는 프로젝트와 history를 변경하지 않는다. 객체 팔레트와 환경설정은 같은 컨트롤을 사용하되, 환경설정은 스크롤 본문 안에 배치해 팝오버 잘림을 피한다. 기본 색상표·상속·기본값 복원·투명도는 기존 책임에 둔다.
 
 후속 UI 변경은 공통 규칙 문서의 완료 기준을 따른다. 각 컴포넌트의 `준수 / 위반 / 예외`, 현재 파일·selector·property, 담당 원본, 대체 규칙, 검증 결과를 기록한 뒤 아래 순서로 진행한다.
 

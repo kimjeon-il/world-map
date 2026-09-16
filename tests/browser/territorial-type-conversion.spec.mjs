@@ -31,61 +31,43 @@ async function importTerritory(page, name) {
   await expect(page.locator('#gisImportModal')).toBeVisible();
   await expect(page.locator('#gisImportConfirmBtn')).toBeEnabled({ timeout: 30_000 });
   await expect(page.locator('#gisStepIndicator')).toContainText('1/3');
-  await selectUiOption(page, '#gisTargetType', 'territory');
+  await selectUiOption(page, '#gisTargetType', 'subunit');
   await selectUiOption(page, '#gisTargetCountry', 'DEU');
   for (const step of ['2/3', '3/3']) {
     await page.locator('#gisImportNextBtn').click();
     await expect(page.locator('#gisStepIndicator')).toContainText(step, { timeout: 30_000 });
   }
   await page.locator('#gisImportConfirmBtn').click();
-  await expect.poll(() => page.evaluate(expected => window.PANDOLAB_TERRITORIAL.list({ type: 'territory' })
+  await expect.poll(() => page.evaluate(expected => window.PANDOLAB_TERRITORIAL.list({ type: 'subunit' })
     .find(unit => unit.properties.name === expected)?.id || '', name), { timeout: 60_000 }).not.toBe('');
 }
 
-test('a territory changes to an administrative area with one-step undo', async ({ page }) => {
+test('subunit editor has one promotion and deletion path without obsolete fields', async ({ page }) => {
   test.setTimeout(180_000);
   const errors = await openApp(page);
-  const name = '종류 변경 시험 지역';
+  const name = '하위단위 편집 검증';
   await importTerritory(page, name);
-  const id = await page.evaluate(expected => window.PANDOLAB_TERRITORIAL.list({ type: 'territory' })
+  const id = await page.evaluate(expected => window.PANDOLAB_TERRITORIAL.list({ type: 'subunit' })
     .find(unit => unit.properties.name === expected).id, name);
-
-  await page.evaluate(unitId => window.PANDOLAB_TERRITORIAL.select('territory', unitId), id);
-  await page.locator('#actionsTabBtn').click();
-  await page.locator('#changeTerritoryTypeBtn').click();
-  await expect(page.locator('#territorialTypeModal')).toBeVisible();
-  await selectUiOption(page, '#territorialTypeInput', 'admin');
-  await expect(page.locator('#territorialTypeTitle')).toHaveText('권역을 행정구역으로 전환');
-  await expect(page.locator('#territorialTypeImpactList')).toContainText('현재 형상과 객체 ID 유지');
-  await expect(page.locator('#territorialTypeImpactList')).toContainText('한 번의 실행취소로 복구 가능');
-  await page.locator('#territorialTypeConfirmBtn').click();
-
-  await expect.poll(() => page.evaluate(unitId => window.PANDOLAB_TERRITORIAL.get(unitId)?.properties?.unitType, id), { timeout: 60_000 }).toBe('admin');
-  await page.locator('#actionsTabBtn').click();
-  const actionRows = await page.locator('#administrativeProperties .editor-action-row').evaluateAll(buttons => buttons.map(button => {
-    const rect = button.getBoundingClientRect();
-    const title = button.querySelector('strong');
-    const description = button.querySelector('small');
-    return {
-      fullWidth: Math.abs(rect.width - button.parentElement.getBoundingClientRect().width) < 1,
-      minHeight: rect.height >= 48,
-      title: title?.textContent || '',
-      descriptionLines: description ? Math.round(description.getBoundingClientRect().height / parseFloat(getComputedStyle(description).lineHeight)) : 0,
-    };
-  }));
-  expect(actionRows.every(row => row.fullWidth && row.minHeight && row.title && row.descriptionLines <= 1)).toBe(true);
-  const converted = await page.evaluate(unitId => {
-    const unit = window.PANDOLAB_TERRITORIAL.get(unitId);
-    return { id: unit.id, name: unit.properties.name, sovereignId: unit.properties.sovereignId, parentId: unit.properties.parentId, adminLevel: unit.properties.adminLevel };
-  }, id);
-  expect(converted).toEqual({ id, name, sovereignId: 'DEU', parentId: 'DEU', adminLevel: 1 });
-
+  await page.evaluate(key => window.PANDOLAB_TERRITORIAL.select('subunit', key), id);
+  await expect(page.locator('#subunitLevelInput, #changeSubunitTypeBtn, #transferSubunitBtn, #splitSubunitBtn')).toHaveCount(0);
+  await expect(page.locator('label[for="subunitCountryInput"]')).toHaveText('소속 국가');
+  await expect(page.locator('label[for="subunitParentInput"]')).toHaveText('상위 단위');
+  for (const button of ['addSubunitChildBtn', 'annexSubunitBtn', 'mergeSubunitBtn', 'reassignSubunitShapeBtn', 'editSubunitCoastBtn', 'reconcileSubunitCoastBtn', 'promoteSubunitBtn']) {
+    await expect(page.locator('#' + button)).toHaveCount(1);
+  }
+  const originalCountry = await page.evaluate(() => window.PANDOLAB_TERRITORIAL.get('DEU').geometry);
+  await page.locator('#removeSubunitDivisionBtn').evaluate(button => button.click());
+  await expect(page.locator('#confirmModalTitle')).toHaveText('하위단위 삭제');
+  await page.locator('#confirmModalOkBtn').click();
+  expect(await page.evaluate(key => window.PANDOLAB_TERRITORIAL.get(key), id)).toBeNull();
+  expect(await page.evaluate(() => window.PANDOLAB_TERRITORIAL.get('DEU').geometry)).toEqual(originalCountry);
   await page.locator('#undoBtn').click();
-  await expect.poll(() => page.evaluate(unitId => window.PANDOLAB_TERRITORIAL.get(unitId)?.properties?.unitType, id), { timeout: 30_000 }).toBe('territory');
+  await expect.poll(() => page.evaluate(key => window.PANDOLAB_TERRITORIAL.get(key)?.properties?.unitType, id)).toBe('subunit');
   expect(errors).toEqual([]);
 });
 
-test('a country and an administrative area convert both ways with a stable canonical UUID', async ({ page }) => {
+test('a country and a subunit convert both ways with a stable canonical UUID', async ({ page }) => {
   test.setTimeout(300_000);
   const errors = await openApp(page);
   const before = await page.evaluate(() => ({
@@ -97,18 +79,18 @@ test('a country and an administrative area convert both ways with a stable canon
   await page.evaluate(() => window.PANDOLAB_TERRITORIAL.select('country', 'IRL'));
   await page.locator('#actionsTabBtn').click();
   await page.locator('#changeCountryTypeBtn').click();
-  await selectUiOption(page, '#territorialTypeInput', 'admin');
+  await selectUiOption(page, '#territorialTypeInput', 'subunit');
   await selectUiOption(page, '#territorialTypeSovereignInput', 'GBR');
   await expect(page.locator('#territorialTypeImpact')).toContainText(before.name);
-  await expect(page.locator('#territorialTypeTitle')).toHaveText('국가를 행정구역으로 전환');
+  await expect(page.locator('#territorialTypeTitle')).toHaveText('국가를 하위단위로 전환');
   await expect(page.locator('#territorialTypeImpactList')).toContainText('현재 형상과 객체 ID 유지');
   await page.locator('#territorialTypeConfirmBtn').click();
 
-  await expect.poll(() => page.evaluate(expected => window.PANDOLAB_TERRITORIAL.list({ type: 'admin' })
-    .find(unit => unit.properties?.name === expected && unit.properties?.unitType === 'admin')?.id || '', before.name), { timeout: 60_000 }).not.toBe('');
+  await expect.poll(() => page.evaluate(expected => window.PANDOLAB_TERRITORIAL.list({ type: 'subunit' })
+    .find(unit => unit.properties?.name === expected && unit.properties?.unitType === 'subunit')?.id || '', before.name), { timeout: 60_000 }).not.toBe('');
   const converted = await page.evaluate(expected => {
-    const unit = window.PANDOLAB_TERRITORIAL.list({ type: 'admin' })
-      .find(candidate => candidate.properties?.name === expected && candidate.properties?.unitType === 'admin');
+    const unit = window.PANDOLAB_TERRITORIAL.list({ type: 'subunit' })
+      .find(candidate => candidate.properties?.name === expected && candidate.properties?.unitType === 'subunit');
     return {
       countryCount: window.PANDOLAB_TERRITORIAL.list({ type: 'country' }).length,
       unit: {
@@ -116,7 +98,6 @@ test('a country and an administrative area convert both ways with a stable canon
         name: unit.properties.name,
         sovereignId: unit.properties.sovereignId,
         parentId: unit.properties.parentId,
-        adminLevel: unit.properties.adminLevel,
         convertedFromName: unit.properties?.metadata?.convertedFromCountry?.properties?.name,
       },
     };
@@ -126,14 +107,14 @@ test('a country and an administrative area convert both ways with a stable canon
   expect(converted.unit.name).toBe(before.name);
   expect(converted.unit.sovereignId).toBe('GBR');
   expect(converted.unit.parentId).toBe('GBR');
-  expect(converted.unit.adminLevel).toBe(1);
   expect(converted.unit.convertedFromName).toBe(before.name);
 
-  await page.evaluate(unitId => window.PANDOLAB_TERRITORIAL.select('admin', unitId), converted.unit.id);
+  await page.evaluate(unitId => window.PANDOLAB_TERRITORIAL.select('subunit', unitId), converted.unit.id);
   await page.locator('#actionsTabBtn').click();
-  await page.locator('#changeAdministrativeTypeBtn').click();
-  await selectUiOption(page, '#territorialTypeInput', 'country');
-  await page.locator('#territorialTypeConfirmBtn').click();
+  await page.locator('#promoteSubunitBtn').evaluate(button => button.click());
+  await page.locator('#confirmModalOkBtn').click();
+  await expect(page.locator('#modePrimaryBtn')).toBeEnabled({ timeout: 60_000 });
+  await page.locator('#modePrimaryBtn').click();
   await expect.poll(() => page.evaluate(id => window.PANDOLAB_TERRITORIAL.get(id)?.properties?.unitType, converted.unit.id), { timeout: 60_000 }).toBe('country');
   expect(await page.evaluate(unitId => ({
     count: window.PANDOLAB_TERRITORIAL.list({ type: 'country' }).length,
@@ -141,7 +122,7 @@ test('a country and an administrative area convert both ways with a stable canon
   }), converted.unit.id)).toEqual({ count: before.countryCount, name: before.name });
 
   await page.locator('#undoBtn').click();
-  await expect.poll(() => page.evaluate(id => window.PANDOLAB_TERRITORIAL.get(id)?.properties?.unitType, converted.unit.id), { timeout: 30_000 }).toBe('admin');
+  await expect.poll(() => page.evaluate(id => window.PANDOLAB_TERRITORIAL.get(id)?.properties?.unitType, converted.unit.id), { timeout: 30_000 }).toBe('subunit');
   await page.locator('#undoBtn').click();
   await expect.poll(() => page.evaluate(() => window.PANDOLAB_TERRITORIAL.get('IRL')?.properties?.unitType), { timeout: 30_000 }).toBe('country');
   expect(await page.evaluate(() => window.PANDOLAB_TERRITORIAL.list({ type: 'country' }).length)).toBe(before.countryCount);

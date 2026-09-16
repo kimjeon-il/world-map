@@ -38,7 +38,7 @@
 - 이번 후속 수정의 Light/Dark 전체 조합·확대 125%·긴 목록 스크롤·전체 키보드/생성 흐름은 미검증이다. 아래의 이전 검사 결과와 구분한다.
 - build ID: `0.33.0-build-ui-layer-footer-20260909`. 앱 버전/schema 유지. 커밋·푸시·배포하지 않음.
 
-2026-09-09. 규격 원본은 [UI Architecture v2](ui-architecture-v2.md)다. 구현·검사 결과와 미검증 항목을 구분하며 전체 QA 완료 선언이 아니다.
+2026-09-09. 규격 원본은 [UI Architecture](ui-architecture.md)다. 구현·검사 결과와 미검증 항목을 구분하며 전체 QA 완료 선언이 아니다.
 
 ## 삭제한 계약과 현재 소유권
 
@@ -58,7 +58,7 @@
 
 생성·편집 dispatch, 라이브러리 진입, 기존 버튼 ID·ARIA 연결은 보존했다. 메뉴가 닫힐 때 일반 Escape는 추가 버튼으로 돌아가고, Tab은 메뉴를 종료해 다음 탐색으로 이동한다. 생성/dialog 진입은 기존 작업의 포커스를 유지한다.
 
-스크롤은 Surface 본문 하나가 기본 소유자다. 가상화 목록, Library 목록/상세, 높이가 제한된 추가 메뉴만 독립 스크롤 예외다. 콘텐츠 padding은 좌우 1rem이며 scrollbar는 레이아웃 폭을 차지하지 않는다. thumb의 접근성 min/max/now/controls와 키보드 Home/End/Page/Arrow 및 pointer drag 처리를 제공한다. 좁은 thumb 조작 영역 예외는 [컴포넌트 계약](ui-components-v2.md)에 기록했다.
+스크롤은 Surface 본문 하나가 기본 소유자다. 가상화 목록, Library 목록/상세, 높이가 제한된 추가 메뉴만 독립 스크롤 예외다. 콘텐츠 padding은 좌우 1rem이며 scrollbar는 레이아웃 폭을 차지하지 않는다. thumb의 접근성 min/max/now/controls와 키보드 Home/End/Page/Arrow 및 pointer drag 처리를 제공한다. 좁은 thumb 조작 영역 예외는 [컴포넌트 계약](ui-components.md)에 기록했다.
 
 ## 확인한 브라우저 범위
 

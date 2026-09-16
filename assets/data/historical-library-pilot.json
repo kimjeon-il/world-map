@@ -34,7 +34,8 @@
       "metadata": {
         "geographicRegion": "Europe",
         "pilot": true,
-        "approximateGeometry": true
+        "approximateGeometry": true,
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzIDIiIGlkPSJmbGFnLWN6ZWNob3Nsb3Zha2lhIj48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMCAwaDN2MUgweiIvPjxwYXRoIGZpbGw9IiNkNzE0MWEiIGQ9Ik0wIDFoM3YxSDB6Ii8+PHBhdGggZmlsbD0iIzExNDU3ZSIgZD0iTTAgMHYybDEuNS0xeiIvPjwvc3ZnPg=="
       },
       "sourceInfo": {
         "title": "판도연구소 pilot derived from Natural Earth 5.1.1 successor states",
@@ -163000,7 +163001,8 @@
         "geographicRegion": "Europe",
         "pilot": true,
         "approximateGeometry": true,
-        "referenceDate": "2014-03-17"
+        "referenceDate": "2014-03-17",
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzIDIiIGlkPSJmbGFnLXVrcmFpbmUiPjxwYXRoIGZpbGw9IiMwMDU3YjciIGQ9Ik0wIDBoM3YxSDB6Ii8+PHBhdGggZmlsbD0iI2ZmZDcwMCIgZD0iTTAgMWgzdjFIMHoiLz48L3N2Zz4="
       },
       "sourceInfo": {
         "title": "Natural Earth 5.1.1 Admin 0 with historical territory adjustment",
@@ -163096,7 +163098,8 @@
       "metadata": {
         "geographicRegion": "Europe",
         "pilot": true,
-        "approximateGeometry": true
+        "approximateGeometry": true,
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyIDEiIGlkPSJmbGFnLXl1Z29zbGF2aWEiPjxwYXRoIGZpbGw9IiMwMDM4OTMiIGQ9Ik0wIDBoMnYuMzMzSDB6Ii8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgLjMzM2gydi4zMzRIMHoiLz48cGF0aCBmaWxsPSIjZGQwMDAwIiBkPSJNMCAuNjY3aDJ2LjMzM0gweiIvPjxwYXRoIGZpbGw9IiNkZDAwMDAiIHN0cm9rZT0iI2Y1YmYyMiIgc3Ryb2tlLXdpZHRoPSIuMDI1IiBkPSJtMSAuMjM1LjA2LjE4aC4xOWwtLjE1NS4xMS4wNi4xOEwxIC41OTUuODQ1LjcwNWwuMDYtLjE4TC43NS40MTVoLjE5eiIvPjwvc3ZnPg=="
       },
       "sourceInfo": {
         "title": "Natural Earth 5.1.1 Admin 0 with historical Yugoslav state versions",
@@ -163150,7 +163153,8 @@
         "geographicRegion": "Africa",
         "pilot": true,
         "approximateGeometry": true,
-        "referenceDate": "2010"
+        "referenceDate": "2010",
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyIDEiIGlkPSJmbGFnLXN1ZGFuIj48cGF0aCBmaWxsPSIjZDIxMDM0IiBkPSJNMCAwaDJ2LjMzM0gweiIvPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0wIC4zMzNoMnYuMzM0SDB6Ii8+PHBhdGggZD0iTTAgLjY2N2gyVjFIMHoiLz48cGF0aCBmaWxsPSIjMDA3MjI5IiBkPSJNMCAwdjFsLjctLjV6Ii8+PC9zdmc+"
       },
       "sourceInfo": {
         "title": "Natural Earth 5.1.1 Admin 0 with historical territory adjustment",
@@ -163203,7 +163207,8 @@
         "geographicRegion": "Asia",
         "pilot": true,
         "approximateGeometry": true,
-        "referenceDate": "2001"
+        "referenceDate": "2001",
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzIDIiIGlkPSJmbGFnLWluZG9uZXNpYSI+PHBhdGggZmlsbD0iI2NlMTEyNiIgZD0iTTAgMGgzdjFIMHoiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMCAxaDN2MUgweiIvPjwvc3ZnPg=="
       },
       "sourceInfo": {
         "title": "Natural Earth 5.1.1 Admin 0 with historical territory adjustment",
@@ -163239,7 +163244,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:russian-sfsr:1991-r1",
@@ -165000,7 +165004,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:ukrainian-ssr:1991-r1",
@@ -166762,7 +166765,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:byelorussian-ssr:1991-r1",
@@ -166818,7 +166820,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:uzbek-ssr:1991-r1",
@@ -166874,7 +166875,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:turkmen-ssr:1991-r1",
@@ -166930,7 +166930,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:tajik-ssr:1991-r1",
@@ -166986,7 +166985,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:kazakh-ssr:1991-r1",
@@ -167044,7 +167042,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:kirghiz-ssr:1991-r1",
@@ -167101,7 +167098,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:georgian-ssr:1991-r1",
@@ -167157,7 +167153,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:armenian-ssr:1991-r1",
@@ -167213,7 +167208,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:azerbaijan-ssr:1991-r1",
@@ -167270,7 +167264,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:moldavian-ssr:1991-r1",
@@ -167326,7 +167319,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:lithuanian-ssr:1991-r1",
@@ -167382,7 +167374,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:latvian-ssr:1991-r1",
@@ -167438,7 +167429,6 @@
       "endDate": "1991-12-25",
       "parentLibraryId": "historical-country:soviet-union",
       "sovereignLibraryId": "historical-country:soviet-union",
-      "adminLevel": 1,
       "geometryVersions": [
         {
           "id": "historical-subunit:soviet-union:estonian-ssr:1991-r1",
@@ -211126,7 +211116,8 @@
         "pilot": true,
         "approximateGeometry": true,
         "referenceDate": "1989-04-25",
-        "dissolutionDate": "1990-10-03"
+        "dissolutionDate": "1990-10-03",
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1IDMiIGlkPSJmbGFnLWdkciI+PHBhdGggZD0iTTAgMGg1djFIMHoiLz48cGF0aCBmaWxsPSIjZGQwMDAwIiBkPSJNMCAxaDV2MUgweiIvPjxwYXRoIGZpbGw9IiNmZmNlMDAiIGQ9Ik0wIDJoNXYxSDB6Ii8+PGcgc3Ryb2tlPSIjZmZjZTAwIiBzdHJva2Utd2lkdGg9Ii4wNTUiIGZpbGw9Im5vbmUiPjxjaXJjbGUgY3g9IjIuNSIgY3k9IjEuNSIgcj0iLjQ2Ii8+PHBhdGggZD0iTTIuNSAxLjA0di43Mm0tLjI4LS4yOC41Ni0uMTZNMi4xOCAxLjQ4bC42NC4xOCIvPjwvZz48cGF0aCBmaWxsPSIjZmZjZTAwIiBkPSJNMi4zNSAxLjU1aC4zdi4zMmgtLjN6Ii8+PC9zdmc+"
       },
       "sourceInfo": {
         "title": "Natural Earth Admin 1 v5.1.1, BKG VG250, Berlin Open Data Wall 1989",
@@ -213283,7 +213274,7 @@
         "geographicRegion": "Asia",
         "pilot": true,
         "approximateGeometry": true,
-        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5MDAgNjAwIj48cmVjdCB3aWR0aD0iOTAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Q5MDAwMCIvPjxyZWN0IHk9IjIwMCIgd2lkdGg9IjkwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMwMDMzYTAiLz48cmVjdCB5PSI0MDAiIHdpZHRoPSI5MDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZjJhODAwIi8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgMjAwaDM5MHYzNGgtNzB2MzJoNzB2MzRoLTcwdjMyaDcwdjM0aC03MHYzMmg3MHYzNGgtNzB2MzRoNzB2MzRIMHoiLz48L3N2Zz4="
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDM2IDE4Ij4KPHBhdGggZmlsbD0iI0YyQTgwMCIgZD0iTTAgMGgzNnYxOEgweiIvPgo8cGF0aCBmaWxsPSIjRDkwMDEyIiBkPSJNMCAwaDM2djlIMHoiLz4KPHBhdGggZmlsbD0iIzAwMzNBMCIgZD0iTTAgNmgyMWwyLjIgMi4yIDQuNS00LjUgMi4zIDIuM2g2djZoLTZsLTIuMyAyLjMtNC41LTQuNS0yLjIgMi4ySDB6Ii8+CjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik0zNiAwaC02djJoLTN2MmgtM3YyaC0zdjJoLTN2MmgzdjJoM3YyaDN2MmgzdjJoNnYtMmgtM3YtMmgtM3YtMmgtM3YtMmgtM1Y4aDNWNmgzVjRoM1YyaDN6Ii8+Cjwvc3ZnPg=="
       },
       "sourceInfo": {
         "title": "Natural Earth Admin 0 – Breakaway, Disputed Areas v4.1.0/v5.1.1",
@@ -215087,424 +215078,292 @@
                     54.83574372978065
                   ],
                   [
-                    18.10457459649051,
-                    54.83353949108987
+                    18.060519604094413,
+                    54.83343824375857
                   ],
                   [
-                    18.20364914438223,
-                    54.83385750467999
+                    18.152354,
+                    54.838324
                   ],
                   [
-                    18.29685480885168,
-                    54.83618651146165
+                    18.316905,
+                    54.838324
                   ],
                   [
-                    18.34541392047134,
-                    54.83662552293692
+                    18.339529,
+                    54.833482
                   ],
                   [
-                    18.36270888943277,
-                    54.82202008419809
+                    18.375824,
+                    54.815131
                   ],
                   [
-                    18.47545840573351,
-                    54.77910846472189
+                    18.389171,
+                    54.811103
                   ],
                   [
-                    18.62454879465843,
-                    54.72694935491275
+                    18.410167,
+                    54.808295
                   ],
                   [
-                    18.67616379792745,
-                    54.70921497924405
+                    18.75172,
+                    54.69009
                   ],
                   [
-                    18.72365696224074,
-                    54.69168725519285
+                    18.813975,
+                    54.643215
                   ],
                   [
-                    18.7979674045761,
-                    54.6470476956705
+                    18.824067,
+                    54.632229
                   ],
                   [
-                    18.82806726518572,
-                    54.62449801585746
+                    18.834321,
+                    54.616685
                   ],
                   [
-                    18.82794204220375,
-                    54.60544271406079
+                    18.835297,
+                    54.603095
                   ],
                   [
-                    18.81608834740258,
-                    54.59473646339331
+                    18.817638,
+                    54.598131
                   ],
                   [
-                    18.81092261286919,
-                    54.5957430278779
+                    18.813243,
+                    54.601549
                   ],
                   [
-                    18.80698245902595,
-                    54.60551096756709
+                    18.80836,
+                    54.608832
                   ],
                   [
-                    18.7879412673062,
-                    54.6178293603034
+                    18.802257,
+                    54.616034
                   ],
                   [
-                    18.75745805934906,
-                    54.65051619228772
+                    18.784028,
+                    54.623521
                   ],
                   [
-                    18.7329190122117,
-                    54.66975883655184
+                    18.771821,
+                    54.642279
                   ],
                   [
-                    18.71846646381646,
-                    54.68437260423305
+                    18.755382,
+                    54.654486
                   ],
                   [
-                    18.64883397851042,
-                    54.71191499168975
+                    18.707774,
+                    54.701239
                   ],
                   [
-                    18.48546144735261,
-                    54.77082969681291
+                    18.698497,
+                    54.703803
                   ],
                   [
-                    18.42588073163382,
-                    54.7912845749401
+                    18.663422,
+                    54.707994
                   ],
                   [
-                    18.42798114716585,
-                    54.77211509852519
+                    18.654552,
+                    54.71015
                   ],
                   [
-                    18.41375291274957,
-                    54.76036571658483
+                    18.64503,
+                    54.71955
                   ],
                   [
-                    18.40406919047228,
-                    54.73824964827916
+                    18.61671,
+                    54.725246
                   ],
                   [
-                    18.40850854505108,
-                    54.72729469611014
+                    18.556977,
+                    54.74901
                   ],
                   [
-                    18.43993677329367,
-                    54.7178805861864
+                    18.49822,
+                    54.765367
                   ],
                   [
-                    18.45252207430563,
-                    54.70648889712599
+                    18.48878,
+                    54.773179
                   ],
                   [
-                    18.48058151422295,
-                    54.69545669680781
+                    18.456309,
+                    54.787665
                   ],
                   [
-                    18.47295529414586,
-                    54.68633714269934
+                    18.447765,
+                    54.789984
                   ],
                   [
-                    18.47259676469886,
-                    54.65836582923879
+                    18.435557,
+                    54.786811
                   ],
                   [
-                    18.48110401996614,
-                    54.65374027922952
+                    18.42921,
+                    54.781684
                   ],
                   [
-                    18.47209049702584,
-                    54.64231363108281
+                    18.41505,
+                    54.753119
                   ],
                   [
-                    18.47493745947322,
-                    54.6344183751041
+                    18.413097,
+                    54.746527
                   ],
                   [
-                    18.48899950650714,
-                    54.63247140325925
+                    18.413097,
+                    54.73192
                   ],
                   [
-                    18.51574641995894,
-                    54.63649180643683
+                    18.418468,
+                    54.728217
                   ],
                   [
-                    18.51845570425439,
-                    54.63689773470875
+                    18.442393,
+                    54.721991
                   ],
                   [
-                    18.5195528095301,
-                    54.63350349882057
+                    18.447765,
+                    54.718248
                   ],
                   [
-                    18.51580004654021,
-                    54.62036568491339
+                    18.459809,
+                    54.706041
                   ],
                   [
-                    18.5170788171378,
-                    54.61647518645791
+                    18.474457,
+                    54.687567
                   ],
                   [
-                    18.51938504545158,
-                    54.60945143005623
+                    18.473888,
+                    54.679918
                   ],
                   [
-                    18.52147235674876,
-                    54.60757505924899
+                    18.470063,
+                    54.673285
                   ],
                   [
-                    18.55497399755145,
-                    54.57741162096004
+                    18.470388,
+                    54.666734
                   ],
                   [
-                    18.55880162725297,
-                    54.57396178199646
+                    18.481944,
+                    54.659613
                   ],
                   [
-                    18.56259067555664,
-                    54.56059302347188
+                    18.475922,
+                    54.640082
                   ],
                   [
-                    18.57176285119548,
-                    54.54758577171285
+                    18.487315,
+                    54.631781
                   ],
                   [
-                    18.55910002365088,
-                    54.54529755228857
+                    18.506358,
+                    54.634101
                   ],
                   [
-                    18.55316212160383,
-                    54.52940493419263
+                    18.52296,
+                    54.646552
                   ],
                   [
-                    18.55190287999416,
-                    54.52603550258323
+                    18.5171,
+                    54.62995
                   ],
                   [
-                    18.55850782329171,
-                    54.51108393347865
+                    18.525157,
+                    54.616685
                   ],
                   [
-                    18.5609410742034,
-                    54.5082334383835
+                    18.537608,
+                    54.605455
                   ],
                   [
-                    18.57570294752162,
-                    54.49092846313027
+                    18.562836,
+                    54.560004
                   ],
                   [
-                    18.57641341247523,
-                    54.49009626415182
+                    18.570649,
+                    54.55036
                   ],
                   [
-                    18.57084761287844,
-                    54.48349115650879
+                    18.566742,
+                    54.527411
                   ],
                   [
-                    18.56795842865998,
-                    54.47316642608106
+                    18.567556,
+                    54.48786
                   ],
                   [
-                    18.56767151830232,
-                    54.46668294924403
+                    18.574067,
+                    54.450385
                   ],
                   [
-                    18.56733923976231,
-                    54.4591450451261
+                    18.588064,
+                    54.433661
                   ],
                   [
-                    18.56951828037741,
-                    54.4565626186378
+                    18.60377,
+                    54.430609
                   ],
                   [
-                    18.58055800224977,
-                    54.44347375076792
+                    18.634288,
+                    54.416938
                   ],
                   [
-                    18.60332201677289,
-                    54.42924100805347
+                    18.649913,
+                    54.413804
                   ],
                   [
-                    18.63458481739127,
-                    54.4178245034601
+                    18.663341,
+                    54.412991
                   ],
                   [
-                    18.64647192041412,
-                    54.41348090143524
+                    18.680024,
+                    54.40998
                   ],
                   [
-                    18.65121499779904,
-                    54.41254782872295
+                    18.694347,
+                    54.404527
                   ],
                   [
-                    18.65901866753645,
-                    54.41101274981016
+                    18.70045,
+                    54.395819
                   ],
                   [
-                    18.66474351677447,
-                    54.41334537282552
+                    18.717296,
+                    54.382025
                   ],
                   [
-                    18.667767869321,
-                    54.41457815869003
+                    18.885916,
+                    54.350165
                   ],
                   [
-                    18.68239922169855,
-                    54.41162146986218
+                    18.923188,
+                    54.348538
                   ],
                   [
-                    18.69550468941586,
-                    54.4068427129457
+                    18.954356,
+                    54.358588
                   ],
                   [
-                    18.7012375515801,
-                    54.39869790651606
+                    18.962901,
+                    54.353502
                   ],
                   [
-                    18.70703241659037,
-                    54.39046184601057
+                    18.97462,
+                    54.349758
                   ],
                   [
-                    18.74983916475154,
-                    54.37473695006438
+                    19.002126,
+                    54.344916
                   ],
                   [
-                    18.75617429595529,
-                    54.37469353546663
-                  ],
-                  [
-                    18.77106145041285,
-                    54.37459124497743
-                  ],
-                  [
-                    18.77878207765842,
-                    54.37453747084162
-                  ],
-                  [
-                    18.78635966276123,
-                    54.37839814237322
-                  ],
-                  [
-                    18.78864614794896,
-                    54.37819950316931
-                  ],
-                  [
-                    18.80390926135206,
-                    54.3768680997623
-                  ],
-                  [
-                    18.80969516768001,
-                    54.37636343091395
-                  ],
-                  [
-                    18.81632882232331,
-                    54.36644304495156
-                  ],
-                  [
-                    18.846989611262,
-                    54.35457325124975
-                  ],
-                  [
-                    18.92204928366533,
-                    54.34610093107963
-                  ],
-                  [
-                    18.93920414657416,
-                    54.35106832465228
-                  ],
-                  [
-                    18.95426049484293,
-                    54.35222309252906
-                  ],
-                  [
-                    18.97020316073526,
-                    54.35344370941201
-                  ],
-                  [
-                    18.99212307712322,
-                    54.34442493364307
-                  ],
-                  [
-                    19.07309508877267,
-                    54.34683205125636
-                  ],
-                  [
-                    19.22043460378392,
-                    54.3553410039677
-                  ],
-                  [
-                    19.31255044253386,
-                    54.36342515991533
-                  ],
-                  [
-                    19.357191179449,
-                    54.37235311382095
-                  ],
-                  [
-                    19.45868520889264,
-                    54.39257528089248
-                  ],
-                  [
-                    19.58746117564421,
-                    54.4315905541058
-                  ],
-                  [
-                    19.67286767934027,
-                    54.4780212039314
-                  ],
-                  [
-                    19.68193487075601,
-                    54.47248462663472
-                  ],
-                  [
-                    19.66788136594156,
-                    54.46457043010072
-                  ],
-                  [
-                    19.64352054107705,
-                    54.45013886177926
-                  ],
-                  [
-                    19.60759737590576,
-                    54.4288271904462
-                  ],
-                  [
-                    19.57921084188311,
-                    54.4201915474456
-                  ],
-                  [
-                    19.52175974244692,
-                    54.40234778962963
-                  ],
-                  [
-                    19.44957663164766,
-                    54.38181703933915
-                  ],
-                  [
-                    19.36978028880636,
-                    54.35776215834007
-                  ],
-                  [
-                    19.36753345942031,
-                    54.35708438626374
-                  ],
-                  [
-                    19.34629138333847,
-                    54.35242635953977
-                  ],
-                  [
-                    19.30683095330728,
-                    54.35423927479857
-                  ],
-                  [
-                    19.23416713234684,
-                    54.34135998456106
-                  ],
-                  [
-                    19.22608784164066,
-                    54.33533800122833
+                    19.248690784398512,
+                    54.36642160923104
                   ],
                   [
                     19.25179702177651,
@@ -215937,7 +215796,7 @@
           "datePrecision": "approximate",
           "certainty": "low",
           "sourceId": "histogis-prussia-provinces-1914-r1",
-          "notes": "1900-01-01 기준으로 사용하는 HistoGIS 서프로이센주 전체 닫힌 외곽 기준선입니다. KDR 고지도 후보선은 별도 검토 자료로 보존했으며 도엽 정렬 잔차와 호수·수로의 법적 경계(강안/중앙선)는 미확정입니다."
+          "notes": "1900-01-01 기준 HistoGIS 서프로이센주 외곽을 바탕으로 판도연구소 canonical POL 해안선의 바깥 돌출·안쪽 누락을 함께 정리한 닫힌 기준선입니다. KDR 고지도 후보선은 별도 검토 자료로 보존했으며 도엽 정렬 잔차와 호수·수로의 법적 경계(강안/중앙선)는 미확정입니다."
         }
       ],
       "metadata": {
@@ -215950,13 +215809,13 @@
         "defaultColor": "#65758A",
         "defaultFlagDataUrl": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gU291cmNlOiBXaWtpbWVkaWEgQ29tbW9ucywgRmxhZ2dlIFByZXXDn2VuIC0gUHJvdmlueiBXZXN0cHJldcOfZW4uc3ZnIC0tPgo8c3ZnIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmVyc2lvbj0iMS4wIiB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDYwMCA0MDAiIGlkPSJGbGFnZ2UiPgogIDxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iMTMzLjMzMyIgeD0iMCIgeT0iMCIgaWQ9Ik9iZW4iIC8+CiAgPHJlY3Qgd2lkdGg9IjYwMCIgaGVpZ2h0PSIxMzMuMzMzIiB4PSIwIiB5PSIyNjYuNjY3IiBpZD0iVW50ZW4iIC8+CiAgPHJlY3Qgd2lkdGg9IjYwMCIgaGVpZ2h0PSIxMzMuMzMzIiB4PSIwIiB5PSIxMzMuMzMzIiBmaWxsPSIjZmZmZmZmIiBpZD0iTWl0dGUiIC8+Cjwvc3ZnPgo=",
         "capital": "단치히",
-        "areaKm2": 25764.266050960607,
-        "artifactSha256": "ed5b8347de05285f5517bb9cdab21839dc7d5cd5aa5a1abd2855c273c05a9c77",
-        "geometrySha256": "dc60da6a8e5902b05364fbb69aaf483a077c7654d785a1b3e23cdaa1fd444be1",
+        "areaKm2": 25764.31730068058,
+        "artifactSha256": "da8c85bd1172b9f1e7644790a2f68dd52193c3f106a40333305d1c39e68c8e20",
+        "geometrySha256": "27420ca8eb4764fb9d6b8a08e2d09ca20429aa5b27dbd491c7a90ab330b3813f",
         "validation": {
           "status": "closed-province-baseline; historical-ground-accuracy-review-pending",
           "componentCount": 1,
-          "coordinatesIncludingClosure": 649,
+          "coordinatesIncludingClosure": 616,
           "selfIntersections": 0,
           "consecutiveDuplicatePoints": 0,
           "degenerateRings": 0,
@@ -215967,7 +215826,7 @@
         "title": "HistoGIS Prussia Provinces 1914 — Westpreußen",
         "url": "https://histogis.acdh.oeaw.ac.at/",
         "license": "HistoGIS repository CC BY 4.0; underlying source conditions require separate review",
-        "notes": "HistoGIS geometry를 1900년 기준선으로 인라인 복사했습니다. 고지도 판독 후보는 정확도 교차검토용이며 이 geometry를 자동 수정하지 않습니다."
+        "notes": "HistoGIS geometry를 1900년 기준선으로 사용하고 canonical POL의 좁은 해안 회랑 안에서만 바깥 돌출 제거와 안쪽 누락 보강을 적용했습니다. 고지도 판독 후보는 정확도 교차검토용이며 이 geometry를 자동 수정하지 않습니다."
       },
       "instantiation": {
         "mode": "territory-replacement",

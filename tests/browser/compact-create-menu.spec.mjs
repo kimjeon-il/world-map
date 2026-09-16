@@ -29,7 +29,7 @@ test('layer add stays a submenu with keyboard and library access at every width'
   expect(await page.locator('#addCountryBtn').evaluate(el => getComputedStyle(el).textAlign)).toBe('left');
   await menu.screenshot({ path: testInfo.outputPath('create-menu-desktop.png') });
   await expect(page.locator('#addFromLibraryBtn')).toBeVisible();
-  await expect(page.locator('#addFromLibraryBtn')).toHaveText('라이브러리에서 추가');
+  await expect(page.locator('#addFromLibraryBtn')).toHaveText('라이브러리');
   await page.locator('#addFromLibraryBtn').click();
   await expect(page.locator('#historicalLibraryModal')).toBeVisible();
   await page.locator('#historicalLibraryCloseBtn').click();

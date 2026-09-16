@@ -1,6 +1,6 @@
-# UI Architecture v2
+# UI Architecture
 
-이 문서는 UI 공통 규칙의 단일 원본이다. 기존 UI v2의 디자인 방향은 유지하되 글자·조작 영역은 아래 합의 규격으로 대체한다. 컴포넌트 계약과 예외는 [UI Components v2](ui-components-v2.md)를 참조한다.
+이 문서는 UI 공통 규칙의 단일 원본이다. 기존 UI의 디자인 방향은 유지하되 글자·조작 영역은 아래 합의 규격으로 대체한다. 컴포넌트 계약과 예외는 [UI Components](ui-components.md)를 참조한다.
 
 아래 규격은 구현의 기준이며 현재 CSS·DOM이 모두 준수한다는 뜻이 아니다. 적용 현황과 남은 검증은 [공통 UI 적용 감사](ui-common-rules-audit.md)에 구분해서 기록한다. 공개 API·저장 형식·기능 및 렌더링 모델은 유지한다.
 
@@ -158,7 +158,7 @@ workspace-surface
 
 ## 5. Legacy CSS ratchet
 
-`phase1-ui-cleanup.css`와 해당 runtime loader는 UI v2 convergence 단계에서 제거되었다. 현재 root-level legacy stylesheet로 허용되는 것은 `app.css` 하나뿐이다.
+`phase1-ui-cleanup.css`와 해당 runtime loader는 UI convergence 단계에서 제거되었다. 현재 root-level legacy stylesheet로 허용되는 것은 `app.css` 하나뿐이다.
 
 - 새 root-level CSS 파일을 추가하지 않는다.
 - `app.css`의 byte budget은 늘리지 않는다.
@@ -195,7 +195,7 @@ UI 예외를 추가해서 검사를 우회하는 것보다 기존 primitive/comp
 
 ## 8. 후속 정리 경계
 
-UI v2의 전용 phase cleanup layer는 더 이상 production runtime에 존재하지 않는다. 이후 UI 정리는 `app.css`의 남은 generic rule을 canonical layered CSS로 이동하고, static markup으로 옮길 수 있는 presentation mutation을 줄이는 방식으로 진행한다.
+UI의 전용 phase cleanup layer는 더 이상 production runtime에 존재하지 않는다. 이후 UI 정리는 `app.css`의 남은 generic rule을 canonical layered CSS로 이동하고, static markup으로 옮길 수 있는 presentation mutation을 줄이는 방식으로 진행한다.
 
 기능/domain state와 renderer를 UI 정리와 동시에 재작성하지 않는다.
 

@@ -167,6 +167,20 @@ test('Prussian province library entries carry their historical province flags', 
   }
 });
 
+test('every static library object has a default flag', () => {
+  const missing = historicalData.entities
+    .filter(entity => !String(entity.metadata?.defaultFlagDataUrl || '').trim())
+    .map(entity => entity.libraryId);
+  assert.deepEqual(missing, []);
+});
+
+test('Artsakh uses the right-originating white stepped flag motif', () => {
+  const entity = historicalData.entities.find(item => item.libraryId === 'historical-country:nagorno-karabakh');
+  const dataUrl = entity.metadata.defaultFlagDataUrl;
+  const svg = Buffer.from(dataUrl.slice('data:image/svg+xml;base64,'.length), 'base64').toString('utf8');
+  assert.match(svg, /M36 0h-6/);
+});
+
 test('world snapshots remain templates with independent reference lists', () => {
   const refs = ['one'];
   const library = createHistoricalLibrary({ schemaVersion: 2, snapshots: [{ id: 'snapshot', name: 'Snapshot', referenceDate: '1914', entityRefs: refs }] });

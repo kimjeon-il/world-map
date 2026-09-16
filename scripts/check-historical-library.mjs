@@ -155,7 +155,7 @@ const sovietChildren = library.entities.filter(item => item.parentLibraryId === 
 if (sovietChildren.length !== 15) throw new Error(`Soviet Union must have 15 constituent republics, found ${sovietChildren.length}`);
 const sovietChildGeometries = [];
 for (const child of sovietChildren) {
-  if (child.type !== 'subunit' || child.sovereignLibraryId !== 'historical-country:soviet-union' || child.adminLevel !== 1) {
+  if (child.type !== 'subunit' || child.sovereignLibraryId !== 'historical-country:soviet-union' || Object.hasOwn(child, 'adminLevel')) {
     throw new Error(`${child.libraryId} has an invalid Soviet constituent hierarchy`);
   }
   const flag = String(child.metadata?.defaultFlagDataUrl || '');

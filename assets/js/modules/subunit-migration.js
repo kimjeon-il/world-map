@@ -10,18 +10,13 @@ export function migrateTerritorialObjectKey(key) {
 export function migrateTerritorialInput(feature) {
   const next = structuredClone(feature);
   const properties = next?.properties;
-  if (!properties || !legacyTypes.has(properties.unitType)) return next;
-  const previousType = properties.unitType;
+  if (!properties) return next;
+  delete properties.adminLevel;
+  delete properties.isRemainder;
+  if (properties.metadata) delete properties.metadata.legacyTerritorialPartition;
+  if (!legacyTypes.has(properties.unitType)) return next;
   properties.unitType = 'subunit';
   properties.schemaVersion = 2;
-  // Retain independent partition families: two legacy remainders must not
-  // become duplicate remainders merely because their public type was merged.
-  properties.metadata = { ...properties.metadata };
-  if (Object.hasOwn(properties.metadata, 'legacyTerritorialPartition')) {
-    throw new Error('Reserved legacyTerritorialPartition metadata is already present.');
-  }
-  properties.metadata.legacyTerritorialPartition = previousType;
-  if (previousType !== 'admin') properties.adminLevel ??= null;
   return next;
 }
 

@@ -147,7 +147,7 @@ for (const layout of layouts) {
     await expect(page.locator('#projectionControl')).toContainText('평면');
     await page.locator('#mapLayersTabBtn').click();
     await page.locator('#mapViewTabBtn').click();
-    await expect(page.locator('label:has(#basemapLabelsVisible)')).toContainText('국가명 표시');
+    await expect(page.locator('label:has(#basemapLabelsVisible)')).toContainText('객체명');
     await expect(page.locator('label:has(#labelsVisible)')).toContainText('지명 표시');
     await expect(page.locator('#distributionLayerModeInput option')).toHaveText([
       '가장 많은 분포만 표시',
@@ -156,7 +156,7 @@ for (const layout of layouts) {
     await page.locator('#distributionLayerModeInput').selectOption('intensity');
     await expect(page.locator('#distributionLayerModeHint')).toHaveText('선택한 분포가 많을수록 색이 진해집니다.');
     await expect(page.locator('label:has(#distributionBoundaryVisibleInput)')).toContainText('분포 경계 표시');
-    await expect(page.locator('[data-layer-style-toggle="distribution"]')).toHaveCount(0);
+    await expect(page.locator('[data-map-display-disclosure="distribution"]')).toHaveCount(0);
     await page.locator('#mapViewTabBtn').focus();
     await page.keyboard.press('ArrowLeft');
     await expect(page.locator('#mapLayersTabBtn')).toBeFocused();

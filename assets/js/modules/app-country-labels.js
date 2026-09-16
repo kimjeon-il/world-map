@@ -1,3 +1,7 @@
+import { countryLabelFlag } from './country-label-flags.js';
+import { effectiveTerritorialFlagUrl } from './country-flags.js';
+import { territorialSymbolGroup, territorialSymbolVisibility } from './layer-presentation.js';
+
 /** CountryLabels: extracted application responsibility.
  * Dependencies are explicitly wired once by the composition modules.
  * Mutable bindings stay local; exported accessors retain live identity.
@@ -49,7 +53,11 @@ export function createCountryLabels() {
     const previousAccent = dependencies.resolvedAccentColor;
     dependencies.userPreferences = persist ? (0, dependencies.saveUserPreferences)(nextPreferences) : nextPreferences;
     const resolvedTheme = (0, dependencies.effectiveTheme)(dependencies.userPreferences, dependencies.systemTheme === 'dark');
+    const statusBarVisible = dependencies.userPreferences.appearance?.statusBarVisible !== false;
     document.documentElement.dataset.theme = resolvedTheme;
+    document.documentElement.dataset.statusBarVisible = String(statusBarVisible);
+    const statusBar = (0, dependencies.$)('mapBottomStatus');
+    if (statusBar) statusBar.hidden = !statusBarVisible;
     dependencies.resolvedAccentColor = (0, dependencies.applyAppAccent)(document, dependencies.userPreferences.appearance.accentColor);
     (0, dependencies.applyMapLabelPreferences)();
     window.__PANDOLAB_THEME__ = resolvedTheme;
@@ -102,7 +110,6 @@ export function createCountryLabels() {
   }
 
   function shouldShowCountryLabel(feature, metrics = countryLabelScreenMetrics(feature)) {
-    if (!dependencies.state.layerVisibility.basemapLabels) return false;
     const id = String(feature.id || '');
     if (!(0, dependencies.isLayerItemVisible)('countryLabels', id) || dependencies.pendingCountryLabelAnchors.has(id)) return false;
     if ((dependencies.state.selected?.domain === 'territorial' && dependencies.state.selected.type === dependencies.TERRITORIAL_UNIT_TYPES.COUNTRY) && dependencies.state.selected.id === id) return true;
@@ -142,15 +149,32 @@ export function createCountryLabels() {
   }
 
   function visibleLabelLayout() {
+    dependencies.scheduleCountryLabelAnchors?.();
     const candidates = [];
     const indexedLabelIds = dependencies.state.layerVisibility.labels
       ? new Set((0, dependencies.visibleMapObjectCandidates)(['label']).map(record => String(record.id)))
       : new Set();
     countryLabelScreenAreas.clear();
     const zoom = currentMapZoom();
-    if (dependencies.state.layerVisibility.basemapLabels) for (const feature of (0, dependencies.builtinRenderCountries)().labelById.values()) {
+    const renderCountries = (0, dependencies.builtinRenderCountries)();
+    const visibility = Object.fromEntries(['countries', 'subunits', 'regions'].map(group =>
+      [group, territorialSymbolVisibility(dependencies.state, group)]));
+    const flagOptions = {
+      zoom, enabled: true,
+      isVisible: feature => visibility[territorialSymbolGroup(feature)].flag,
+      flagUrl: feature => territorialSymbolGroup(feature) === 'countries'
+        ? (0, dependencies.effectiveCountryFlagUrl)({ countryId: feature.id, override: dependencies.state.countryOverrides[String(feature.id)] || {}, assetRevision: dependencies.ASSET_REVISION })
+        : effectiveTerritorialFlagUrl(feature, { assetRevision: dependencies.ASSET_REVISION }),
+    };
+    for (const feature of renderCountries.labelById.values()) {
       const id = String(feature.id || '');
+      const group = territorialSymbolGroup(feature);
+      const namesVisible = visibility[group].name;
+      const labelRef = renderCountries.labelRefs.get(id);
+      if (!(0, dependencies.isLayerItemVisible)(group, labelRef?.id || id)) continue;
       if (!(0, dependencies.isLayerItemVisible)('countryLabels', id) || dependencies.pendingCountryLabelAnchors.has(id)) continue;
+      const flag = namesVisible ? null : countryLabelFlag(feature, flagOptions);
+      if (!namesVisible && !flag) continue;
       const settings = (0, dependencies.automaticLabelSettings)('country', dependencies.state.labelSettings[(0, dependencies.labelKey)('country', id)] || {});
       if (zoom < Number(settings.minZoom ?? -Infinity) || zoom > Number(settings.maxZoom ?? Infinity)) continue;
       const anchor = dependencies.countryLabelAnchors.get(id);
@@ -158,7 +182,6 @@ export function createCountryLabels() {
       if (!Array.isArray(coordinate)) continue;
       const point = (0, dependencies.projectVisibleCoordinate)(coordinate);
       if (!point) continue;
-      const labelRef = (0, dependencies.builtinRenderCountries)().labelRefs.get(id);
       const selected = labelRef ? dependencies.selectionDomain.has(labelRef)
         : (dependencies.state.selected?.domain === 'territorial' && dependencies.state.selected.type === dependencies.TERRITORIAL_UNIT_TYPES.COUNTRY) && dependencies.state.selected.id === id;
       const displayFeature = countryDisplayFeature(feature);
@@ -166,10 +189,12 @@ export function createCountryLabels() {
       const fontSize = baseMetrics.area >= ((0, dependencies.isMobile)() ? 3200 : 2200) ? ((0, dependencies.isMobile)() ? 10 : 12) : (0, dependencies.isMobile)() ? 8 : 9;
       const metrics = countryLabelScreenMetrics(displayFeature, fontSize, baseMetrics, feature);
       countryLabelScreenAreas.set(id, metrics.area);
-      if (!selected && !shouldShowCountryLabel(feature, metrics)) continue;
+      if (namesVisible && !selected && !shouldShowCountryLabel(feature, metrics)) continue;
       candidates.push({
         key: (0, dependencies.labelKey)('country', id), sourceType: 'country', source: feature, point,
-        width: metrics.textWidth, height: metrics.textHeight,
+        nameVisible: namesVisible,
+        width: namesVisible ? metrics.textWidth : flag.width,
+        height: namesVisible ? metrics.textHeight : flag.height,
         priority: settings.priority ?? dependencies.LABEL_PRIORITIES.country, minZoom: settings.minZoom, maxZoom: settings.maxZoom,
         pinned: settings.pinned, collisionGroup: settings.collisionGroup,
         selected,
@@ -210,17 +235,15 @@ export function createCountryLabels() {
       qualityCulledCount: Math.max(0, candidates.length - qualityCandidates.length),
     };
     const placed = (0, dependencies.layoutLabels)(qualityCandidates, { zoom, padding: (0, dependencies.isMobile)() ? 5 : 3, metrics: nextLabelLayoutMetrics });
-    const placedCountryLabels = placed.filter(item => item.sourceType === 'country');
-    const countryFlags = (0, dependencies.layoutCountryFlags)(placed, {
-      zoom, enabled: dependencies.state.layerVisibility.countryFlags !== false,
-      isCountry: feature => !(0, dependencies.builtinRenderCountries)().labelRefs.has(String(feature.id)),
-      flagUrl: feature => (0, dependencies.effectiveCountryFlagUrl)({ countryId: feature.id, override: dependencies.state.countryOverrides[String(feature.id)] || {}, assetRevision: dependencies.ASSET_REVISION }),
-    });
+    const countryFlags = (0, dependencies.layoutCountryFlags)(placed, flagOptions);
+    const placedCountryLabels = placed.filter(item => item.sourceType === 'country'
+      && (item.nameVisible || countryFlags.has(String(item.source.id))));
     const placedUserLabels = placed.filter(item => item.sourceType === 'label');
     labelLayoutMetrics = nextLabelLayoutMetrics;
     if (dependencies.viewportCullingMetrics.lastByDomain.label) dependencies.viewportCullingMetrics.lastByDomain.label.finalVisibleCount = placedUserLabels.length;
     return {
       countryLabels: placedCountryLabels.map(item => item.source),
+      countryLabelNames: new Map(placedCountryLabels.map(item => [String(item.source.id), item.nameVisible])),
       countryFlags,
       userLabels: placedUserLabels.map(item => item.source),
       countryLabelPoints: new Map(placedCountryLabels.map(item => [String(item.source?.id || ''), item.point])),

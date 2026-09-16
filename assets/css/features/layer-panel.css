@@ -1,23 +1,9 @@
 /* Layer feature states are loaded after primitives so stateful SVGs win the
  * generic icon defaults without changing the shared icon primitive. */
 
-/* Document commands live in the header; only viewport controls float on the map. */
-.app-root .topbar { display: flex; justify-content: flex-start;
-}
-/* The menu shares the header's stacking context; lift it above workspace panels. */
-body.file-menu-open .app-root .topbar { z-index: 150;
-}
-.app-root .topbar-file-actions { position: relative; flex: 0 0 auto;
-}
-.app-root .topbar-history { display: flex; align-items: center; gap: var(--ui-space-1); flex: 0 0 auto;
-}
-.app-root .topbar-center { flex: 1 1 auto;
-}
-.app-root .top-actions { position: absolute; top: calc(100% + var(--ui-space-2)); left: 0; right: auto; max-width: calc(100vw - var(--ui-space-6));
-}
 .layer-panel-footer { flex: 0 0 auto;
 }
-.layer-action-bar { display: flex; align-items: center; justify-content: flex-start; gap: var(--ui-v2-button-gap);
+.layer-action-bar { display: flex; align-items: center; justify-content: flex-start; gap: var(--design-button-gap);
 }
 .app-root .layer-action-bar > .icon-btn { flex: 0 0 var(--ui-control-height); width: var(--ui-control-height); min-width: var(--ui-control-height); min-height: var(--ui-control-height); height: auto; color: var(--text-soft);
 }
@@ -34,16 +20,8 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 @media (max-width: 799px) {
   .app-root .layer-action-bar > .icon-btn { flex-basis: var(--ui-touch-height); width: var(--ui-touch-height); min-height: var(--ui-touch-height); height: auto;
 }
-  .app-root .topbar { gap: var(--ui-v2-button-gap);
 }
-  .app-root .topbar .brand { flex: 0 1 auto;
-}
-  .app-root .topbar .brand strong { font-size: var(--ui-font-md);
-}
-  .app-root .adaptive-nav { grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-  .app-root .top-actions { left: auto; right: auto; position: fixed; top: calc(var(--ui-topbar-height) + var(--ui-space-3)); inset-inline-start: var(--ui-space-3);
-}}
+
 /* Visibility color is independent of row selection and pointer state. */
 .layer-visibility-control { color: var(--text-strong); }
 .layer-visibility-control:has(.layer-visibility-toggle:not(:checked)) { color: var(--muted); }
@@ -68,7 +46,7 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 .app-root .layer-list.hidden, .app-root .layer-search-results.hidden { display: none;
 }
 .app-root .layer-child, .app-root .layer-bundle-row {
-  height: var(--ui-v2-layer-row-height); min-height: var(--ui-v2-layer-row-height);
+  height: var(--design-layer-row-height); min-height: var(--design-layer-row-height);
   box-sizing: border-box; margin: 0; flex-shrink: 0;
 }
 .app-root .layer-bundle-row {
@@ -120,13 +98,6 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 .layer-child:hover .layer-child-menu, .layer-child:focus-within .layer-child-menu,
 .layer-child.is-selected .layer-child-menu { opacity: 1;
 }
-.map-object-style-settings > summary { cursor: pointer;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .layer-type-settings-heading:not(:hover):not(:focus-within) .layer-style-toggle[aria-expanded="false"] {
-    opacity: 0;
-}}
 .layer-type-settings-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-1);
 }
 .layer-type-settings-heading > label { flex: 1;
@@ -134,14 +105,14 @@ body.file-menu-open .app-root .topbar { z-index: 150;
 .app-root .layer-type-settings .layer-inline-style-panel { margin: 0;
 }
 @media (max-width: 799px) {
-  .app-root .layer-child.layer-hierarchy-row { --layer-action-size: var(--ui-v2-layer-visibility-size-mobile);
+  .app-root .layer-child.layer-hierarchy-row { --layer-action-size: var(--design-layer-visibility-size-mobile);
 }
   .app-root .layer-child, .app-root .layer-bundle-row {
-    height: var(--ui-v2-layer-row-height-mobile); min-height: var(--ui-v2-layer-row-height-mobile);
+    height: var(--design-layer-row-height-mobile); min-height: var(--design-layer-row-height-mobile);
 }
-  .app-root .layer-bundle-row { grid-template-columns: var(--ui-icon-size) var(--ui-v2-layer-visibility-size-mobile) minmax(0, 1fr);
+  .app-root .layer-bundle-row { grid-template-columns: var(--ui-icon-size) var(--design-layer-visibility-size-mobile) minmax(0, 1fr);
 }
   .layer-visibility-control {
-    width: var(--ui-v2-layer-visibility-size-mobile); min-width: var(--ui-v2-layer-visibility-size-mobile);
-    height: var(--ui-v2-layer-visibility-size-mobile);
+    width: var(--design-layer-visibility-size-mobile); min-width: var(--design-layer-visibility-size-mobile);
+    height: var(--design-layer-visibility-size-mobile);
 }}
