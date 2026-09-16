@@ -56,7 +56,7 @@ export function createCountryLabels() {
     const statusBarVisible = dependencies.preferences.userPreferences.appearance?.statusBarVisible !== false;
     document.documentElement.dataset.theme = resolvedTheme;
     document.documentElement.dataset.statusBarVisible = String(statusBarVisible);
-    const statusBar = (0, dependencies.$)('mapBottomStatus');
+    const statusBar = (0, dependencies.platform.$)('mapBottomStatus');
     if (statusBar) statusBar.hidden = !statusBarVisible;
     dependencies.preferences.setResolvedAccentColor((0, dependencies.preferences.applyAppAccent)(document, dependencies.preferences.userPreferences.appearance.accentColor));
     (0, dependencies.preferences.applyMapLabelPreferences)();
@@ -64,8 +64,8 @@ export function createCountryLabels() {
     const themeChanged = previousTheme !== resolvedTheme;
     if (themeChanged || previousAccent !== dependencies.preferences.resolvedAccentColor) (0, dependencies.preferences.syncResolvedInteractionStyle)({ redraw: rerender });
     if (themeChanged) {
-      dependencies.gpuMapRenderer.invalidateCountryPalette({ base: true, emphasis: true }, 'user-preferences');
-      dependencies.gpuMapRenderer.invalidatePhysicalStyle('user-preferences');
+      dependencies.rendering.gpuMapRenderer.invalidateCountryPalette({ base: true, emphasis: true }, 'user-preferences');
+      dependencies.rendering.gpuMapRenderer.invalidatePhysicalStyle('user-preferences');
     }
     if (themeChanged && rerender && dependencies.mapLayers.svg) {
       (0, dependencies.layerPresentation.markLayerTreeDirty)();
@@ -111,8 +111,8 @@ export function createCountryLabels() {
 
   function shouldShowCountryLabel(feature, metrics = countryLabelScreenMetrics(feature)) {
     const id = String(feature.id || '');
-    if (!(0, dependencies.layerPresentation.isLayerItemVisible)('countryLabels', id) || dependencies.pendingCountryLabelAnchors.has(id)) return false;
-    if ((dependencies.projectState.state.selected?.domain === 'territorial' && dependencies.projectState.state.selected.type === dependencies.TERRITORIAL_UNIT_TYPES.COUNTRY) && dependencies.projectState.state.selected.id === id) return true;
+    if (!(0, dependencies.layerPresentation.isLayerItemVisible)('countryLabels', id) || dependencies.labelPresentation.pendingCountryLabelAnchors.has(id)) return false;
+    if ((dependencies.projectState.state.selected?.domain === 'territorial' && dependencies.projectState.state.selected.type === dependencies.objectCatalog.TERRITORIAL_UNIT_TYPES.COUNTRY) && dependencies.projectState.state.selected.id === id) return true;
     const widthFit = metrics.width >= Math.min(34, metrics.textWidth * ((0, dependencies.surfaces.isMobile)() ? 0.48 : 0.42));
     const heightFit = metrics.height >= metrics.textHeight * 0.52;
     const areaFit = metrics.area >= Math.max((0, dependencies.surfaces.isMobile)() ? 72 : 58, metrics.textWidth * metrics.textHeight * 0.32);
@@ -172,18 +172,18 @@ export function createCountryLabels() {
       const namesVisible = visibility[group].name;
       const labelRef = renderCountries.labelRefs.get(id);
       if (!(0, dependencies.layerPresentation.isLayerItemVisible)(group, labelRef?.id || id)) continue;
-      if (!(0, dependencies.layerPresentation.isLayerItemVisible)('countryLabels', id) || dependencies.pendingCountryLabelAnchors.has(id)) continue;
+      if (!(0, dependencies.layerPresentation.isLayerItemVisible)('countryLabels', id) || dependencies.labelPresentation.pendingCountryLabelAnchors.has(id)) continue;
       const flag = namesVisible ? null : countryLabelFlag(feature, flagOptions);
       if (!namesVisible && !flag) continue;
       const settings = (0, dependencies.labelPresentation.automaticLabelSettings)('country', dependencies.projectState.state.labelSettings[(0, dependencies.labelPresentation.labelKey)('country', id)] || {});
       if (zoom < Number(settings.minZoom ?? -Infinity) || zoom > Number(settings.maxZoom ?? Infinity)) continue;
-      const anchor = dependencies.countryLabelAnchors.get(id);
+      const anchor = dependencies.labelPresentation.countryLabelAnchors.get(id);
       const coordinate = settings.pinned && settings.manualPosition ? settings.manualPosition : anchor;
       if (!Array.isArray(coordinate)) continue;
       const point = (0, dependencies.mapLayout.projectVisibleCoordinate)(coordinate);
       if (!point) continue;
-      const selected = labelRef ? dependencies.selectionDomain.has(labelRef)
-        : (dependencies.projectState.state.selected?.domain === 'territorial' && dependencies.projectState.state.selected.type === dependencies.TERRITORIAL_UNIT_TYPES.COUNTRY) && dependencies.projectState.state.selected.id === id;
+      const selected = labelRef ? dependencies.domains.selectionDomain.has(labelRef)
+        : (dependencies.projectState.state.selected?.domain === 'territorial' && dependencies.projectState.state.selected.type === dependencies.objectCatalog.TERRITORIAL_UNIT_TYPES.COUNTRY) && dependencies.projectState.state.selected.id === id;
       const displayFeature = countryDisplayFeature(feature);
       const baseMetrics = countryLabelScreenMetrics(displayFeature, (0, dependencies.surfaces.isMobile)() ? 8 : 9, null, feature);
       const fontSize = baseMetrics.area >= ((0, dependencies.surfaces.isMobile)() ? 3200 : 2200) ? ((0, dependencies.surfaces.isMobile)() ? 10 : 12) : (0, dependencies.surfaces.isMobile)() ? 8 : 9;
@@ -195,7 +195,7 @@ export function createCountryLabels() {
         nameVisible: namesVisible,
         width: namesVisible ? metrics.textWidth : flag.width,
         height: namesVisible ? metrics.textHeight : flag.height,
-        priority: settings.priority ?? dependencies.LABEL_PRIORITIES.country, minZoom: settings.minZoom, maxZoom: settings.maxZoom,
+        priority: settings.priority ?? dependencies.labelPresentation.LABEL_PRIORITIES.country, minZoom: settings.minZoom, maxZoom: settings.maxZoom,
         pinned: settings.pinned, collisionGroup: settings.collisionGroup,
         selected,
       });
@@ -208,7 +208,7 @@ export function createCountryLabels() {
       const coordinate = settings.pinned && settings.manualPosition ? settings.manualPosition : label.coordinates;
       const point = (0, dependencies.mapLayout.projectVisibleCoordinate)(coordinate);
       if (!point) continue;
-      const priority = settings.priority ?? (label.kind === 'capital' ? dependencies.LABEL_PRIORITIES.capital : label.kind === 'city' ? dependencies.LABEL_PRIORITIES.majorCity : label.kind === 'region' ? dependencies.LABEL_PRIORITIES.administrative : dependencies.LABEL_PRIORITIES.place);
+      const priority = settings.priority ?? (label.kind === 'capital' ? dependencies.labelPresentation.LABEL_PRIORITIES.capital : label.kind === 'city' ? dependencies.labelPresentation.LABEL_PRIORITIES.majorCity : label.kind === 'region' ? dependencies.labelPresentation.LABEL_PRIORITIES.administrative : dependencies.labelPresentation.LABEL_PRIORITIES.place);
       candidates.push({
         key: (0, dependencies.labelPresentation.labelKey)('label', label.id), sourceType: 'label', source: label, point,
         width: Math.max(22, [...String(label.name || '')].length * 9 + 16), height: 19,
@@ -217,7 +217,7 @@ export function createCountryLabels() {
         selected,
       });
     }
-    const labelDensity = Math.max(0.25, Math.min(1, Number(dependencies.currentRenderQuality.labelDensity) || 1));
+    const labelDensity = Math.max(0.25, Math.min(1, Number(dependencies.renderScene.currentRenderQuality.labelDensity) || 1));
     const viewportArea = Math.max(1, Number(dependencies.projectState.state.size.width || 1) * Number(dependencies.projectState.state.size.height || 1));
     const backgroundLimit = labelDensity >= 0.99
       ? Number.POSITIVE_INFINITY
@@ -230,7 +230,7 @@ export function createCountryLabels() {
       ? [...protectedCandidates, ...backgroundCandidates.slice(0, backgroundLimit)]
       : candidates;
     const nextLabelLayoutMetrics = {
-      qualityTier: dependencies.currentRenderQuality.tier,
+      qualityTier: dependencies.renderScene.currentRenderQuality.tier,
       qualityCandidateCount: qualityCandidates.length,
       qualityCulledCount: Math.max(0, candidates.length - qualityCandidates.length),
     };
@@ -240,7 +240,7 @@ export function createCountryLabels() {
       && (item.nameVisible || countryFlags.has(String(item.source.id))));
     const placedUserLabels = placed.filter(item => item.sourceType === 'label');
     labelLayoutMetrics = nextLabelLayoutMetrics;
-    if (dependencies.viewportCullingMetrics.lastByDomain.label) dependencies.viewportCullingMetrics.lastByDomain.label.finalVisibleCount = placedUserLabels.length;
+    if (dependencies.spatialQuery.viewportCullingMetrics.lastByDomain.label) dependencies.spatialQuery.viewportCullingMetrics.lastByDomain.label.finalVisibleCount = placedUserLabels.length;
     return {
       countryLabels: placedCountryLabels.map(item => item.source),
       countryLabelNames: new Map(placedCountryLabels.map(item => [String(item.source.id), item.nameVisible])),
