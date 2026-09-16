@@ -66,12 +66,57 @@ test('arbitrary user metadata strings are not rewritten', () => {
   assert.equal(migrateProjectV4ToV5(input).territorialUnits[0].properties.metadata.notes, 'territorial:admin:my-notes');
 });
 
-test('Region parents are invalid even when the relation was already stored', () => {
+test('new Region parents are rejected while an unchanged legacy relation is preserved', () => {
   const region = createTerritorialFeature({ id: 'r', unitType: 'region', geometry: geometry() });
   const subunit = unit('s', 'r');
   assert.equal(validateSubunitParentChanges([], [region, subunit], id => id === 'DNK').ok, false);
-  assert.equal(validateSubunitParentChanges([region, subunit], [region, subunit], id => id === 'DNK').ok, false);
+  assert.equal(validateSubunitParentChanges([region, subunit], [region, subunit], id => id === 'DNK').ok, true);
+  assert.equal(validateSubunitParentChanges([region, unit('s')], [region, subunit], id => id === 'DNK').ok, false);
   assert.equal(validateSubunitParentChanges([], [unit('s')], id => id === 'DNK').ok, true);
+});
+
+test('relationship validation reacts to child and parent ownership changes while cycle checks remain global', () => {
+  const parent = unit('p');
+  const child = unit('c', 'p');
+  const parentAsRegion = {
+    ...parent,
+    properties: { ...parent.properties, unitType: 'region' },
+  };
+  assert.equal(validateSubunitParentChanges(
+    [parent, child],
+    [parentAsRegion, child],
+    id => id === 'DNK',
+  ).ok, false);
+
+  const foreignParent = {
+    ...parent,
+    properties: { ...parent.properties, parentId: 'SWE', sovereignId: 'SWE' },
+  };
+  assert.equal(validateSubunitParentChanges(
+    [parent, child],
+    [foreignParent, child],
+    id => id === 'DNK' || id === 'SWE',
+  ).ok, false);
+
+  const foreignChild = {
+    ...child,
+    properties: { ...child.properties, sovereignId: 'SWE' },
+  };
+  assert.equal(validateSubunitParentChanges(
+    [parent, child],
+    [parent, foreignChild],
+    id => id === 'DNK' || id === 'SWE',
+  ).ok, false);
+
+  const circularParent = {
+    ...parent,
+    properties: { ...parent.properties, parentId: 'c' },
+  };
+  assert.equal(validateSubunitParentChanges(
+    [parent, child],
+    [circularParent, child],
+    id => id === 'DNK',
+  ).ok, false);
 });
 
 test('rank is discarded while nested subunits and cycle checks remain available', () => {
