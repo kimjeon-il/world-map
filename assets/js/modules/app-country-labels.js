@@ -58,7 +58,7 @@ export function createCountryLabels() {
     document.documentElement.dataset.statusBarVisible = String(statusBarVisible);
     const statusBar = (0, dependencies.platform.$)('mapBottomStatus');
     if (statusBar) statusBar.hidden = !statusBarVisible;
-    dependencies.preferences.setResolvedAccentColor((0, dependencies.preferences.applyAppAccent)(document, dependencies.preferences.userPreferences.appearance.accentColor));
+    dependencies.preferences.setResolvedAccentColor((0, dependencies.preferences.applyAppAccent)(document, dependencies.preferences.userPreferences.appearance.accentPreset));
     (0, dependencies.preferences.applyMapLabelPreferences)();
     window.__PANDOLAB_THEME__ = resolvedTheme;
     const themeChanged = previousTheme !== resolvedTheme;
