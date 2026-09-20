@@ -19,13 +19,14 @@ for (const renderer of ['webgl2', 'webgl1', 'canvas']) {
         geometry: { type: 'Polygon', coordinates: [[[9, 50], [9, 51], [10, 51], [10, 50], [9, 50]]] },
       }] })),
     });
-    await expect(page.locator('#gisImportConfirmBtn')).toBeEnabled({ timeout: 30_000 });
     await selectUiOption(page, '#gisTargetType', 'subunit');
+    await page.locator('#gisImportNextBtn').click();
+    await expect(page.locator('#gisStepIndicator')).toContainText('2/3');
+    await expect(page.locator('#gisTargetCountryRow')).toBeVisible();
     await selectUiOption(page, '#gisTargetCountry', 'DEU');
-    for (const step of ['2/3', '3/3']) {
-      await page.locator('#gisImportNextBtn').click();
-      await expect(page.locator('#gisStepIndicator')).toContainText(step);
-    }
+    await page.locator('#gisImportNextBtn').click();
+    await expect(page.locator('#gisStepIndicator')).toContainText('3/3');
+    await expect(page.locator('#gisImportConfirmBtn')).toBeEnabled({ timeout: 30_000 });
     await page.locator('#gisImportConfirmBtn').click();
     await expect.poll(() => page.evaluate(() => window.PANDOLAB_TERRITORIAL.list({ type: 'subunit' })
       .some(unit => unit.properties.name === '상속 화면 비교')), { timeout: 60_000 }).toBe(true);

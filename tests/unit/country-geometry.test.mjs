@@ -62,6 +62,15 @@ test('country geometry normalizer removes consecutive duplicate vertices', () =>
     && coord[1] === normalizedRing[index - 1][1]), false);
 });
 
+test('country geometry normalizer removes a zero-area collinear backtrack', () => {
+  const ring = [[0, 0], [4, 0], [2, 0], [2, 2], [0, 2], [0, 0]];
+  const normalized = normalizeCountryGeometry({ type: 'Polygon', coordinates: [ring] });
+
+  assert.equal(normalized.coordinates[0].some(coord => coord[0] === 4 && coord[1] === 0), false);
+  assert.equal(normalized.coordinates[0].some(coord => coord[0] === 2 && coord[1] === 0), true);
+  assert.equal(hasCanonicalCountryWinding(normalized), true);
+});
+
 test('Borneo canonical country rings are clean before runtime normalization', () => {
   const countries = JSON.parse(fs.readFileSync(path.join(root, 'assets/data/countries-ne-5.1.1.geojson'), 'utf8'));
   const borneoCountries = countries.features.filter(feature => ['IDN', 'MYS'].includes(feature.id));

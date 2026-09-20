@@ -10,6 +10,38 @@
       && Math.abs(Number(left[1]) - Number(right[1])) <= tolerance;
   }
 
+  function pointOnSegment(point, start, end, tolerance = COORDINATE_TOLERANCE) {
+    const dx = Number(end?.[0]) - Number(start?.[0]);
+    const dy = Number(end?.[1]) - Number(start?.[1]);
+    const lengthSquared = dx * dx + dy * dy;
+    if (lengthSquared <= tolerance * tolerance) return coordinatesNear(point, start, tolerance);
+    const offsetX = Number(point?.[0]) - Number(start?.[0]);
+    const offsetY = Number(point?.[1]) - Number(start?.[1]);
+    const position = (offsetX * dx + offsetY * dy) / lengthSquared;
+    if (position < -tolerance || position > 1 + tolerance) return false;
+    return Math.abs(offsetX * dy - offsetY * dx) <= tolerance * Math.sqrt(lengthSquared);
+  }
+
+  function removeCollinearBacktracks(rawRing) {
+    const vertices = rawRing.slice(0, -1);
+    let changed = true;
+    while (changed && vertices.length >= 3) {
+      changed = false;
+      for (let index = 0; index < vertices.length; index += 1) {
+        const previous = vertices[(index + vertices.length - 1) % vertices.length];
+        const current = vertices[index];
+        const next = vertices[(index + 1) % vertices.length];
+        if (pointOnSegment(next, previous, current)
+          || pointOnSegment(previous, current, next)) {
+          vertices.splice(index, 1);
+          changed = true;
+          break;
+        }
+      }
+    }
+    return vertices.length ? [...vertices, vertices[0].slice()] : [];
+  }
+
   function ensureClosedRing(rawRing) {
     const coordinates = (rawRing || [])
       .filter(coord => Array.isArray(coord) && Number.isFinite(Number(coord[0])) && Number.isFinite(Number(coord[1])))
@@ -21,6 +53,11 @@
     if (ring.length && !coordinatesNear(ring[0], ring[ring.length - 1])) ring.push(ring[0].slice());
     else if (ring.length > 1) ring[ring.length - 1] = ring[0].slice();
     return ring;
+  }
+
+  function normalizeRing(rawRing) {
+    const ring = ensureClosedRing(rawRing);
+    return ring.length >= 4 ? removeCollinearBacktracks(ring) : ring;
   }
 
   function ringSignedArea(rawRing) {
@@ -45,9 +82,9 @@
   }
 
   function orientRing(rawRing, wantClockwise) {
-    let ring = ensureClosedRing(rawRing);
+    let ring = normalizeRing(rawRing);
     const clockwise = ringSignedArea(ring) < 0;
-    if (clockwise !== wantClockwise) ring = ensureClosedRing(ring.slice(0, -1).reverse());
+    if (clockwise !== wantClockwise) ring = normalizeRing(ring.slice(0, -1).reverse());
     return ring;
   }
 

@@ -306,6 +306,19 @@
         "https://www.wikidata.org/wiki/Q192820"
       ]
     },
+    "20323928": {
+      "nameKo": "라인강",
+      "localName": "Rhein",
+      "language": "deu",
+      "aliases": [
+        "Rhine",
+        "Rijn",
+        "Rhin"
+      ],
+      "sources": [
+        "https://www.wikidata.org/wiki/Q584"
+      ]
+    },
     "20440799": {
       "nameKo": "빌렌강",
       "localName": "Vilaine",

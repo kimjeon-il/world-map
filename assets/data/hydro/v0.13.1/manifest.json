@@ -94,8 +94,8 @@
     "featureCount": 16548,
     "core": {
       "url": "metadata-core.json.gz",
-      "bytes": 729993,
-      "sha256": "c5d439b1eeb00682c7d94a43d0938fc58d03f3654d1b1a1db18139006dff41e5"
+      "bytes": 730000,
+      "sha256": "5d1b1ad8d04ee405d313fc394033560fca8ee086de46f47998feb07f963f065b"
     },
     "detail": {
       "url": "../v0.13.0/metadata-detail.json.gz",
@@ -128,7 +128,7 @@
     }
   ],
   "cache": {
-    "name": "pandolab-water-v0.13.1-c5d439b1eeb0",
+    "name": "pandolab-water-v0.13.1-5d1b1ad8d04e",
     "backgroundDownload": true,
     "rangeRequests": true
   },
@@ -169,7 +169,7 @@
     "shardCount": 3,
     "indexTileCount": 953,
     "logicalFeatureCount": 5173,
-    "compressedBytes": 11974488,
+    "compressedBytes": 11974495,
     "largestPackBytes": 236563,
     "seedReachCount": 326261,
     "continuityRootCount": 2285,
@@ -195,8 +195,8 @@
     "borderChangedCoordinateCount": 57541,
     "connectionChangedCount": 6418,
     "riverSystemCount": 3818,
-    "namedRiverSystemCount": 376,
-    "unnamedRiverSystemCount": 3442,
+    "namedRiverSystemCount": 377,
+    "unnamedRiverSystemCount": 3441,
     "osmWaterwayMatchCount": 73
   },
   "sources": {
@@ -1799,11 +1799,11 @@
     },
     "hydronymOverrides": {
       "file": "hydronym-ko-overrides.json",
-      "sha256": "3a4c4b3938ade0f11b173e183b41fe5e56021877fc009a8cf92a87f9312dc2f7"
+      "sha256": "46903881edc05fcde234377e711489f2bc1d39a9307efa218ec47a5f04ccdfd4"
     },
     "nameEnrichment": {
-      "namedRiverSystems": 376,
-      "unnamedRiverSystems": 3442,
+      "namedRiverSystems": 377,
+      "unnamedRiverSystems": 3441,
       "osmMatches": 73
     }
   },
