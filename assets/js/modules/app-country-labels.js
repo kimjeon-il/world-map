@@ -234,7 +234,18 @@ export function createCountryLabels() {
       qualityCandidateCount: qualityCandidates.length,
       qualityCulledCount: Math.max(0, candidates.length - qualityCandidates.length),
     };
-    const placed = (0, dependencies.labelPresentation.layoutLabels)(qualityCandidates, { zoom, padding: (0, dependencies.surfaces.isMobile)() ? 5 : 3, metrics: nextLabelLayoutMetrics });
+    const safe = dependencies.mapLayout.mapLayoutMetricsSnapshot?.safe || {};
+    const placed = (0, dependencies.labelPresentation.layoutLabels)(qualityCandidates, {
+      zoom,
+      padding: (0, dependencies.surfaces.isMobile)() ? 5 : 3,
+      bounds: {
+        left: Number(safe.left || 0),
+        top: Number(safe.top || 0),
+        right: Number(dependencies.projectState.state.size.width || 0) - Number(safe.right || 0),
+        bottom: Number(dependencies.projectState.state.size.height || 0) - Number(safe.bottom || 0),
+      },
+      metrics: nextLabelLayoutMetrics,
+    });
     const countryFlags = (0, dependencies.labelPresentation.layoutCountryFlags)(placed, flagOptions);
     const placedCountryLabels = placed.filter(item => item.sourceType === 'country'
       && (item.nameVisible || countryFlags.has(String(item.source.id))));
