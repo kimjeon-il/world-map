@@ -48,26 +48,35 @@ export function createCountryLabels() {
     return countryDisplayIndex.get(id) || feature;
   }
 
+  function countryFillColor(feature) {
+    return dependencies.projectState.state.layerPresentation?.styles?.countries?.colorVisible === false
+      ? (0, dependencies.preferences.mapTheme)().defaultLand
+      : dependencies.colorModel.countryColor(feature);
+  }
+
   function applyUserPreferences(nextPreferences, { persist = true, rerender = true } = {}) {
     const previousTheme = (0, dependencies.preferences.effectiveTheme)(dependencies.preferences.userPreferences, dependencies.preferences.systemTheme === 'dark');
     const previousAccent = dependencies.preferences.resolvedAccentColor;
+    const previousSmoothLines = dependencies.preferences.userPreferences.appearance?.smoothLines !== false;
     dependencies.preferences.setUserPreferences(persist ? (0, dependencies.preferences.saveUserPreferences)(nextPreferences) : nextPreferences);
     const resolvedTheme = (0, dependencies.preferences.effectiveTheme)(dependencies.preferences.userPreferences, dependencies.preferences.systemTheme === 'dark');
     const statusBarVisible = dependencies.preferences.userPreferences.appearance?.statusBarVisible !== false;
     document.documentElement.dataset.theme = resolvedTheme;
     document.documentElement.dataset.statusBarVisible = String(statusBarVisible);
+    document.documentElement.dataset.smoothLines = String(dependencies.preferences.userPreferences.appearance?.smoothLines !== false);
     const statusBar = (0, dependencies.platform.$)('mapBottomStatus');
     if (statusBar) statusBar.hidden = !statusBarVisible;
     dependencies.preferences.setResolvedAccentColor((0, dependencies.preferences.applyAppAccent)(document, dependencies.preferences.userPreferences.appearance.accentPreset));
     (0, dependencies.preferences.applyMapLabelPreferences)();
     window.__PANDOLAB_THEME__ = resolvedTheme;
     const themeChanged = previousTheme !== resolvedTheme;
-    if (themeChanged || previousAccent !== dependencies.preferences.resolvedAccentColor) (0, dependencies.preferences.syncResolvedInteractionStyle)({ redraw: rerender });
+    const smoothLinesChanged = previousSmoothLines !== (dependencies.preferences.userPreferences.appearance?.smoothLines !== false);
+    if (themeChanged || smoothLinesChanged || previousAccent !== dependencies.preferences.resolvedAccentColor) (0, dependencies.preferences.syncResolvedInteractionStyle)({ redraw: rerender });
     if (themeChanged) {
       dependencies.rendering.gpuMapRenderer.invalidateCountryPalette({ base: true, emphasis: true }, 'user-preferences');
       dependencies.rendering.gpuMapRenderer.invalidatePhysicalStyle('user-preferences');
     }
-    if (themeChanged && rerender && dependencies.mapLayers.svg) {
+    if ((themeChanged || smoothLinesChanged) && rerender && dependencies.mapLayers.svg) {
       (0, dependencies.layerPresentation.markLayerTreeDirty)();
       dependencies.domains.layerTreeController?.render();
       dependencies.domains.renderingDomain?.invalidateBaseScene?.('user-preferences');
@@ -132,7 +141,7 @@ export function createCountryLabels() {
     dependencies.mapLayers.countryLayer.selectAll('path.country-patch-preview-fill')
       .attr('d', feature => (0, dependencies.mapView.path)(feature))
       .attr('data-gpu-scene-key', feature => `pending-country-fill:${feature.id}`)
-      .style('fill', dependencies.colorModel.countryColor)
+      .style('fill', countryFillColor)
       .style('fill-opacity', (0, dependencies.preferences.mapTheme)().fillAlpha)
       .style('stroke', 'none');
     patchFill.exit().remove();
