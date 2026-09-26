@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "id": "historical-country:deutsches-reich:1914-07-31-working-base-r1",
+  "referenceDate": "1914-07-31",
+  "source": {
+    "title": "HistoGIS - Deutsches Reich, 1871-02-27 to 1919-12-31",
+    "repository": "acdh-oeaw/histogis-data",
+    "path": "single_files/deutsches-reich__1871-02-27_1919-12-31.geojson",
+    "license": "CC BY 4.0",
+    "sourceName": "German Empire Stateborders 1871 2",
+    "sourceFeatureId": 10092,
+    "sourcePolygonCount": 27,
+    "sourceCoordinateCount": 7935,
+    "declaredSpatialExtentKm2": 542359.1232126306
+  },
+  "osHistoryAlignment": {
+    "source": "OSHistory/hgis-germany-transformer",
+    "correctionLineCount": 146,
+    "meanDistanceToEndpointA_km": 1.361979,
+    "meanDistanceToEndpointB_km": 0.494411,
+    "medianDistanceToEndpointA_km": 1.117242,
+    "medianDistanceToEndpointB_km": 0.204191,
+    "endpointBCloserCount": 110,
+    "endpointACloserCount": 36,
+    "decision": "Do not apply the linear correction again to this HistoGIS skeleton; it is already materially closer to the correction target endpoints."
+  },
+  "heligolandPatch": {
+    "source": "assets/data/countries-ne-5.1.1.geojson / DEU",
+    "sourceLicense": "Natural Earth public domain",
+    "selectionBbox": [
+      7.85,
+      54.16,
+      7.95,
+      54.21
+    ],
+    "components": [
+      {
+        "sourceComponentIndex": 20,
+        "bbox": [
+          7.879893,
+          54.178168,
+          7.904145,
+          54.194648
+        ],
+        "coordinateCount": 10,
+        "areaKm2": 1.201326
+      },
+      {
+        "sourceComponentIndex": 21,
+        "bbox": [
+          7.912364,
+          54.186998,
+          7.933442,
+          54.195299
+        ],
+        "coordinateCount": 5,
+        "areaKm2": 0.738889
+      }
+    ]
+  },
+  "validation": {
+    "sourceRingsClosedAndCanonical": true,
+    "canonicalPatchRingsClosedAndCanonical": true,
+    "insidePoints": [
+      "Berlin",
+      "Strasbourg",
+      "Metz",
+      "Poznan",
+      "Danzig",
+      "Konigsberg",
+      "Memel",
+      "Hultschin",
+      "Haderslev",
+      "Eupen",
+      "Heligoland",
+      "Dune"
+    ],
+    "outsidePoints": [
+      "Belfort",
+      "Copenhagen",
+      "Prague",
+      "LuxembourgCity",
+      "Warsaw"
+    ],
+    "approxAreaKm2": 540331.107,
+    "bounds": [
+      5.875153,
+      47.2705079,
+      22.8904465,
+      55.8937234
+    ],
+    "polygonComponentCount": 29,
+    "coordinateCount": 7950
+  },
+  "notes": [
+    "This is a working skeleton, not the final 1914 historical-library geometry.",
+    "The HistoGIS empire geometry spans the 1914 reference date and has been position-checked against OSHistory's HGIS correction lines.",
+    "Heligoland and Düne use the same Natural Earth 10m components already used by PandoLab's canonical Germany geometry.",
+    "Fine border bends, historical coastlines, micro-enclaves and other sub-kilometre details still require map-by-map refinement."
+  ]
+}
