@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "id": "historical-country:deutsches-reich:1914-07-31-working-base-r2",
+  "referenceDate": "1914-07-31",
+  "source": {
+    "title": "HistoGIS - Deutsches Reich, 1871-02-27 to 1919-12-31",
+    "repository": "acdh-oeaw/histogis-data",
+    "path": "single_files/deutsches-reich__1871-02-27_1919-12-31.geojson",
+    "license": "CC BY 4.0",
+    "sourceName": "German Empire Stateborders 1871 2",
+    "sourceFeatureId": 10092,
+    "sourcePolygonCount": 27,
+    "sourceCoordinateCount": 7935,
+    "declaredSpatialExtentKm2": 542359.1232126306
+  },
+  "osHistoryAlignment": {
+    "source": "OSHistory/hgis-germany-transformer",
+    "correctionLineCount": 146,
+    "meanDistanceToEndpointA_km": 1.361979,
+    "meanDistanceToEndpointB_km": 0.494411,
+    "medianDistanceToEndpointA_km": 1.117242,
+    "medianDistanceToEndpointB_km": 0.204191,
+    "endpointBCloserCount": 110,
+    "endpointACloserCount": 36,
+    "decision": "Do not apply the linear correction again to this HistoGIS skeleton; it is already materially closer to the correction target endpoints."
+  },
+  "heligolandPatch": {
+    "helgoland": {
+      "source": "Pleiades-preserved OpenStreetMap relation 3787052",
+      "license": "ODbL 1.0",
+      "coordinateCount": 567,
+      "bbox": [
+        7.8648436,
+        54.1693099,
+        7.9001626,
+        54.1907839
+      ],
+      "approxAreaKm2": 1.071814
+    },
+    "dune": {
+      "source": "OpenStreetMap way 273992076",
+      "license": "ODbL 1.0",
+      "coordinateCount": 406,
+      "bbox": [
+        7.8993155,
+        54.1796038,
+        7.9214341,
+        54.1917198
+      ],
+      "approxAreaKm2": 0.626575
+    },
+    "replacedLowResolutionComponents": [
+      {
+        "bbox": [
+          7.879893,
+          54.178168,
+          7.904145,
+          54.194648
+        ],
+        "coords": 10
+      },
+      {
+        "bbox": [
+          7.912364,
+          54.186998,
+          7.933442,
+          54.195299
+        ],
+        "coords": 5
+      }
+    ]
+  },
+  "normalization": {
+    "removedConsecutiveDuplicateCoordinates": 2
+  },
+  "validation": {
+    "allRingsClosed": true,
+    "properSelfIntersections": 0,
+    "insidePoints": [
+      "Berlin",
+      "Strasbourg",
+      "Metz",
+      "Poznan",
+      "Danzig",
+      "Konigsberg",
+      "Memel",
+      "Hultschin",
+      "Haderslev",
+      "Eupen",
+      "Heligoland",
+      "Dune"
+    ],
+    "outsidePoints": [
+      "Belfort",
+      "Copenhagen",
+      "Prague",
+      "LuxembourgCity",
+      "Warsaw"
+    ],
+    "approxAreaKm2": 540330.865,
+    "bounds": [
+      5.875153,
+      47.2705079,
+      22.8904465,
+      55.8937234
+    ],
+    "polygonComponentCount": 29,
+    "ringCount": 29,
+    "coordinateCount": 8906
+  },
+  "notes": [
+    "Working skeleton, not final historical-map geometry.",
+    "Modern Helgoland/Düne coastlines are used only to avoid omission at working-base stage; 1914 shoreline refinement remains pending.",
+    "Changed frontier sectors and micro-enclaves still require historical-map review."
+  ]
+}
