@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "historical-country:deutsches-reich:1914-07-31-working-base-r1",
+  "id": "historical-country:deutsches-reich:1914-07-31-working-base-r2",
   "referenceDate": "1914-07-31",
   "source": {
     "title": "HistoGIS - Deutsches Reich, 1871-02-27 to 1919-12-31",
@@ -25,42 +25,57 @@
     "decision": "Do not apply the linear correction again to this HistoGIS skeleton; it is already materially closer to the correction target endpoints."
   },
   "heligolandPatch": {
-    "source": "assets/data/countries-ne-5.1.1.geojson / DEU",
-    "sourceLicense": "Natural Earth public domain",
-    "selectionBbox": [
-      7.85,
-      54.16,
-      7.95,
-      54.21
-    ],
-    "components": [
+    "helgoland": {
+      "source": "Pleiades-preserved OpenStreetMap relation 3787052",
+      "license": "ODbL 1.0",
+      "coordinateCount": 567,
+      "bbox": [
+        7.8648436,
+        54.1693099,
+        7.9001626,
+        54.1907839
+      ],
+      "approxAreaKm2": 1.071814
+    },
+    "dune": {
+      "source": "OpenStreetMap way 273992076",
+      "license": "ODbL 1.0",
+      "coordinateCount": 406,
+      "bbox": [
+        7.8993155,
+        54.1796038,
+        7.9214341,
+        54.1917198
+      ],
+      "approxAreaKm2": 0.626575
+    },
+    "replacedLowResolutionComponents": [
       {
-        "sourceComponentIndex": 20,
         "bbox": [
           7.879893,
           54.178168,
           7.904145,
           54.194648
         ],
-        "coordinateCount": 10,
-        "areaKm2": 1.201326
+        "coords": 10
       },
       {
-        "sourceComponentIndex": 21,
         "bbox": [
           7.912364,
           54.186998,
           7.933442,
           54.195299
         ],
-        "coordinateCount": 5,
-        "areaKm2": 0.738889
+        "coords": 5
       }
     ]
   },
+  "normalization": {
+    "removedConsecutiveDuplicateCoordinates": 2
+  },
   "validation": {
-    "sourceRingsClosedAndCanonical": true,
-    "canonicalPatchRingsClosedAndCanonical": true,
+    "allRingsClosed": true,
+    "properSelfIntersections": 0,
     "insidePoints": [
       "Berlin",
       "Strasbourg",
@@ -82,7 +97,7 @@
       "LuxembourgCity",
       "Warsaw"
     ],
-    "approxAreaKm2": 540331.107,
+    "approxAreaKm2": 540330.865,
     "bounds": [
       5.875153,
       47.2705079,
@@ -90,12 +105,12 @@
       55.8937234
     ],
     "polygonComponentCount": 29,
-    "coordinateCount": 7950
+    "ringCount": 29,
+    "coordinateCount": 8906
   },
   "notes": [
-    "This is a working skeleton, not the final 1914 historical-library geometry.",
-    "The HistoGIS empire geometry spans the 1914 reference date and has been position-checked against OSHistory's HGIS correction lines.",
-    "Heligoland and Düne use the same Natural Earth 10m components already used by PandoLab's canonical Germany geometry.",
-    "Fine border bends, historical coastlines, micro-enclaves and other sub-kilometre details still require map-by-map refinement."
+    "Working skeleton, not final historical-map geometry.",
+    "Modern Helgoland/Düne coastlines are used only to avoid omission at working-base stage; 1914 shoreline refinement remains pending.",
+    "Changed frontier sectors and micro-enclaves still require historical-map review."
   ]
 }
